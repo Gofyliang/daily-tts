@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>📰 每日要闻（20260526）</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f5f5f5;
+    color: #333;
+    padding-bottom: 80px;
+}
+
+/* ===== 顶部控制栏 ===== */
+.control-bar {
+    position: sticky; top:0; z-index:100;
+    background: linear-gradient(135deg, #1A73E8 0%, #4FC3F7 100%);
+    padding: 12px 16px;
+    box-shadow: 0 2px 12px rgba(26,115,232,0.3);
+}
+.control-row {
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+}
+.control-btn {
+    width: 48px; height: 48px;
+    border: none; border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    font-size: 22px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
+.control-btn:active { transform: scale(0.9); background: rgba(255,255,255,0.35); }
+.control-btn.play-btn {
+    width: 64px; height: 64px;
+    background: #fff;
+    color: #1A73E8;
+    font-size: 28px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+.control-btn.play-btn.playing { color: #FF6B35; }
+
+.speed-select {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 14px;
+    cursor: pointer;
+    -webkit-appearance: none;
+}
+.speed-select option { color: #333; }
+
+/* ===== 进度信息 ===== */
+.progress-row {
+    display: flex; align-items: center; gap: 10px;
+    margin-top: 8px;
+    color: rgba(255,255,255,0.9);
+    font-size: 13px;
+}
+.progress-bar-outer {
+    flex: 1; height: 4px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 2px;
+    overflow: hidden;
+}
+.progress-bar-inner {
+    height: 100%;
+    background: #fff;
+    border-radius: 2px;
+    transition: width 0.3s;
+    width: 0%;
+}
+.progress-text {
+    white-space: nowrap;
+    min-width: 90px;
+    text-align: right;
+}
+
+/* ===== 当前朗读提示 ===== */
+.now-playing {
+    background: #FFF9C4;
+    padding: 8px 16px;
+    font-size: 13px;
+    color: #F57F17;
+    text-align: center;
+    display: none;
+    border-bottom: 2px solid #FFD54F;
+}
+.now-playing.active { display: block; }
+
+/* ===== 标题区 ===== */
+.header {
+    background: #fff;
+    padding: 20px 16px 12px;
+    border-bottom: 1px solid #eee;
+}
+.header h1 { font-size: 18px; color: #1A73E8; margin-bottom: 4px; }
+.header .subtitle { font-size: 13px; color: #888; }
+
+/* ===== 岗位列表 ===== */
+.job-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 14px 16px;
+    background: #fff;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
+.job-item:active { background: #f5f5f5; }
+.job-item.reading {
+    background: #E3F2FD;
+    border-left: 4px solid #1A73E8;
+    padding-left: 12px;
+}
+.job-item.read-done {
+    opacity: 0.6;
+}
+
+.job-index {
+    width: 32px; height: 32px;
+    background: #f0f0f0;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: bold;
+    color: #888;
+    flex-shrink: 0;
+}
+.job-item.reading .job-index {
+    background: #1A73E8;
+    color: #fff;
+}
+.job-item.read-done .job-index {
+    background: #4CAF50;
+    color: #fff;
+}
+
+.job-info { flex:1; min-width:0; }
+.job-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    display: flex; align-items: center; gap: 6px;
+    flex-wrap: wrap;
+}
+.job-detail {
+    font-size: 13px;
+    color: #666;
+    display: flex; flex-wrap: wrap; gap: 8px;
+}
+.position { color: #1A73E8; }
+.salary { color: #FF6B35; font-weight: bold; }
+.location { color: #888; }
+
+.tag {
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    white-space: nowrap;
+}
+.tag-new { background: #E8F5E9; color: #2E7D32; }
+.tag-repeat { background: #FFF3E0; color: #E65100; }
+.tag-update { background: #E3F2FD; color: #1565C0; }
+
+/* ===== 底部浮动条 ===== */
+.float-hint {
+    position: fixed; bottom: 0; left:0; right:0;
+    background: rgba(26,115,232,0.95);
+    color: #fff;
+    text-align: center;
+    padding: 10px 16px;
+    font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px;
+    z-index: 99;
+}
+.float-hint .icon { font-size: 20px; }
+
+/* ===== 状态标记 ===== */
+.status-badge {
+    display: inline-block;
+    background: #4CAF50;
+    color: #fff;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+    0%,100% { opacity:1; }
+    50% { opacity:0.5; }
+}
+</style>
+</head>
+<body>
+
+<!-- 控制栏 -->
+<div class="control-bar">
+    <div class="control-row">
+        <button class="control-btn" onclick="skipPrev()" title="上一条">⏮️</button>
+        <button class="control-btn play-btn" id="playBtn" onclick="togglePlay()" title="播放/暂停">
+            <span id="playIcon">🎧</span>
+        </button>
+        <button class="control-btn" onclick="skipNext()" title="下一条">⏭️</button>
+        <select class="speed-select" id="speedSelect" onchange="setSpeed(this.value)">
+            <option value="0.8">0.8x</option>
+            <option value="1.0" selected>1x</option>
+            <option value="1.2">1.2x</option>
+            <option value="1.5">1.5x</option>
+        </select>
+    </div>
+    <div class="progress-row">
+        <span id="progressLabel">0/52</span>
+        <div class="progress-bar-outer">
+            <div class="progress-bar-inner" id="progressBar"></div>
+        </div>
+        <span class="progress-text" id="progressText">准备就绪</span>
+    </div>
+</div>
+
+<!-- 当前朗读提示 -->
+<div class="now-playing" id="nowPlaying">
+    🔊 正在朗读：<span id="nowPlayingText"></span>
+</div>
+
+<!-- 标题 -->
+<div class="header">
+    <h1>📰 每日要闻（20260526）</h1>
+    <p class="subtitle">52条新闻 | 点🎧按钮浏览器自动朗读</p>
+</div>
+
+<!-- 岗位/新闻列表 -->
+<div id="jobList">
+
+        <div class="job-item" data-index="0" onclick="jumpTo(0)">
+            <div class="job-index">1</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">今日重点聚焦：华为"韬(τ)定律"发布引发半导体板块大涨、美伊谈判进展冲击油价、A股科技板块强势领涨、恒大清盘人起诉普华永道、跨境券商监管升级五大核心事件。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="1" onclick="jumpTo(1)">
+            <div class="job-index">2</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">日期： 20260525</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="2" onclick="jumpTo(2)">
+            <div class="job-index">3</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5月25日，在上海举行的2026国际电路与系统研讨会（ISCAS 2026）上，华为董事、半导体业务部总裁何庭波正式提出半导体领域全新演进理念——"韬(τ)定律"。该定律核心是以"时间缩微"替代传统"几何缩微"，不再单纯依赖晶体管尺寸缩小，而是通过逻辑折叠等创新技术持续压缩信号传播时延，提升系统整体...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="3" onclick="jumpTo(3)">
+            <div class="job-index">4</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🔍 五维深度分析：</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="4" onclick="jumpTo(4)">
+            <div class="job-index">5</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💼 工作就业影响。华为此举在中美科技博弈背景下为中国半导体产业提供了全新突围思路，对相关人才需求形成实质性拉动。供应链从业者若具备芯片封装测试、先进封装（如CoWoS、Chiplet）相关经验，将在本轮技术路线转换中获得更多优质岗位机会。建议重点关注华为产业链上下游企业的招聘动态，尤其是封装测试、E...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="5" onclick="jumpTo(5)">
+            <div class="job-index">6</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">📈 职业发展影响。"韬定律"本质上是用系统级创新替代制程级微缩，意味着半导体行业的人才评价逻辑正在发生变化。传统"唯纳米制程论"正在被打破，系统架构设计、逻辑优化、封装集成等能力权重上升。对于供应链/管理背景的从业者，理解这条技术路线有助于在与科技公司、芯片公司打交道时建立更专业的对话能力，提升职业...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="6" onclick="jumpTo(6)">
+            <div class="job-index">7</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🏭 行业影响（机械/供应链/直播）。机械/供应链行业：华为逻辑折叠技术路线对封装设备、测试设备、先进封装材料需求上升，国内设备厂商（如北方华创、中微公司）受益明显，相关采购/供应链岗位需求增加。直播行业：芯片算力提升直接利好直播推流设备、GPU算力卡需求，直播间硬件升级换代周期可能提速。建议密切关注...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="7" onclick="jumpTo(7)">
+            <div class="job-index">8</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🚀 创业机会（液冷/3D打印/直播副业）。液冷项目：华为芯片逻辑折叠技术提升晶体管密度，功耗控制更关键，算力设备的散热需求只增不减，个人液冷主机项目的市场需求逻辑进一步夯实。3D打印：芯片封装环节对精密结构件需求上升，3D打印在快速原型验证环节的应用场景增加。直播副业：芯片性能提升降低高清直播硬件门...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="8" onclick="jumpTo(8)">
+            <div class="job-index">9</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💰 投资机会。A股半导体板块短期受情绪驱动已大涨，需注意5月22日已有7家半导体公司披露减持计划，合计套现规模约127亿元，短期存在回调压力。中长期看，"韬定律"若成功落地，将重构国产半导体估值逻辑，华为产业链（封装测试、EDA工具、先进材料）具备长期配置价值。建议关注估值相对合理的二阶供应商，避开...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="9" onclick="jumpTo(9)">
+            <div class="job-index">10</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">日期： 20260525</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="10" onclick="jumpTo(10)">
+            <div class="job-index">11</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5月25日，美国与伊朗谈判传出积极信号，特朗普表示谈判进展顺利，并呼吁中东多国与以色列建交，欢迎伊朗加入地区和平进程。据报道，美伊双方或达成谅解备忘录，将分阶段开放霍尔木兹海峡。消息传出后，国际油价大幅跳水，美股三大股指期货和欧洲股市全线拉升。伊朗官员同时表示，谈判最终成果取决于美方诚意，伊方重申将...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="11" onclick="jumpTo(11)">
+            <div class="job-index">12</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🔍 五维深度分析：</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="12" onclick="jumpTo(12)">
+            <div class="job-index">13</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💼 工作就业影响。油价下跌对能源行业就业形成压制，尤其是油气开采、炼化方向；反之，航空、物流、化工等用油大户成本下降，相关行业用工需求可能边际改善。对于正在求职的供应链管理者，化工、化纤、塑料制品等下游行业（油价敏感型）的利润改善可能带动采购/供应链岗位扩张，可重点关注。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="13" onclick="jumpTo(13)">
+            <div class="job-index">14</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">📈 职业发展影响。油价是全球经济的重要风向标，油价大幅下跌通常伴随全球需求预期走弱。对于供应链从业者，现阶段应更加注重成本管控能力和供应商议价能力的积累——在通缩预期下，企业更看重能帮公司"省钱"的供应链人才。建议在简历/面试中突出"成本降低X%"等量化成果，契合当前企业诉求。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="14" onclick="jumpTo(14)">
+            <div class="job-index">15</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🏭 行业影响（机械/供应链/直播）。机械/制造业：油价下跌降低物流成本和原材料（石化下游）成本，对机械制造企业利润端偏正面，但需警惕需求端是否同步走弱。供应链行业：国际运费与油价高度相关，油价下跌有望降低跨境采购物流费用，对进口设备/原材料采购形成利好。直播行业：影响较小，暂不纳入核心考量。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="15" onclick="jumpTo(15)">
+            <div class="job-index">16</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🚀 创业机会（液冷/3D打印/直播副业）。液冷项目：油价下跌对液冷项目影响偏间接。氟化液等关键液体材料的石化下游成本可能小幅下降，有利于降低液冷主机BOM成本，提升产品毛利空间。3D打印：树脂、塑料线材等原材料成本对油价敏感，成本下行有利于提升3D打印服务毛利。直播副业：燃油成本下降降低设备运输、活...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="16" onclick="jumpTo(16)">
+            <div class="job-index">17</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💰 投资机会。油价下跌短期利空能源股（中海油、中石油、页岩油相关），但利好航空股（中国国航、南方航空）、化工股（万华化学、恒力石化）、物流股（顺丰控股）。需警惕：美伊谈判存在反复可能，霍尔木兹海峡地缘风险未根本解除，油价中期仍可能反弹，做空能源股需谨慎。建议关注航空板块的短期交易性机会。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="17" onclick="jumpTo(17)">
+            <div class="job-index">18</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">日期： 20260525</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="18" onclick="jumpTo(18)">
+            <div class="job-index">19</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5月25日，A股市场结构性行情明显，科技板块在华为"韬定律"催化下强势爆发，科创50指数单日大涨5.88%，全市场超百股涨停。PCB（印制电路板）、电力设备、先进封装等方向全线活跃。与此同时，市场分化明显，传统周期板块表现平淡。值得注意的是，本轮科技行情伴随大量股东减持——5月22日晚间，中微公司、...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="19" onclick="jumpTo(19)">
+            <div class="job-index">20</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🔍 五维深度分析：</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="20" onclick="jumpTo(20)">
+            <div class="job-index">21</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💼 工作就业影响。科技板块强势带动相关企业融资环境改善，拟上市公司IPO进程加速——长鑫科技科创板IPO将于5月27日上会，长江存储正式启动IPO辅导，宇树科技定于6月1日上会。IPO加速意味着相关企业扩产招人需求上升，供应链/采购岗位将同步扩张。建议重点关注即将IPO的科技企业招聘信息，此类企业上...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="21" onclick="jumpTo(21)">
+            <div class="job-index">22</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">📈 职业发展影响。本轮科技行情的核心是"国产替代+AI算力"，具有相关行业背景的供应链管理者市场溢价进一步提升。如果简历能体现"半导体供应链经验""科技制造业采购管理"等标签，在求职中将具备显著差异化优势。建议求职期间主动在简历和猎聘/BOSS个人介绍中强化相关关键词，提升被搜索匹配的概率。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="22" onclick="jumpTo(22)">
+            <div class="job-index">23</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🏭 行业影响（机械/供应链/直播）。机械/制造业：科创50大涨映射的是"硬科技"制造升级逻辑，与机械/高端制造行业高度契合，相关企业估值提升有助于改善员工薪酬福利水平。供应链行业：科技制造企业的供应链本地化、国产替代需求持续旺盛，熟悉国内供应商开发、具备国产替代落地经验的采购经理是当前市场稀缺人才。...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="23" onclick="jumpTo(23)">
+            <div class="job-index">24</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🚀 创业机会（液冷/3D打印/直播副业）。液冷项目：AI算力需求持续爆发是本轮科技行情的核心驱动力之一，而算力爆发直接驱动液冷散热需求。今日A股液冷概念股应已同步活跃，可关注中科曙光、英维克等液冷概念股表现，验证市场需求热度。3D打印：科技板块大涨提升整个硬科技创业氛围，3D打印作为"智能制造"子赛...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="24" onclick="jumpTo(24)">
+            <div class="job-index">25</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💰 投资机会。当前科创50已单日涨5.88%，短期追高风险较大；且7家半导体公司同时披露大额减持，产业资本用脚投票的信号值得警惕。投资策略：短期观望，等待回调后布局；中长期关注具备真实业绩支撑、估值合理的二阶半导体设备/材料公司，避开纯主题炒作标的。REAMDE：市场有风险，投资需谨慎。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="25" onclick="jumpTo(25)">
+            <div class="job-index">26</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">日期： 20260525</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="26" onclick="jumpTo(26)">
+            <div class="job-index">27</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">恒大海外清盘人正式将普华永道（PwC）告上香港法庭，索赔570亿元人民币。清盘人指控普华永道在恒大20192020年财报审计中严重失职——恒大部分财报存在系统性造假，而普华永道连续多年出具"无保留意见"审计报告，变相为恒大发债融资提供了信用背书。普华永道辩称是恒大管理层刻意隐瞒，审计机构受限于审计程...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="27" onclick="jumpTo(27)">
+            <div class="job-index">28</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🔍 五维深度分析：</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="28" onclick="jumpTo(28)">
+            <div class="job-index">29</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💼 工作就业影响。此案对审计、会计、风控方向就业产生深远影响——四大会计师事务所的信用风险急剧上升，企业内控/合规岗位的重要性被重新审视。对于供应链从业者，此案是一个强烈提醒：供应商财务风险核查（包括审计机构信誉）应纳入供应商准入评估体系，具备财务风险识别能力的采购人才将更受青睐。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="29" onclick="jumpTo(29)">
+            <div class="job-index">30</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">📈 职业发展影响。大型财务造假案件往往会推动监管升级，企业合规、内控、风险管理类岗位需求上升。对于有意转型的供应链管理者，可考虑向"采购合规""供应商风险管理"方向深化，考取相关认证（如CIPS进阶认证、内控 related 资格），打造差异化职业标签。此案也提醒我们：职业口碑和长期信誉是最核心的职...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="30" onclick="jumpTo(30)">
+            <div class="job-index">31</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🏭 行业影响（机械/供应链/直播）。机械/制造业：此案对制造业直接影响有限，但警惕类似财务风险在制造业企业中隐匿存在——部分制造企业可能通过应收账款、存货等科目调节利润，采购管理者需提升财务阅读能力。供应链行业：此案推动更多企业将"供应商财务健康度"纳入QCDS评估体系，具备财务分析能力的供应链人才...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="31" onclick="jumpTo(31)">
+            <div class="job-index">32</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🚀 创业机会（液冷/3D打印/直播副业）。液冷项目：创业初期需引入外部投资或合作伙伴，此案提醒创业者必须重视财务合规，从第一天起规范做账，避免未来融资或合作时因财务问题受阻。3D打印：同理，3D打印服务涉及客户预付款、材料库存等财务节点，规范财务流程是长期发展的基础。直播副业：若未来注册个体工商户或...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="32" onclick="jumpTo(32)">
+            <div class="job-index">33</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💰 投资机会。此案对普华永道品牌造成重创，可能波及相关中概股审计信心；但更直接的是，恒大系债券已基本归零，此案更多是损失追偿程序，对二级市场直接影响有限。需关注：A股审计机构合规检查可能趋严，财务造假企业的股价下行风险加剧，建议远离有财务瑕疵嫌疑的标的。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="33" onclick="jumpTo(33)">
+            <div class="job-index">34</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">日期： 20260522/25</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="34" onclick="jumpTo(34)">
+            <div class="job-index">35</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5月22日，中国证监会联合七部门联合发文，全面整治境外券商境内无牌经营行为，明确禁止境外券商在境内开展营销招揽、客户开发等业务，并设定2年过渡期。同日，富途控股、老虎证券、长桥证券等跨境互联网券商因非法跨境展业拟被合计罚款约22.6亿元人民币。消息传出后，相关中概股股价应声下跌。分析人士指出，此轮监...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="35" onclick="jumpTo(35)">
+            <div class="job-index">36</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🔍 五维深度分析：</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="36" onclick="jumpTo(36)">
+            <div class="job-index">37</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💼 工作就业影响。跨境券商裁员风险上升——罚没22.6亿元+业务受限，富途、老虎等平台可能收缩境内团队规模。反之，持牌券商（如中信证券、华泰证券等）的跨境业务版图有望扩大，相关岗位需求增加。对于求职中的供应链管理者，此事件提醒我们：选择雇主时务必关注企业合规风险，避免加入监管高压行业的公司，影响职业...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="37" onclick="jumpTo(37)">
+            <div class="job-index">38</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">📈 职业发展影响。金融监管趋严是长期趋势，合规能力成为金融行业从业者的核心能力之一。跨行业启示：供应链管理者同样面临合规要求（反腐败、反垄断、出口管制等），在日常工作中主动建立合规意识、保留合规记录，是职业生涯的"护城河"。建议在岗位工作中主动推动采购合规制度建设，这既是业绩亮点，也是职业保护。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="38" onclick="jumpTo(38)">
+            <div class="job-index">39</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🏭 行业影响（机械/供应链/直播）。机械/制造业：直接影响有限。但出口型制造企业需关注：若产品涉及美国出口管制清单，供应链合规要求持续趋严，建议提前排查。供应链行业：跨境采购（尤其涉及美国/欧盟技术管制产品）的合规审查成本上升，熟悉出口管制规则的采购人才更具市场价值。直播行业：若直播内容涉及跨境金融...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="39" onclick="jumpTo(39)">
+            <div class="job-index">40</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🚀 创业机会（液冷/3D打印/直播副业）。液冷项目：若涉及海外采购（如氟化液从3M等美系厂商采购），需关注出口管制合规，建议提前了解相关法规，避免创业过程中踩坑。3D打印：若未来接入海外3D模型素材或使用海外开源模型，需注意版权合规。直播副业：切勿在直播中推介任何境外金融产品（包括港股美股开户引流）...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="40" onclick="jumpTo(40)">
+            <div class="job-index">41</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💰 投资机会。富途（FUTU）、老虎（TIGR）等中概股短期承压，但2年过渡期意味着业务不会立即归零，若股价超跌可能存在短期反弹机会，需仔细评估合规转型可行性。长期看，持牌券商的跨境业务份额将扩大，可关注中信证券、华泰证券在跨境业务方向的布局。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="41" onclick="jumpTo(41)">
+            <div class="job-index">42</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">日期： 20260525/26</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="42" onclick="jumpTo(42)">
+            <div class="job-index">43</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">国产存储芯片"双雄"资本进程同步加速：长鑫科技科创板IPO定于5月27日上会审核，长江存储正式启动IPO辅导。值得一提的是，两家公司的股东名单中均出现了多家国有大行旗下金融资产投资公司（AIC）的身影——中国银行、农业银行、交通银行、建设银行等集体现身，布局高度重合。分析认为，在传统息差盈利模式不可...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="43" onclick="jumpTo(43)">
+            <div class="job-index">44</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🔍 五维深度分析：</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="44" onclick="jumpTo(44)">
+            <div class="job-index">45</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💼 工作就业影响。长鑫科技、长江存储均为重资产、重采购的半导体制造企业，IPO成功后融资能力大幅提升，产能扩张和人才招募将同步加速。采购/供应链岗位需求将显著增加，且薪资水平具备竞争力。建议重点跟踪这两家公司的招聘动态，其供应商体系（设备、材料、零部件）也会同步受益，相关配套企业的采购岗位同样值得关...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="45" onclick="jumpTo(45)">
+            <div class="job-index">46</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">📈 职业发展影响。"国有大行AIC押注硬科技"这一现象级趋势，意味着国家资本正系统性布局半导体产业链。对于供应链从业者，理解"国家大基金+AIC+地方国资"的资本支持体系，有助于把握行业发展趋势，在面试中展现行业认知深度。建议在求职覆盖信/自我介绍中加入对国产半导体产业链自主化的理解，体现格局和视野...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="46" onclick="jumpTo(46)">
+            <div class="job-index">47</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🏭 行业影响（机械/供应链/直播）。机械/制造业：存储芯片国产化为下游整机厂商（服务器、PC、手机）提供更安全的供应链选择，有助于中国机械/高端制造企业在国际竞争中降低供应链风险。供应链行业：长鑫、长存量产能力提升，将带动国内存储芯片价格下降，整机企业的BOM成本有望优化，采购部门的成本降低空间扩大...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="47" onclick="jumpTo(47)">
+            <div class="job-index">48</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🚀 创业机会（液冷/3D打印/直播副业）。液冷项目：AI算力爆发带动存储需求，高性能存储与高性能算力绑定，液冷算力设备的市场需求进一步夯实。长鑫IPO成功后将加快DRAM产能扩张，国产内存价格下行，有助于降低AI工作站/液冷主机的内存成本。3D打印：存储降价+算力提升，有助于3D模型渲染、切片处理的...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="48" onclick="jumpTo(48)">
+            <div class="job-index">49</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💰 投资机会。长鑫科技科创板IPO上会结果（5月27日）是近期最值得关注的投资事件之一。若成功过会，相关概念股（封测、设备、材料）可能迎来短期炒作行情。长江存储IPO辅导启动，相关参股公司（天眼查可查）也值得提前关注。需注意：半导体板块当前处于高位，且伴随大额减持，短期追高需谨慎。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="49" onclick="jumpTo(49)">
+            <div class="job-index">50</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">今日核心主线</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">科技自立是今日最核心的主题——华为"韬定律"为半导体产业提供了新路径，长鑫/长存IPO加速国产存储自主化，A股科技板块强势回应。与此同时，外部环境不确定性仍存（美伊谈判反复、跨境监管升级），需在乐观中保持一分清醒。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="50" onclick="jumpTo(50)">
+            <div class="job-index">51</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">本周关注日历</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5月27日：长鑫科技科创板IPO上会 → 关注结果公告。6月1日：宇树科技科创板IPO上会 → 机器人赛道观察窗口。持续：美伊谈判进展 → 影响油价和A股资源板块</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="51" onclick="jumpTo(51)">
+            <div class="job-index">52</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">📌 本日报由八弟（AI助手）自动生成并推送，分析仅供参考，不构成投资/职业建议。</span>
+                </div>
+            </div>
+        </div>
+</div>
+
+<!-- 底部提示 -->
+<div class="float-hint" id="floatHint">
+    <span class="icon">🎧</span>
+    <span id="floatText">点击顶部播放按钮开始朗读</span>
+</div>
+
+<script>
+// ===== 数据 =====
+const items = [{"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "今日重点聚焦：华为\"韬(τ)定律\"发布引发半导体板块大涨、美伊谈判进展冲击油价、A股科技板块强势领涨、恒大清盘人起诉普华永道、跨境券商监管升级五大核心事件。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "日期： 2026-05-25"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "5月25日，在上海举行的2026国际电路与系统研讨会（ISCAS 2026）上，华为董事、半导体业务部总裁何庭波正式提出半导体领域全新演进理念——\"韬(τ)定律\"。该定律核心是以\"时间缩微\"替代传统\"几何缩微\"，不再单纯依赖晶体管尺寸缩小，而是通过逻辑折叠等创新技术持续压缩信号传播时延，提升系统整体效率。华为过去六年已量产381款芯片，今年秋季将发布采用逻辑折叠技术的麒麟手机芯片；预计到2031年，基于该定律的高端芯片晶体管密度将达1.4纳米制程同等水平。消息发布后，A股半导体板块本周强势领涨，科创50指数单日涨5.88%。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🔍 五维深度分析："}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💼 工作就业影响。华为此举在中美科技博弈背景下为中国半导体产业提供了全新突围思路，对相关人才需求形成实质性拉动。供应链从业者若具备芯片封装测试、先进封装（如CoWoS、Chiplet）相关经验，将在本轮技术路线转换中获得更多优质岗位机会。建议重点关注华为产业链上下游企业的招聘动态，尤其是封装测试、EDA工具、先进材料方向。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "📈 职业发展影响。\"韬定律\"本质上是用系统级创新替代制程级微缩，意味着半导体行业的人才评价逻辑正在发生变化。传统\"唯纳米制程论\"正在被打破，系统架构设计、逻辑优化、封装集成等能力权重上升。对于供应链/管理背景的从业者，理解这条技术路线有助于在与科技公司、芯片公司打交道时建立更专业的对话能力，提升职业竞争力。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🏭 行业影响（机械/供应链/直播）。机械/供应链行业：华为逻辑折叠技术路线对封装设备、测试设备、先进封装材料需求上升，国内设备厂商（如北方华创、中微公司）受益明显，相关采购/供应链岗位需求增加。直播行业：芯片算力提升直接利好直播推流设备、GPU算力卡需求，直播间硬件升级换代周期可能提速。建议密切关注华为秋季新品发布带来的周边设备采购机会。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🚀 创业机会（液冷/3D打印/直播副业）。液冷项目：华为芯片逻辑折叠技术提升晶体管密度，功耗控制更关键，算力设备的散热需求只增不减，个人液冷主机项目的市场需求逻辑进一步夯实。3D打印：芯片封装环节对精密结构件需求上升，3D打印在快速原型验证环节的应用场景增加。直播副业：芯片性能提升降低高清直播硬件门槛，可用更低价位设备实现专业级推流，副业启动成本下降。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💰 投资机会。A股半导体板块短期受情绪驱动已大涨，需注意5月22日已有7家半导体公司披露减持计划，合计套现规模约127亿元，短期存在回调压力。中长期看，\"韬定律\"若成功落地，将重构国产半导体估值逻辑，华为产业链（封装测试、EDA工具、先进材料）具备长期配置价值。建议关注估值相对合理的二阶供应商，避开已大涨且有大股东减持的一线标的。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "日期： 2026-05-25"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "5月25日，美国与伊朗谈判传出积极信号，特朗普表示谈判进展顺利，并呼吁中东多国与以色列建交，欢迎伊朗加入地区和平进程。据报道，美伊双方或达成谅解备忘录，将分阶段开放霍尔木兹海峡。消息传出后，国际油价大幅跳水，美股三大股指期货和欧洲股市全线拉升。伊朗官员同时表示，谈判最终成果取决于美方诚意，伊方重申将坚决回应任何敌对行动，暗示谈判仍存在变数。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🔍 五维深度分析："}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💼 工作就业影响。油价下跌对能源行业就业形成压制，尤其是油气开采、炼化方向；反之，航空、物流、化工等用油大户成本下降，相关行业用工需求可能边际改善。对于正在求职的供应链管理者，化工、化纤、塑料制品等下游行业（油价敏感型）的利润改善可能带动采购/供应链岗位扩张，可重点关注。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "📈 职业发展影响。油价是全球经济的重要风向标，油价大幅下跌通常伴随全球需求预期走弱。对于供应链从业者，现阶段应更加注重成本管控能力和供应商议价能力的积累——在通缩预期下，企业更看重能帮公司\"省钱\"的供应链人才。建议在简历/面试中突出\"成本降低X%\"等量化成果，契合当前企业诉求。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🏭 行业影响（机械/供应链/直播）。机械/制造业：油价下跌降低物流成本和原材料（石化下游）成本，对机械制造企业利润端偏正面，但需警惕需求端是否同步走弱。供应链行业：国际运费与油价高度相关，油价下跌有望降低跨境采购物流费用，对进口设备/原材料采购形成利好。直播行业：影响较小，暂不纳入核心考量。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🚀 创业机会（液冷/3D打印/直播副业）。液冷项目：油价下跌对液冷项目影响偏间接。氟化液等关键液体材料的石化下游成本可能小幅下降，有利于降低液冷主机BOM成本，提升产品毛利空间。3D打印：树脂、塑料线材等原材料成本对油价敏感，成本下行有利于提升3D打印服务毛利。直播副业：燃油成本下降降低设备运输、活动执行成本，对线下活动技术支持业务形成小幅利好。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💰 投资机会。油价下跌短期利空能源股（中海油、中石油、页岩油相关），但利好航空股（中国国航、南方航空）、化工股（万华化学、恒力石化）、物流股（顺丰控股）。需警惕：美伊谈判存在反复可能，霍尔木兹海峡地缘风险未根本解除，油价中期仍可能反弹，做空能源股需谨慎。建议关注航空板块的短期交易性机会。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "日期： 2026-05-25"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "5月25日，A股市场结构性行情明显，科技板块在华为\"韬定律\"催化下强势爆发，科创50指数单日大涨5.88%，全市场超百股涨停。PCB（印制电路板）、电力设备、先进封装等方向全线活跃。与此同时，市场分化明显，传统周期板块表现平淡。值得注意的是，本轮科技行情伴随大量股东减持——5月22日晚间，中微公司、澜起科技等7家半导体公司披露减持计划，按最新收盘价估算合计套现规模达126.92亿元，为火爆行情蒙上阴影。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🔍 五维深度分析："}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💼 工作就业影响。科技板块强势带动相关企业融资环境改善，拟上市公司IPO进程加速——长鑫科技科创板IPO将于5月27日上会，长江存储正式启动IPO辅导，宇树科技定于6月1日上会。IPO加速意味着相关企业扩产招人需求上升，供应链/采购岗位将同步扩张。建议重点关注即将IPO的科技企业招聘信息，此类企业上市前通常有批量补员需求。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "📈 职业发展影响。本轮科技行情的核心是\"国产替代+AI算力\"，具有相关行业背景的供应链管理者市场溢价进一步提升。如果简历能体现\"半导体供应链经验\"\"科技制造业采购管理\"等标签，在求职中将具备显著差异化优势。建议求职期间主动在简历和猎聘/BOSS个人介绍中强化相关关键词，提升被搜索匹配的概率。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🏭 行业影响（机械/供应链/直播）。机械/制造业：科创50大涨映射的是\"硬科技\"制造升级逻辑，与机械/高端制造行业高度契合，相关企业估值提升有助于改善员工薪酬福利水平。供应链行业：科技制造企业的供应链本地化、国产替代需求持续旺盛，熟悉国内供应商开发、具备国产替代落地经验的采购经理是当前市场稀缺人才。直播行业：直接关联度较低，暂不重点分析。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🚀 创业机会（液冷/3D打印/直播副业）。液冷项目：AI算力需求持续爆发是本轮科技行情的核心驱动力之一，而算力爆发直接驱动液冷散热需求。今日A股液冷概念股应已同步活跃，可关注中科曙光、英维克等液冷概念股表现，验证市场需求热度。3D打印：科技板块大涨提升整个硬科技创业氛围，3D打印作为\"智能制造\"子赛道，融资环境边际改善。直播副业：科技行情与直播副业关联度低，但科技话题流量高，可尝试在抖音/视频号制作\"科技+供应链\"相关内容获取流量。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💰 投资机会。当前科创50已单日涨5.88%，短期追高风险较大；且7家半导体公司同时披露大额减持，产业资本用脚投票的信号值得警惕。投资策略：短期观望，等待回调后布局；中长期关注具备真实业绩支撑、估值合理的二阶半导体设备/材料公司，避开纯主题炒作标的。REAMDE：市场有风险，投资需谨慎。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "日期： 2026-05-25"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "恒大海外清盘人正式将普华永道（PwC）告上香港法庭，索赔570亿元人民币。清盘人指控普华永道在恒大2019-2020年财报审计中严重失职——恒大部分财报存在系统性造假，而普华永道连续多年出具\"无保留意见\"审计报告，变相为恒大发债融资提供了信用背书。普华永道辩称是恒大管理层刻意隐瞒，审计机构受限于审计程序固有局限，但外界普遍认为其难逃失职之责。此案成为迄今为止全球审计侵权责任索赔金额最高的案件之一。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🔍 五维深度分析："}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💼 工作就业影响。此案对审计、会计、风控方向就业产生深远影响——四大会计师事务所的信用风险急剧上升，企业内控/合规岗位的重要性被重新审视。对于供应链从业者，此案是一个强烈提醒：供应商财务风险核查（包括审计机构信誉）应纳入供应商准入评估体系，具备财务风险识别能力的采购人才将更受青睐。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "📈 职业发展影响。大型财务造假案件往往会推动监管升级，企业合规、内控、风险管理类岗位需求上升。对于有意转型的供应链管理者，可考虑向\"采购合规\"\"供应商风险管理\"方向深化，考取相关认证（如CIPS进阶认证、内控 related 资格），打造差异化职业标签。此案也提醒我们：职业口碑和长期信誉是最核心的职业资产，任何时候不参与任何形式的造假或违规操作。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🏭 行业影响（机械/供应链/直播）。机械/制造业：此案对制造业直接影响有限，但警惕类似财务风险在制造业企业中隐匿存在——部分制造企业可能通过应收账款、存货等科目调节利润，采购管理者需提升财务阅读能力。供应链行业：此案推动更多企业将\"供应商财务健康度\"纳入QCDS评估体系，具备财务分析能力的供应链人才价值上升。直播行业：关联度低。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🚀 创业机会（液冷/3D打印/直播副业）。液冷项目：创业初期需引入外部投资或合作伙伴，此案提醒创业者必须重视财务合规，从第一天起规范做账，避免未来融资或合作时因财务问题受阻。3D打印：同理，3D打印服务涉及客户预付款、材料库存等财务节点，规范财务流程是长期发展的基础。直播副业：若未来注册个体工商户或小微企业，务必规范记账报税，不可心存侥幸。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💰 投资机会。此案对普华永道品牌造成重创，可能波及相关中概股审计信心；但更直接的是，恒大系债券已基本归零，此案更多是损失追偿程序，对二级市场直接影响有限。需关注：A股审计机构合规检查可能趋严，财务造假企业的股价下行风险加剧，建议远离有财务瑕疵嫌疑的标的。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "日期： 2026-05-22/25"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "5月22日，中国证监会联合七部门联合发文，全面整治境外券商境内无牌经营行为，明确禁止境外券商在境内开展营销招揽、客户开发等业务，并设定2年过渡期。同日，富途控股、老虎证券、长桥证券等跨境互联网券商因非法跨境展业拟被合计罚款约22.6亿元人民币。消息传出后，相关中概股股价应声下跌。分析人士指出，此轮监管的核心目标是将跨境证券业务纳入合法监管框架，而非彻底禁止，2年过渡期给了相关平台合规调整的时间。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🔍 五维深度分析："}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💼 工作就业影响。跨境券商裁员风险上升——罚没22.6亿元+业务受限，富途、老虎等平台可能收缩境内团队规模。反之，持牌券商（如中信证券、华泰证券等）的跨境业务版图有望扩大，相关岗位需求增加。对于求职中的供应链管理者，此事件提醒我们：选择雇主时务必关注企业合规风险，避免加入监管高压行业的公司，影响职业连续性。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "📈 职业发展影响。金融监管趋严是长期趋势，合规能力成为金融行业从业者的核心能力之一。跨行业启示：供应链管理者同样面临合规要求（反腐败、反垄断、出口管制等），在日常工作中主动建立合规意识、保留合规记录，是职业生涯的\"护城河\"。建议在岗位工作中主动推动采购合规制度建设，这既是业绩亮点，也是职业保护。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🏭 行业影响（机械/供应链/直播）。机械/制造业：直接影响有限。但出口型制造企业需关注：若产品涉及美国出口管制清单，供应链合规要求持续趋严，建议提前排查。供应链行业：跨境采购（尤其涉及美国/欧盟技术管制产品）的合规审查成本上升，熟悉出口管制规则的采购人才更具市场价值。直播行业：若直播内容涉及跨境金融产品推介，需立即自查合规性，避免触碰监管红线。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🚀 创业机会（液冷/3D打印/直播副业）。液冷项目：若涉及海外采购（如氟化液从3M等美系厂商采购），需关注出口管制合规，建议提前了解相关法规，避免创业过程中踩坑。3D打印：若未来接入海外3D模型素材或使用海外开源模型，需注意版权合规。直播副业：切勿在直播中推介任何境外金融产品（包括港股美股开户引流），当前监管环境下极易触碰红线，务必规避。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💰 投资机会。富途（FUTU）、老虎（TIGR）等中概股短期承压，但2年过渡期意味着业务不会立即归零，若股价超跌可能存在短期反弹机会，需仔细评估合规转型可行性。长期看，持牌券商的跨境业务份额将扩大，可关注中信证券、华泰证券在跨境业务方向的布局。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "日期： 2026-05-25/26"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "国产存储芯片\"双雄\"资本进程同步加速：长鑫科技科创板IPO定于5月27日上会审核，长江存储正式启动IPO辅导。值得一提的是，两家公司的股东名单中均出现了多家国有大行旗下金融资产投资公司（AIC）的身影——中国银行、农业银行、交通银行、建设银行等集体现身，布局高度重合。分析认为，在传统息差盈利模式不可持续的背景下，国有大行正通过AIC模式加快股权投资布局，从新能源到AI再到存储芯片，频频\"押中\"产业风口。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🔍 五维深度分析："}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💼 工作就业影响。长鑫科技、长江存储均为重资产、重采购的半导体制造企业，IPO成功后融资能力大幅提升，产能扩张和人才招募将同步加速。采购/供应链岗位需求将显著增加，且薪资水平具备竞争力。建议重点跟踪这两家公司的招聘动态，其供应商体系（设备、材料、零部件）也会同步受益，相关配套企业的采购岗位同样值得关注。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "📈 职业发展影响。\"国有大行AIC押注硬科技\"这一现象级趋势，意味着国家资本正系统性布局半导体产业链。对于供应链从业者，理解\"国家大基金+AIC+地方国资\"的资本支持体系，有助于把握行业发展趋势，在面试中展现行业认知深度。建议在求职覆盖信/自我介绍中加入对国产半导体产业链自主化的理解，体现格局和视野。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🏭 行业影响（机械/供应链/直播）。机械/制造业：存储芯片国产化为下游整机厂商（服务器、PC、手机）提供更安全的供应链选择，有助于中国机械/高端制造企业在国际竞争中降低供应链风险。供应链行业：长鑫、长存量产能力提升，将带动国内存储芯片价格下降，整机企业的BOM成本有望优化，采购部门的成本降低空间扩大，有助于采购管理者达成降本KPI。直播行业：存储芯片降价有助于降低直播设备（摄像头、采集卡、SSD等）成本，对直播间搭建业务形成利好。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🚀 创业机会（液冷/3D打印/直播副业）。液冷项目：AI算力爆发带动存储需求，高性能存储与高性能算力绑定，液冷算力设备的市场需求进一步夯实。长鑫IPO成功后将加快DRAM产能扩张，国产内存价格下行，有助于降低AI工作站/液冷主机的内存成本。3D打印：存储降价+算力提升，有助于3D模型渲染、切片处理的效率提升，对3D打印服务品质改善有间接帮助。直播副业：存储芯片国产化降低设备成本，直播间设备更新换代成本下降，有利于拓展更多客户。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💰 投资机会。长鑫科技科创板IPO上会结果（5月27日）是近期最值得关注的投资事件之一。若成功过会，相关概念股（封测、设备、材料）可能迎来短期炒作行情。长江存储IPO辅导启动，相关参股公司（天眼查可查）也值得提前关注。需注意：半导体板块当前处于高位，且伴随大额减持，短期追高需谨慎。"}, {"company": "今日核心主线", "position": "", "salary": "", "location": "", "tag": "", "body": "科技自立是今日最核心的主题——华为\"韬定律\"为半导体产业提供了新路径，长鑫/长存IPO加速国产存储自主化，A股科技板块强势回应。与此同时，外部环境不确定性仍存（美伊谈判反复、跨境监管升级），需在乐观中保持一分清醒。"}, {"company": "本周关注日历", "position": "", "salary": "", "location": "", "tag": "", "body": "5月27日：长鑫科技科创板IPO上会 → 关注结果公告。6月1日：宇树科技科创板IPO上会 → 机器人赛道观察窗口。持续：美伊谈判进展 → 影响油价和A股资源板块"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "📌 本日报由八弟（AI助手）自动生成并推送，分析仅供参考，不构成投资/职业建议。*"}];
+const totalItems = 52;
+const speakTemplate = "{company}。详细内容：{body}。";
+
+// ===== 状态 =====
+let currentIndex = 0;
+let isPlaying = false;
+let speechRate = 1.0;
+let readDoneSet = new Set();
+let synth = window.speechSynthesis;
+let currentUtterance = null;
+let selectedVoice = null;
+let voicesReady = false;
+
+// ===== 浏览器检测 =====
+function isQQBrowser() {
+    let ua = navigator.userAgent || '';
+    return /MQQBrowser|QQ\//i.test(ua);
+}
+function isUCBrowser() {
+    let ua = navigator.userAgent || '';
+    return /UCBrowser|UCWEB/i.test(ua);
+}
+function isWeChat() {
+    let ua = navigator.userAgent || '';
+    return /MicroMessenger/i.test(ua);
+}
+function isUnsupportedBrowser() {
+    return isQQBrowser() || isUCBrowser() || isWeChat();
+}
+
+// ===== 初始化 =====
+function init() {
+    // 浏览器检测：不支持的直接提示换浏览器
+    if (isUnsupportedBrowser()) {
+        let browserName = isQQBrowser() ? 'QQ浏览器' : (isUCBrowser() ? 'UC浏览器' : '微信内置浏览器');
+        showBrowserWarning(browserName);
+        return;
+    }
+
+    if (!synth) {
+        showBrowserWarning('当前浏览器');
+        return;
+    }
+
+    // Chrome/Edge: voices 通过异步事件加载
+    let voices = synth.getVoices();
+    if (voices && voices.length > 0) {
+        pickVoice(voices);
+    }
+
+    // 监听语音列表加载（关键！Android Chrome 需要等事件）
+    synth.onvoiceschanged = function() {
+        voices = synth.getVoices();
+        if (voices && voices.length > 0 && !voicesReady) {
+            pickVoice(voices);
+            document.getElementById('floatText').textContent =
+                '✅ 语音引擎就绪 (' + voices.length + '个) — 点🎧开始朗读';
+            document.getElementById('progressText').textContent = '就绪 ✓';
+        }
+    };
+
+    // 超时兜底：2秒后强制尝试
+    setTimeout(function() {
+        if (!voicesReady) {
+            voices = synth.getVoices();
+            if (voices && voices.length > 0) {
+                pickVoice(voices);
+            }
+            if (selectedVoice) {
+                document.getElementById('floatText').textContent =
+                    '✅ 语音引擎: ' + selectedVoice.name;
+                document.getElementById('progressText').textContent = '就绪 ✓';
+            } else {
+                document.getElementById('floatText').textContent =
+                    '⚠️ 未找到中文语音，请用系统自带 Chrome/Edge 打开';
+                document.getElementById('progressText').textContent = '无中文语音 ⚠️';
+            }
+            voicesReady = true;
+        }
+    }, 2500);
+}
+
+function showBrowserWarning(browserName) {
+    // 隐藏控制栏播放按钮
+    document.getElementById('playBtn').style.opacity = '0.3';
+    document.getElementById('playBtn').style.pointerEvents = 'none';
+    // 底部显示换浏览器提示
+    document.getElementById('floatHint').style.background = 'rgba(211,47,47,0.95)';
+    document.getElementById('floatText').innerHTML =
+        '❌ ' + browserName + '不支持语音朗读<br><small>👉 请用 <b>Chrome</b> 或 <b>Edge</b> 浏览器打开</small>';
+    document.getElementById('progressText').textContent = '❌ 浏览器不支持';
+    // 页面顶部插入醒目提示横幅
+    let banner = document.createElement('div');
+    banner.style.cssText = 'background:#FFEBEE;border-bottom:2px solid #EF5350;padding:16px;text-align:center;';
+    banner.innerHTML =
+        '<div style="font-size:40px;margin-bottom:8px;">🚫</div>' +
+        '<div style="font-size:15px;font-weight:bold;color:#C62828;margin-bottom:6px;">' +
+        browserName + ' 不支持语音朗读</div>' +
+        '<div style="font-size:14px;color:#555;line-height:1.6;">' +
+        '请用 <b style="color:#1A73E8;">Chrome</b> 或 <b style="color:#0078D4;">Edge</b> 浏览器打开即可朗读<br>' +
+        '<span style="font-size:12px;color:#999;">（应用商店搜索"Chrome"或"Edge"下载）</span></div>';
+    let header = document.querySelector('.header');
+    if (header) {
+        header.parentNode.insertBefore(banner, header);
+    }
+    // 禁用所有岗位点击
+    document.querySelectorAll('.job-item').forEach(function(el) {
+        el.style.pointerEvents = 'none';
+        el.style.opacity = '0.5';
+    });
+}
+
+function pickVoice(voices) {
+    // 优先级：zh-CN 中文女声 > zh-CN 任意 > zh-* > 第一个
+    let preferred = ['zh-CN', 'zh-Hans', 'zh-HK', 'zh-TW', 'zh'];
+    for (let lang of preferred) {
+        for (let v of voices) {
+            if (v.lang && v.lang.startsWith(lang)) {
+                // 优先女声
+                if (v.name.toLowerCase().indexOf('female') >= 0 ||
+                    v.name.indexOf('女') >= 0) {
+                    selectedVoice = v;
+                    voicesReady = true;
+                    return;
+                }
+            }
+        }
+    }
+    // 中文任意
+    for (let lang of preferred) {
+        for (let v of voices) {
+            if (v.lang && v.lang.startsWith(lang)) {
+                selectedVoice = v;
+                voicesReady = true;
+                return;
+            }
+        }
+    }
+    // 无中文语音 → 用第一个兜底
+    if (voices.length > 0) {
+        selectedVoice = voices[0];  // 用第一个兜底
+    }
+    voicesReady = true;
+}
+
+// ===== 构建朗读文本 =====
+function buildSpeakText(item) {
+    let raw = speakTemplate
+        .replace('{company}', item.company || '')
+        .replace('{position}', item.position || '')
+        .replace('{salary}', item.salary || '面议')
+        .replace('{location}', item.location || '')
+        .replace('{body}', item.body || '');
+    return _cleanForTTS(raw);
+}
+
+// ===== TTS 文本清洗：去除所有 Markdown 残留符号 =====
+function _cleanForTTS(text) {
+    if (!text) return text;
+    let cleaned = text;
+    // 去除 Markdown 标题标记 (# ## ### #### 等)
+    cleaned = cleaned.replace(/#{1,6}\s*/g, '');
+    // 去除加粗/斜体标记 (** __ * _)
+    cleaned = cleaned.replace(/\*{1,2}|_/g, '');
+    // 去除管道符 (表格)
+    cleaned = cleaned.replace(/\|/g, ' ');
+    // 去除反引号 (代码)
+    cleaned = cleaned.replace(/`+/g, '');
+    // 去除波浪线
+    cleaned = cleaned.replace(/~+/g, '');
+    // 去除分散的 -  :  标记（但不破坏正常连字符和冒号）
+    cleaned = cleaned.replace(/：/g, ':');
+    // 压缩多余空格
+    cleaned = cleaned.replace(/\s+/g, ' ');
+    // 去除连续连字符
+    cleaned = cleaned.replace(/-{2,}/g, '');
+    return cleaned.trim();
+}
+
+// ===== 朗读单条 =====
+function speakItem(index) {
+    if (index < 0 || index >= totalItems) return;
+
+    currentIndex = index;
+
+    synth.cancel();
+    let item = items[index];
+    let text = buildSpeakText(item);
+
+    let utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'zh-CN';
+    utterance.rate = speechRate;
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+    if (selectedVoice) {
+        utterance.voice = selectedVoice;
+    }
+
+    utterance.onstart = function() {
+        updateUI(index);
+        document.getElementById('nowPlaying').classList.add('active');
+        document.getElementById('nowPlayingText').textContent =
+            (item.company || '') + ' ' + (item.position || '');
+    };
+
+    utterance.onend = function() {
+        readDoneSet.add(index);
+        updateReadDone(index);
+        let next = index + 1;
+        if (next < totalItems && isPlaying) {
+            speakItem(next);
+        } else if (next >= totalItems) {
+            stopPlayback();
+            document.getElementById('floatText').textContent = '✅ 全部朗读完成！';
+            document.getElementById('progressText').textContent = '朗读完成';
+            document.getElementById('progressBar').style.width = '100%';
+            document.getElementById('progressLabel').textContent = totalItems + '/' + totalItems;
+        }
+    };
+
+    utterance.onerror = function(e) {
+        if (e.error !== 'canceled' && e.error !== 'interrupted') {
+            let errMsg = '⚠️ 朗读出错: ' + (e.error || 'unknown');
+            document.getElementById('progressText').textContent = errMsg;
+            document.getElementById('floatText').textContent =
+                errMsg + ' — 可尝试用系统自带浏览器打开';
+            let next = index + 1;
+            if (next < totalItems && isPlaying) {
+                setTimeout(function() { speakItem(next); }, 500);
+            }
+        }
+    };
+
+    currentUtterance = utterance;
+    synth.speak(utterance);
+}
+
+// ===== 播放控制 =====
+function togglePlay() {
+    if (isPlaying) {
+        pausePlayback();
+    } else {
+        startPlayback();
+    }
+}
+
+function startPlayback() {
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    document.getElementById('progressText').textContent = '朗读中...';
+    document.getElementById('floatText').textContent =
+        selectedVoice
+            ? '🔊 朗读中 (' + selectedVoice.name + ') ...'
+            : '🔊 朗读中 (系统默认语音)...';
+    speakItem(currentIndex);
+}
+
+function pausePlayback() {
+    isPlaying = false;
+    synth.cancel();
+    document.getElementById('playIcon').textContent = '🎧';
+    document.getElementById('playBtn').classList.remove('playing');
+    document.getElementById('nowPlaying').classList.remove('active');
+    document.getElementById('floatText').textContent = '⏸️ 已暂停，点击继续';
+    document.getElementById('progressText').textContent = '已暂停';
+}
+
+function stopPlayback() {
+    isPlaying = false;
+    synth.cancel();
+    document.getElementById('playIcon').textContent = '🎧';
+    document.getElementById('playBtn').classList.remove('playing');
+    document.getElementById('nowPlaying').classList.remove('active');
+    document.getElementById('floatText').textContent = '✅ 朗读完成';
+}
+
+function skipNext() {
+    synth.cancel();
+    let next = (currentIndex + 1) % totalItems;
+    currentIndex = next;
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function skipPrev() {
+    synth.cancel();
+    let prev = currentIndex - 1;
+    if (prev < 0) prev = totalItems - 1;
+    currentIndex = prev;
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function jumpTo(index) {
+    synth.cancel();
+    currentIndex = index;
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function setSpeed(val) {
+    speechRate = parseFloat(val);
+    document.getElementById('floatText').textContent =
+        '🎵 朗读速度: ' + val + 'x';
+    setTimeout(function() {
+        if (isPlaying) {
+            document.getElementById('floatText').textContent = '🔊 朗读中...';
+        }
+    }, 1500);
+}
+
+// ===== UI更新 =====
+function updateUI(index) {
+    // 进度条
+    let pct = (index / totalItems) * 100;
+    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent = (index + 1) + '/' + totalItems;
+    document.getElementById('progressText').textContent =
+        '正在朗读第 ' + (index + 1) + ' ' + '条新闻'.replace('个岗位','').replace('条新闻','');
+
+    // 高亮当前
+    document.querySelectorAll('.job-item').forEach(function(el) {
+        el.classList.remove('reading');
+    });
+    let currentEl = document.querySelector('.job-item[data-index="' + index + '"]');
+    if (currentEl) {
+        currentEl.classList.add('reading');
+        currentEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+function updateReadDone(index) {
+    let el = document.querySelector('.job-item[data-index="' + index + '"]');
+    if (el) {
+        el.classList.add('read-done');
+    }
+}
+
+// ===== 启动 =====
+init();
+
+// ===== 移动端保持屏幕唤醒（可选） =====
+if (navigator.wakeLock) {
+    try {
+        navigator.wakeLock.request('screen');
+    } catch(e) {}
+}
+</script>
+</body>
+</html>
