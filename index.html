@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GitHub Pages 朗读测试</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, "Microsoft YaHei", sans-serif; background: #1a1a2e; color: #eee; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+.card { background: #16213e; border-radius: 16px; padding: 24px; max-width: 600px; width: 100%; margin: 12px 0; }
+h1 { font-size: 24px; margin-bottom: 8px; color: #e94560; }
+.status { font-size: 14px; color: #0f3460; background: #e94560; padding: 4px 12px; border-radius: 20px; display: inline-block; margin-bottom: 12px; }
+.btn { display: inline-block; padding: 14px 32px; border: none; border-radius: 28px; font-size: 18px; font-weight: bold; cursor: pointer; transition: all .2s; margin: 6px; }
+.btn-play { background: #e94560; color: #fff; }
+.btn-play:hover { background: #c73e54; transform: scale(1.05); }
+.btn-stop { background: #555; color: #fff; }
+.text-preview { background: #0f3460; padding: 16px; border-radius: 8px; margin: 12px 0; font-size: 15px; line-height: 1.8; }
+.check { display: flex; align-items: center; gap: 8px; margin: 6px 0; font-size: 14px; }
+.check .icon { font-size: 20px; }
+.log { background: #111; color: #0f0; font-family: monospace; padding: 12px; border-radius: 8px; margin: 12px 0; font-size: 13px; max-height: 200px; overflow-y: auto; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>GitHub Pages TTS 测试</h1>
+  <span class="status" id="pageStatus">页面渲染中...</span>
+  
+  <div class="check"><span class="icon" id="check1">⏳</span> HTML 渲染检测</div>
+  <div class="check"><span class="icon" id="check2">⏳</span> JavaScript 执行检测</div>
+  <div class="check"><span class="icon" id="check3">⏳</span> Web Speech API 检测</div>
+  
+  <div class="text-preview" id="textContent">
+    这是一段测试文本，用于验证 GitHub Pages 的语音朗读功能是否正常。
+    如果一切正常，点击下方按钮后你应该能听到这段文字被朗读出来。
+    支持中英文混合朗读：Hello World 你好世界！
+  </div>
+  
+  <button class="btn btn-play" id="btnPlay">播放朗读</button>
+  <button class="btn btn-stop" id="btnStop">停止</button>
+  
+  <div class="log" id="log">等待测试开始...</div>
+</div>
+
+<script>
+(function() {
+  var logEl = document.getElementById('log');
+  function log(msg) {
+    var t = new Date().toLocaleTimeString();
+    logEl.innerHTML += '[' + t + '] ' + msg + '\n';
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  // 检测1: HTML渲染
+  document.getElementById('pageStatus').textContent = 'HTML 渲染正常';
+  document.getElementById('pageStatus').style.background = '#4CAF50';
+  document.getElementById('check1').innerHTML = '<span class="icon">✅</span> HTML 渲染: 成功（页面正确渲染）';
+  log('HTML 渲染检测通过');
+
+  // 检测2: JS执行
+  document.getElementById('check2').innerHTML = '<span class="icon">✅</span> JavaScript: 成功（脚本正常执行）';
+  log('JavaScript 执行检测通过');
+
+  // 检测3: Web Speech API
+  if ('speechSynthesis' in window) {
+    document.getElementById('check3').innerHTML = '<span class="icon">✅</span> Web Speech API: 可用';
+    log('Web Speech API 可用');
+  } else {
+    document.getElementById('check3').innerHTML = '<span class="icon">❌</span> Web Speech API: 不可用（浏览器不支持）';
+    log('Web Speech API 不可用！');
+  }
+
+  var synth = window.speechSynthesis;
+  var speaking = false;
+
+  document.getElementById('btnPlay').addEventListener('click', function() {
+    if (synth.speaking) {
+      synth.cancel();
+      speaking = false;
+    }
+    var text = document.getElementById('textContent').textContent.trim();
+    var utter = new SpeechSynthesisUtterance(text);
+    utter.lang = 'zh-CN';
+    utter.rate = 1.0;
+    utter.pitch = 1.0;
+    utter.onstart = function() {
+      speaking = true;
+      log('开始朗读...');
+    };
+    utter.onend = function() {
+      speaking = false;
+      log('朗读完成');
+    };
+    utter.onerror = function(e) {
+      log('朗读错误: ' + e.error);
+    };
+    synth.speak(utter);
+    log('已触发朗读（共 ' + text.length + ' 字符）');
+  });
+
+  document.getElementById('btnStop').addEventListener('click', function() {
+    synth.cancel();
+    speaking = false;
+    log('朗读已停止');
+  });
+
+  log('初始化完成，页面就绪');
+})();
+</script>
+</body>
+</html>
