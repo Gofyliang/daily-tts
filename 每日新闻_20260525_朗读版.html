@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>📰 每日要闻（2026-05-25）</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f5f5f5;
+    color: #333;
+    padding-bottom: 80px;
+}
+
+/* ===== 顶部控制栏 ===== */
+.control-bar {
+    position: sticky; top:0; z-index:100;
+    background: linear-gradient(135deg, #1A73E8 0%, #4FC3F7 100%);
+    padding: 12px 16px;
+    box-shadow: 0 2px 12px rgba(26,115,232,0.3);
+}
+.control-row {
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+}
+.control-btn {
+    width: 48px; height: 48px;
+    border: none; border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    font-size: 22px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
+.control-btn:active { transform: scale(0.9); background: rgba(255,255,255,0.35); }
+.control-btn.play-btn {
+    width: 64px; height: 64px;
+    background: #fff;
+    color: #1A73E8;
+    font-size: 28px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+.control-btn.play-btn.playing { color: #FF6B35; }
+
+.speed-select {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 14px;
+    cursor: pointer;
+    -webkit-appearance: none;
+}
+.speed-select option { color: #333; }
+
+/* ===== 进度信息 ===== */
+.progress-row {
+    display: flex; align-items: center; gap: 10px;
+    margin-top: 8px;
+    color: rgba(255,255,255,0.9);
+    font-size: 13px;
+}
+.progress-bar-outer {
+    flex: 1; height: 4px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 2px;
+    overflow: hidden;
+}
+.progress-bar-inner {
+    height: 100%;
+    background: #fff;
+    border-radius: 2px;
+    transition: width 0.3s;
+    width: 0%;
+}
+.progress-text {
+    white-space: nowrap;
+    min-width: 90px;
+    text-align: right;
+}
+
+/* ===== 当前朗读提示 ===== */
+.now-playing {
+    background: #FFF9C4;
+    padding: 8px 16px;
+    font-size: 13px;
+    color: #F57F17;
+    text-align: center;
+    display: none;
+    border-bottom: 2px solid #FFD54F;
+}
+.now-playing.active { display: block; }
+
+/* ===== 标题区 ===== */
+.header {
+    background: #fff;
+    padding: 20px 16px 12px;
+    border-bottom: 1px solid #eee;
+}
+.header h1 { font-size: 18px; color: #1A73E8; margin-bottom: 4px; }
+.header .subtitle { font-size: 13px; color: #888; }
+
+/* ===== 岗位列表 ===== */
+.job-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 14px 16px;
+    background: #fff;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
+.job-item:active { background: #f5f5f5; }
+.job-item.reading {
+    background: #E3F2FD;
+    border-left: 4px solid #1A73E8;
+    padding-left: 12px;
+}
+.job-item.read-done {
+    opacity: 0.6;
+}
+
+.job-index {
+    width: 32px; height: 32px;
+    background: #f0f0f0;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: bold;
+    color: #888;
+    flex-shrink: 0;
+}
+.job-item.reading .job-index {
+    background: #1A73E8;
+    color: #fff;
+}
+.job-item.read-done .job-index {
+    background: #4CAF50;
+    color: #fff;
+}
+
+.job-info { flex:1; min-width:0; }
+.job-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    display: flex; align-items: center; gap: 6px;
+    flex-wrap: wrap;
+}
+.job-detail {
+    font-size: 13px;
+    color: #666;
+    display: flex; flex-wrap: wrap; gap: 8px;
+}
+.position { color: #1A73E8; }
+.salary { color: #FF6B35; font-weight: bold; }
+.location { color: #888; }
+
+.tag {
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    white-space: nowrap;
+}
+.tag-new { background: #E8F5E9; color: #2E7D32; }
+.tag-repeat { background: #FFF3E0; color: #E65100; }
+.tag-update { background: #E3F2FD; color: #1565C0; }
+
+/* ===== 底部浮动条 ===== */
+.float-hint {
+    position: fixed; bottom: 0; left:0; right:0;
+    background: rgba(26,115,232,0.95);
+    color: #fff;
+    text-align: center;
+    padding: 10px 16px;
+    font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px;
+    z-index: 99;
+}
+.float-hint .icon { font-size: 20px; }
+
+/* ===== 状态标记 ===== */
+.status-badge {
+    display: inline-block;
+    background: #4CAF50;
+    color: #fff;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+    0%,100% { opacity:1; }
+    50% { opacity:0.5; }
+}
+</style>
+</head>
+<body>
+
+<!-- 控制栏 -->
+<div class="control-bar">
+    <div class="control-row">
+        <button class="control-btn" onclick="skipPrev()" title="上一条">⏮️</button>
+        <button class="control-btn play-btn" id="playBtn" onclick="togglePlay()" title="播放/暂停">
+            <span id="playIcon">🎧</span>
+        </button>
+        <button class="control-btn" onclick="skipNext()" title="下一条">⏭️</button>
+        <select class="speed-select" id="speedSelect" onchange="setSpeed(this.value)">
+            <option value="0.8">0.8x</option>
+            <option value="1.0" selected>1x</option>
+            <option value="1.2">1.2x</option>
+            <option value="1.5">1.5x</option>
+        </select>
+    </div>
+    <div class="progress-row">
+        <span id="progressLabel">0/46</span>
+        <div class="progress-bar-outer">
+            <div class="progress-bar-inner" id="progressBar"></div>
+        </div>
+        <span class="progress-text" id="progressText">准备就绪</span>
+    </div>
+</div>
+
+<!-- 当前朗读提示 -->
+<div class="now-playing" id="nowPlaying">
+    🔊 正在朗读：<span id="nowPlayingText"></span>
+</div>
+
+<!-- 标题 -->
+<div class="header">
+    <h1>📰 每日要闻（2026-05-25）</h1>
+    <p class="subtitle">46条新闻 | 点🎧按钮浏览器自动朗读</p>
+</div>
+
+<!-- 岗位/新闻列表 -->
+<div id="jobList">
+
+        <div class="job-item" data-index="0" onclick="jumpTo(0)">
+            <div class="job-index">1</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">1️⃣ DeepSeek 推进700亿融资 + V4-Pro API永久降价75%</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">DeepSeek持续降价将加速AI在企业的落地应用，懂AI的采购/供应链人才价值将大幅提升。建议在求职简历中强化"AI+供应链"的复合能力描述，这是当前市场最稀缺的组合。融资成功也意味着DeepSeek扩招在即，可关注其采购/运营岗位。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="1" onclick="jumpTo(1)">
+            <div class="job-index">2</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">AI大模型从"技术竞赛"进入"生态竞赛"阶段，供应链管理者需要理解AI算力成本结构，才能做好IT采购决策。未来3年，"懂得如何采购AI算力和服务的供应链经理"将是高薪岗位。现在开始学习AI基础设施知识，是职业差异化竞争的关键窗口期。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="2" onclick="jumpTo(2)">
+            <div class="job-index">3</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">AI API降价75%意味着制造业部署AI质检、预测性维护的门槛大幅降低，机械/制造企业的数字化投入ROI将显著改善。对于机械制造行业，这意味着以前用不起AI的中小企业现在可以用得上，行业整体效率提升将加速。佛山制造业正是受益群体。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="3" onclick="jumpTo(3)">
+            <div class="job-index">4</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">液冷项目高度相关：DeepSeek融资700亿+降本策略的核心是要建更大规模的算力集群，算力集群的散热需求直接驱动液冷市场爆发。你的液冷创业方向完全踩中这个趋势，建议在BP中直接引用这条新闻作为市场验证。3D打印：AI生成3D模型的成本也在下降，利好3D打印上游设计环节。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="4" onclick="jumpTo(4)">
+            <div class="job-index">5</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">DeepSeek融资估值450亿美元，相关算力产业链（液冷、高精密机械加工、钣金机柜）的持续受益逻辑不变。A股可关注：中际旭创（光模块）、英维克（液冷）、申菱环境（液冷）。这条新闻是算力基础设施板块的中长期利好。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="5" onclick="jumpTo(5)">
+            <div class="job-index">6</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">2️⃣ 佛山AI研究院揭牌 + 三水白坭新明珠数字化工厂投产</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">佛山AI研究院落地+白坭本地企业转型升级，将直接产生一批AI+制造业的采购/供应链管理岗位。白坭镇本地的21家转型企业对有机械背景的供应链人才需求会上升。建议重点关注佛山大学AI研究院的合作伙伴企业名单，这些企业大概率有采购岗位释放。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="6" onclick="jumpTo(6)">
+            <div class="job-index">7</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">佛山"三箭齐发"推进传统产业发新枝、新兴产业结硕果、未来产业育新苗，政策资源向本地制造业倾斜。你在佛山三水白坭，地理位置上完全贴合这个产业集聚区。未来职业路径可以考虑：先进入本土转型企业做供应链经理，再借力佛山AI研究院的生态资源向AI+供应链专家转型。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="7" onclick="jumpTo(7)">
+            <div class="job-index">8</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">白坭镇新明珠项目是陶瓷行业数字化标杆，总投资3.8亿且不新增产能（聚焦提质增效降碳），说明本地制造业已从"扩产"转向"提质"。这对供应链的要求从"低成本采购"变为"高质量+低碳采购"，采购经理需要建立全新的供应商评估体系。陶瓷/建材行业的供应链升级需求，是你的经验可以直接迁移的方向。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="8" onclick="jumpTo(8)">
+            <div class="job-index">9</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">佛山AI研究院打造"新制造、新营销"五大AI赋能体系，其中"新制造"直接关联你的液冷和3D打印项目。研究院推进具身智能机器人数据训练中心建设，机器人需要算力支持，算力需要散热——液冷项目的B端市场（机器人训练集群）由此打开。建议主动联系佛山AI研究院，争取成为其算力基础设施供应商。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="9" onclick="jumpTo(9)">
+            <div class="job-index">10</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">佛山先进制造业占规上工业增加值比重已达57.4%（较2022年提升6.8个百分点），且还在上升。三水白坭作为佛山制造业核心镇， local 产业集聚效应持续增强，若有机会参与本地优质制造企业的股权/合伙，是值得关注的。新明珠模式的成功会带动更多陶瓷企业数字化改造，相关设备/系统集成商受益。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="10" onclick="jumpTo(10)">
+            <div class="job-index">11</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">3️⃣ Anthropic 三款新模型即将发布（Opus 4.8 / Sonnet 4.8 / Mythos 1）</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">AI编程工具快速迭代，意味着"会用AI辅助工作的管理者"和"不会用的"之间的效率差距持续扩大。在求职过程中，能用AI工具（如Claude）快速生成采购分析报告、供应商对比表的候选人会有明显优势。建议在简历技能栏增加"AI辅助供应链管理"的具体描述。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="11" onclick="jumpTo(11)">
+            <div class="job-index">12</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">Anthropic推出安全专用模型Mythos 1，说明AI正在向垂直专业领域渗透。供应链管理作为企业核心风控环节，未来也会有专用AI模型。提前了解这些模型的能力边界，在职业发展中建立"AI+供应链风控"的专业标签，是一条有前景的差异化路径。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="12" onclick="jumpTo(12)">
+            <div class="job-index">13</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">AI编程成功率从20%飙升至100%（仅需一个Harness文件），意味着企业自研供应链系统的成本和难度大幅下降。中小型制造企业将有能力拥有自己的供应链管理系统，这对传统ERP厂商是冲击，对懂得选型和实施的供应链管理者则是机会——你们可以帮助企业用AI快速搭建定制化的采购管理工具。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="13" onclick="jumpTo(13)">
+            <div class="job-index">14</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">AI编程门槛降低，对你的液冷项目和3D打印项目都是利好：以前需要专业程序员才能做的"微信小程序+AI 3D建模"现在可以用AI辅助快速开发，大幅降低技术团队成本。如果你在找技术合伙人，现在正是好时机——AI工具让小团队能完成以前需要大团队才能做的事。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="14" onclick="jumpTo(14)">
+            <div class="job-index">15</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">Anthropic持续发布新模型，其估值和融资动态是AI行业风向标。若有关联A股上市公司（如持有Anthropic股份的科技公司），可关注。更直接的机会是：AI编程工具普及→软件开发成本下降→AI应用大爆发→算力需求持续旺盛→液冷/算力基础设施长期受益。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="15" onclick="jumpTo(15)">
+            <div class="job-index">16</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">4️⃣ 中国品牌在欧洲纯电动汽车市场销量占比首超15%</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">中国新能源车在欧洲销量大增，相关企业的海外供应链布局需求激增，采购/供应链管理岗位（尤其是有跨境采购经验、懂国际供应链合规的人才）需求上升。你的英语流利+采购管理经验，完全契合这个方向。可重点关注在欧有布局的中国车企（比亚迪、小鹏、蔚来等）的供应链岗位。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="16" onclick="jumpTo(16)">
+            <div class="job-index">17</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">汽车及零部件是你求职的行业优先级第二位（仅次于机械制造）。这条新闻验证了该行业的高景气度。中国新能源车出海是未来510年的大趋势，选择加入这个赛道的供应链团队，职业成长空间和薪资涨幅都会更优。建议在求职时主动提及对出海供应链的理解。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="17" onclick="jumpTo(17)">
+            <div class="job-index">18</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">欧洲市场突破15%意味着中国汽车零部件供应链企业（电池、电机、电控、精密机加工件）将迎来海外订单增长。对于机械/铸造/机加工行业的供应商来说，这是重大机会。如果你加入的制造企业有汽车零部件业务，供应链管理的复杂度会显著提升（跨境、合规、汇率），这也是你展示能力的舞台。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="18" onclick="jumpTo(18)">
+            <div class="job-index">19</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">新能源汽车出海带动海外售后服务市场，3D打印的"海外备件即时制造"模式（在目标市场本地3D打印替代传统海运备件）是一个潜在方向。液冷方面，电动车的电池热管理也需要液冷技术，你的液冷项目可以考虑向"车载液冷"延伸，这是一个比"个人算力液冷"更大的市场。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="19" onclick="jumpTo(19)">
+            <div class="job-index">20</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">中国新能源车产业链（电池、精密零部件、汽车电子）是长期看好的赛道。A股可关注：比亚迪、宁德时代、拓普集团、三花智控。这条新闻是板块中期向好的验证信号，不是短期炒作，可以作为持仓信心依据。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="20" onclick="jumpTo(20)">
+            <div class="job-index">21</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">5️⃣ 1-4月全国吸收外资2876.9亿元，同比下降10.3%</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">外资下降对美资/欧资制造企业的在华扩张计划可能有影响，你上一份工作（斯多里，美资）的行业需要关注。但反过来，内资龙头企业（国企、民营龙头）正在填补外资收缩留下的市场空间，求职方向可以适当向优质内资制造企业倾斜。政府采购规范化（山西比价要求）也意味着懂成本分析的采购人才更受政府和国企欢迎。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="21" onclick="jumpTo(21)">
+            <div class="job-index">22</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">外资流入下降 + 国内产业升级并行，意味着"国产替代"和"自主供应链"是未来主旋律。你的职业经验横跨外资（斯多里、恺德仕英资）和内资，这种"中西结合"的供应链视角在国产替代背景下很有价值——你既懂国际供应链标准，也懂国内成本结构。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="22" onclick="jumpTo(22)">
+            <div class="job-index">23</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">政府采购价格虚高被通报，说明"降本"和"合规"同时成为采购管理的核心KPI。你在简历中写的"成本降低8%15%"和"供应商来料合格率92%+"这两个量化成果，在这类政策背景下含金量更高。机械制造、汽车等行业也在面临类似的压力——客户要求降价，监管要求合规，采购经理的价值在于平衡两者。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="23" onclick="jumpTo(23)">
+            <div class="job-index">24</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">外资收缩背景下，国内中小企业更需要低成本的专业服务。你的副业方向（直播间搭建、供应链管理咨询、简历优化）主要服务国内中小客户，受外资流入下降影响小，反而可能因为中小企业更追求"性价比"而获得更多机会。建议副业获客方向更多瞄准国内中小微企业主。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="24" onclick="jumpTo(24)">
+            <div class="job-index">25</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">外资流入下降通常对A股外资重仓股有短期压力，但长期看"国产替代"主线不受影响。反而可能因为外资收缩，国内龙头企业市场份额提升，利好国产龙头。关注国产替代主线：高端装备、核心零部件、工业自动化等方向。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="25" onclick="jumpTo(25)">
+            <div class="job-index">26</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">6️⃣ 斯坦福研究：到2025年年中35%新网页由AI生成</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">AI生成内容占比35%，意味着"内容生产"类岗位的门槛大幅降低，纯内容搬运/基础文案岗位在缩减。但反过来，"会判断AI内容质量、会用AI提效"的岗位在增加。你的头马演讲+内容创作方向，核心竞争力应是"AI辅助但不替代人的创意和表达"，这是AI无法替代的。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="26" onclick="jumpTo(26)">
+            <div class="job-index">27</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">AI内容生成普及，供应链管理中的"报告撰写、数据分析、供应商评估报告"等工作也可以用AI提效。职业发展的关键不是"与AI竞争"，而是"用AI放大个人产出"。建议在职业发展计划中加入"AI提效工具熟练度"这一项，它将成为未来3年职场竞争力的基础门槛。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="27" onclick="jumpTo(27)">
+            <div class="job-index">28</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">AI生成内容改变互联网生态，对直播/短视频行业影响直接——内容供给爆炸，流量竞争更激烈。但"真实人物IP"（如你的头马演讲内容、技术干货分享）反而因为稀缺性而更有价值。机械/制造行业的AI内容生成主要用于技术文档、产品说明书，提质提效明显。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="28" onclick="jumpTo(28)">
+            <div class="job-index">29</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">直播副业：AI生成内容35%占比意味着直播间的"内容策划"环节可以用AI大幅提效（AI写脚本、AI生成短视频文案）。但"直播间搭建技术"是AI替代不了的，这是你的核心竞争力，建议强化这个差异化卖点。3D打印：AI生成3D模型的技术也在快速进步，利好"手机拍照→AI重建→3D打印"的闭环体验，你的3D...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="29" onclick="jumpTo(29)">
+            <div class="job-index">30</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">AI内容生成工具产业链（GPU、云服务、AI应用）持续受益。A股可关注：科大讯飞（AI内容生成）、万兴科技（AI创意工具）、虹软科技（AI视觉）。这条新闻是AI应用层爆发的验证信号。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="30" onclick="jumpTo(30)">
+            <div class="job-index">31</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">7️⃣ 美国5月消费者信心指数终值44.8，创1952年有记录以来新低</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">美国消费者信心创历史新低，通常预示美国市场需求走弱，出口美国的制造企业订单可能受影响。你的目标行业（机械制造、汽车零部件）如果有美国市场依赖度高的企业，需要谨慎。反过来，以内需为主的中国制造企业（如佛山本土机械企业）受冲击小，求职可优先考虑内需型制造企业。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="31" onclick="jumpTo(31)">
+            <div class="job-index">32</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">全球经济不确定性上升，企业更看重"成本控制"和"供应链韧性"——这正是你的核心能力。在求职面试中，可以主动提及"在外资企业经历过多次市场波动，建立了完整的成本控制和供应链风险管控体系"，这与当前企业需求高度匹配。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="32" onclick="jumpTo(32)">
+            <div class="job-index">33</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">美国市场需求走弱 + 中国品牌欧洲电车销量突破15%，说明全球制造业需求重心正在从美国向欧洲/一带一路转移。机械/制造企业的客户结构需要调整，供应链也需要相应重构。懂"供应链多元化布局"的管理人才，价值在上升。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="33" onclick="jumpTo(33)">
+            <div class="job-index">34</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">美国市场不确定性高，但国内市场和政策支持相对稳定。你的液冷项目和3D打印项目都以内需为主，受美国消费者信心下滑影响小。事实上，国内AI算力建设（受DeepSeek等驱动）和国内3D打印消费市场都处于上升期，创业时间窗口不错。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="34" onclick="jumpTo(34)">
+            <div class="job-index">35</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">美国消费者信心新低通常伴随美股调整压力，A股也可能受情绪传导。但中国经济以内需为主，影响相对有限。更值得关注的是：美国需求走弱→中国出口结构调整→欧洲/一带一路方向的外贸相关供应链企业受益。可关注"一带一路"相关的机械出口企业。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="35" onclick="jumpTo(35)">
+            <div class="job-index">36</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">8️⃣ 山西煤矿事故问责升级：省委书记、省长赶赴现场</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">安全生产事故问责升级，意味着全国各地将开展安全生产大检查，制造企业的安全合规采购需求上升——安全防护设备、安全监测系统、环保设备的采购量可能增加。这对有制造企业采购经验、懂安全合规的采购经理是机会。可关注有安全生产合规需求的企业岗位。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="36" onclick="jumpTo(36)">
+            <div class="job-index">37</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">安全生产成为政治任务，企业管理者的"安全合规"能力成为晋升考核要素。作为供应链管理者，如果你的供应商管理体系中包含了"安全合规供应商认证"模块，这在求职时是很有说服力的差异点。建议在简历中补充供应商安全合规评估相关经验（即使之前没有专门写）。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="37" onclick="jumpTo(37)">
+            <div class="job-index">38</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">煤矿安全事故将推动矿山智能化、无人化改造需求，相关机械设备（智能巡检机器人、无人开采设备）需求上升。佛山机械制造企业如果有矿山机械相关产品线，可能迎来订单增长。更广泛地，全行业安全生产标准提升，将带动安全设备/系统采购市场扩容。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="38" onclick="jumpTo(38)">
+            <div class="job-index">39</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">安全生产监管趋严，企业需要定期制作安全培训内容、安全演练记录等，这与你的直播技术能力可以产生交集——"企业安全生产培训视频制作+直播间式培训系统搭建"是一个可探索的B端服务方向。另外，巡检机器人下井（新闻中提到）是AI+机器人的应用场景，与佛山AI研究院的方向吻合。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="39" onclick="jumpTo(39)">
+            <div class="job-index">40</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">安全生产监管升级，利好安全设备板块。A股可关注：海康威视（安检设备）、大华股份（视频监控）、梅安森（煤矿安全监控）。短期事件驱动，中长期看安全合规投入是持续趋势。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="40" onclick="jumpTo(40)">
+            <div class="job-index">41</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">今日主旋律：AI算力军备竞赛 + 佛山本地制造业升级 + 全球宏观不确定性并存</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="41" onclick="jumpTo(41)">
+            <div class="job-index">42</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. AI赛道持续爆发：DeepSeek融资700亿+降价75% + Anthropic三款新模型即将发布，确认AI算力需求持续高速增长，你的液冷创业项目市场验证充分。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="42" onclick="jumpTo(42)">
+            <div class="job-index">43</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">2. 佛山本地机会涌现：AI研究院揭牌 + 白坭新明珠项目投产，你身处的三水白坭正是产业转型升级的核心区域，本地就业机会和创业资源都在增加。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="43" onclick="jumpTo(43)">
+            <div class="job-index">44</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3. 求职市场信号明确：新能源车出海 + 安全生产合规 + 国产替代，三个方向都指向"机械/制造+供应链"岗位的持续需求，继续坚持目标行业优先级。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="44" onclick="jumpTo(44)">
+            <div class="job-index">45</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">4. 宏观风险需要管理：外资流入下降 + 美国消费者信心新低，外部环境有不确定性，求职和创业都以"稳健"为第一原则，优先保证现金流。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="45" onclick="jumpTo(45)">
+            <div class="job-index">46</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🤙 八弟（WorkBuddy）· 每日6:15准时推送。如有需要深入讨论的新闻，直接告诉我</span>
+                </div>
+            </div>
+        </div>
+</div>
+
+<!-- 底部提示 -->
+<div class="float-hint" id="floatHint">
+    <span class="icon">🎧</span>
+    <span id="floatText">点击顶部播放按钮开始朗读</span>
+</div>
+
+<script>
+// ===== 数据 =====
+const items = [{"company": "1️⃣ DeepSeek 推进700亿融资 + V4-Pro API永久降价75%", "position": "", "salary": "", "location": "", "tag": "", "body": "DeepSeek持续降价将加速AI在企业的落地应用，懂AI的采购/供应链人才价值将大幅提升。建议在求职简历中强化\"AI+供应链\"的复合能力描述，这是当前市场最稀缺的组合。融资成功也意味着DeepSeek扩招在即，可关注其采购/运营岗位。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "AI大模型从\"技术竞赛\"进入\"生态竞赛\"阶段，供应链管理者需要理解AI算力成本结构，才能做好IT采购决策。未来3年，\"懂得如何采购AI算力和服务的供应链经理\"将是高薪岗位。现在开始学习AI基础设施知识，是职业差异化竞争的关键窗口期。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "AI API降价75%意味着制造业部署AI质检、预测性维护的门槛大幅降低，机械/制造企业的数字化投入ROI将显著改善。对于机械制造行业，这意味着以前用不起AI的中小企业现在可以用得上，行业整体效率提升将加速。佛山制造业正是受益群体。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "液冷项目高度相关：DeepSeek融资700亿+降本策略的核心是要建更大规模的算力集群，算力集群的散热需求直接驱动液冷市场爆发。你的液冷创业方向完全踩中这个趋势，建议在BP中直接引用这条新闻作为市场验证。3D打印：AI生成3D模型的成本也在下降，利好3D打印上游设计环节。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "DeepSeek融资估值450亿美元，相关算力产业链（液冷、高精密机械加工、钣金机柜）的持续受益逻辑不变。A股可关注：中际旭创（光模块）、英维克（液冷）、申菱环境（液冷）。这条新闻是算力基础设施板块的中长期利好。"}, {"company": "2️⃣ 佛山AI研究院揭牌 + 三水白坭新明珠数字化工厂投产", "position": "", "salary": "", "location": "", "tag": "", "body": "佛山AI研究院落地+白坭本地企业转型升级，将直接产生一批AI+制造业的采购/供应链管理岗位。白坭镇本地的21家转型企业对有机械背景的供应链人才需求会上升。建议重点关注佛山大学AI研究院的合作伙伴企业名单，这些企业大概率有采购岗位释放。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "佛山\"三箭齐发\"推进传统产业发新枝、新兴产业结硕果、未来产业育新苗，政策资源向本地制造业倾斜。你在佛山三水白坭，地理位置上完全贴合这个产业集聚区。未来职业路径可以考虑：先进入本土转型企业做供应链经理，再借力佛山AI研究院的生态资源向AI+供应链专家转型。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "白坭镇新明珠项目是陶瓷行业数字化标杆，总投资3.8亿且不新增产能（聚焦提质增效降碳），说明本地制造业已从\"扩产\"转向\"提质\"。这对供应链的要求从\"低成本采购\"变为\"高质量+低碳采购\"，采购经理需要建立全新的供应商评估体系。陶瓷/建材行业的供应链升级需求，是你的经验可以直接迁移的方向。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "佛山AI研究院打造\"新制造、新营销\"五大AI赋能体系，其中\"新制造\"直接关联你的液冷和3D打印项目。研究院推进具身智能机器人数据训练中心建设，机器人需要算力支持，算力需要散热——液冷项目的B端市场（机器人训练集群）由此打开。建议主动联系佛山AI研究院，争取成为其算力基础设施供应商。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "佛山先进制造业占规上工业增加值比重已达57.4%（较2022年提升6.8个百分点），且还在上升。三水白坭作为佛山制造业核心镇， local 产业集聚效应持续增强，若有机会参与本地优质制造企业的股权/合伙，是值得关注的。新明珠模式的成功会带动更多陶瓷企业数字化改造，相关设备/系统集成商受益。"}, {"company": "3️⃣ Anthropic 三款新模型即将发布（Opus 4.8 / Sonnet 4.8 / Mythos 1）", "position": "", "salary": "", "location": "", "tag": "", "body": "AI编程工具快速迭代，意味着\"会用AI辅助工作的管理者\"和\"不会用的\"之间的效率差距持续扩大。在求职过程中，能用AI工具（如Claude）快速生成采购分析报告、供应商对比表的候选人会有明显优势。建议在简历技能栏增加\"AI辅助供应链管理\"的具体描述。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "Anthropic推出安全专用模型Mythos 1，说明AI正在向垂直专业领域渗透。供应链管理作为企业核心风控环节，未来也会有专用AI模型。提前了解这些模型的能力边界，在职业发展中建立\"AI+供应链风控\"的专业标签，是一条有前景的差异化路径。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "AI编程成功率从20%飙升至100%（仅需一个Harness文件），意味着企业自研供应链系统的成本和难度大幅下降。中小型制造企业将有能力拥有自己的供应链管理系统，这对传统ERP厂商是冲击，对懂得选型和实施的供应链管理者则是机会——你们可以帮助企业用AI快速搭建定制化的采购管理工具。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "AI编程门槛降低，对你的液冷项目和3D打印项目都是利好：以前需要专业程序员才能做的\"微信小程序+AI 3D建模\"现在可以用AI辅助快速开发，大幅降低技术团队成本。如果你在找技术合伙人，现在正是好时机——AI工具让小团队能完成以前需要大团队才能做的事。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "Anthropic持续发布新模型，其估值和融资动态是AI行业风向标。若有关联A股上市公司（如持有Anthropic股份的科技公司），可关注。更直接的机会是：AI编程工具普及→软件开发成本下降→AI应用大爆发→算力需求持续旺盛→液冷/算力基础设施长期受益。"}, {"company": "4️⃣ 中国品牌在欧洲纯电动汽车市场销量占比首超15%", "position": "", "salary": "", "location": "", "tag": "", "body": "中国新能源车在欧洲销量大增，相关企业的海外供应链布局需求激增，采购/供应链管理岗位（尤其是有跨境采购经验、懂国际供应链合规的人才）需求上升。你的英语流利+采购管理经验，完全契合这个方向。可重点关注在欧有布局的中国车企（比亚迪、小鹏、蔚来等）的供应链岗位。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "汽车及零部件是你求职的行业优先级第二位（仅次于机械制造）。这条新闻验证了该行业的高景气度。中国新能源车出海是未来5-10年的大趋势，选择加入这个赛道的供应链团队，职业成长空间和薪资涨幅都会更优。建议在求职时主动提及对出海供应链的理解。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "欧洲市场突破15%意味着中国汽车零部件供应链企业（电池、电机、电控、精密机加工件）将迎来海外订单增长。对于机械/铸造/机加工行业的供应商来说，这是重大机会。如果你加入的制造企业有汽车零部件业务，供应链管理的复杂度会显著提升（跨境、合规、汇率），这也是你展示能力的舞台。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "新能源汽车出海带动海外售后服务市场，3D打印的\"海外备件即时制造\"模式（在目标市场本地3D打印替代传统海运备件）是一个潜在方向。液冷方面，电动车的电池热管理也需要液冷技术，你的液冷项目可以考虑向\"车载液冷\"延伸，这是一个比\"个人算力液冷\"更大的市场。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "中国新能源车产业链（电池、精密零部件、汽车电子）是长期看好的赛道。A股可关注：比亚迪、宁德时代、拓普集团、三花智控。这条新闻是板块中期向好的验证信号，不是短期炒作，可以作为持仓信心依据。"}, {"company": "5️⃣ 1-4月全国吸收外资2876.9亿元，同比下降10.3%", "position": "", "salary": "", "location": "", "tag": "", "body": "外资下降对美资/欧资制造企业的在华扩张计划可能有影响，你上一份工作（斯多里，美资）的行业需要关注。但反过来，内资龙头企业（国企、民营龙头）正在填补外资收缩留下的市场空间，求职方向可以适当向优质内资制造企业倾斜。政府采购规范化（山西比价要求）也意味着懂成本分析的采购人才更受政府和国企欢迎。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "外资流入下降 + 国内产业升级并行，意味着\"国产替代\"和\"自主供应链\"是未来主旋律。你的职业经验横跨外资（斯多里、恺德仕英资）和内资，这种\"中西结合\"的供应链视角在国产替代背景下很有价值——你既懂国际供应链标准，也懂国内成本结构。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "政府采购价格虚高被通报，说明\"降本\"和\"合规\"同时成为采购管理的核心KPI。你在简历中写的\"成本降低8%-15%\"和\"供应商来料合格率92%+\"这两个量化成果，在这类政策背景下含金量更高。机械制造、汽车等行业也在面临类似的压力——客户要求降价，监管要求合规，采购经理的价值在于平衡两者。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "外资收缩背景下，国内中小企业更需要低成本的专业服务。你的副业方向（直播间搭建、供应链管理咨询、简历优化）主要服务国内中小客户，受外资流入下降影响小，反而可能因为中小企业更追求\"性价比\"而获得更多机会。建议副业获客方向更多瞄准国内中小微企业主。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "外资流入下降通常对A股外资重仓股有短期压力，但长期看\"国产替代\"主线不受影响。反而可能因为外资收缩，国内龙头企业市场份额提升，利好国产龙头。关注国产替代主线：高端装备、核心零部件、工业自动化等方向。"}, {"company": "6️⃣ 斯坦福研究：到2025年年中35%新网页由AI生成", "position": "", "salary": "", "location": "", "tag": "", "body": "AI生成内容占比35%，意味着\"内容生产\"类岗位的门槛大幅降低，纯内容搬运/基础文案岗位在缩减。但反过来，\"会判断AI内容质量、会用AI提效\"的岗位在增加。你的头马演讲+内容创作方向，核心竞争力应是\"AI辅助但不替代人的创意和表达\"，这是AI无法替代的。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "AI内容生成普及，供应链管理中的\"报告撰写、数据分析、供应商评估报告\"等工作也可以用AI提效。职业发展的关键不是\"与AI竞争\"，而是\"用AI放大个人产出\"。建议在职业发展计划中加入\"AI提效工具熟练度\"这一项，它将成为未来3年职场竞争力的基础门槛。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "AI生成内容改变互联网生态，对直播/短视频行业影响直接——内容供给爆炸，流量竞争更激烈。但\"真实人物IP\"（如你的头马演讲内容、技术干货分享）反而因为稀缺性而更有价值。机械/制造行业的AI内容生成主要用于技术文档、产品说明书，提质提效明显。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "直播副业：AI生成内容35%占比意味着直播间的\"内容策划\"环节可以用AI大幅提效（AI写脚本、AI生成短视频文案）。但\"直播间搭建技术\"是AI替代不了的，这是你的核心竞争力，建议强化这个差异化卖点。3D打印：AI生成3D模型的技术也在快速进步，利好\"手机拍照→AI重建→3D打印\"的闭环体验，你的3D打印副业技术路径可以更激进地采用AI生成方案。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "AI内容生成工具产业链（GPU、云服务、AI应用）持续受益。A股可关注：科大讯飞（AI内容生成）、万兴科技（AI创意工具）、虹软科技（AI视觉）。这条新闻是AI应用层爆发的验证信号。"}, {"company": "7️⃣ 美国5月消费者信心指数终值44.8，创1952年有记录以来新低", "position": "", "salary": "", "location": "", "tag": "", "body": "美国消费者信心创历史新低，通常预示美国市场需求走弱，出口美国的制造企业订单可能受影响。你的目标行业（机械制造、汽车零部件）如果有美国市场依赖度高的企业，需要谨慎。反过来，以内需为主的中国制造企业（如佛山本土机械企业）受冲击小，求职可优先考虑内需型制造企业。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "全球经济不确定性上升，企业更看重\"成本控制\"和\"供应链韧性\"——这正是你的核心能力。在求职面试中，可以主动提及\"在外资企业经历过多次市场波动，建立了完整的成本控制和供应链风险管控体系\"，这与当前企业需求高度匹配。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "美国市场需求走弱 + 中国品牌欧洲电车销量突破15%，说明全球制造业需求重心正在从美国向欧洲/一带一路转移。机械/制造企业的客户结构需要调整，供应链也需要相应重构。懂\"供应链多元化布局\"的管理人才，价值在上升。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "美国市场不确定性高，但国内市场和政策支持相对稳定。你的液冷项目和3D打印项目都以内需为主，受美国消费者信心下滑影响小。事实上，国内AI算力建设（受DeepSeek等驱动）和国内3D打印消费市场都处于上升期，创业时间窗口不错。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "美国消费者信心新低通常伴随美股调整压力，A股也可能受情绪传导。但中国经济以内需为主，影响相对有限。更值得关注的是：美国需求走弱→中国出口结构调整→欧洲/一带一路方向的外贸相关供应链企业受益。可关注\"一带一路\"相关的机械出口企业。"}, {"company": "8️⃣ 山西煤矿事故问责升级：省委书记、省长赶赴现场", "position": "", "salary": "", "location": "", "tag": "", "body": "安全生产事故问责升级，意味着全国各地将开展安全生产大检查，制造企业的安全合规采购需求上升——安全防护设备、安全监测系统、环保设备的采购量可能增加。这对有制造企业采购经验、懂安全合规的采购经理是机会。可关注有安全生产合规需求的企业岗位。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "安全生产成为政治任务，企业管理者的\"安全合规\"能力成为晋升考核要素。作为供应链管理者，如果你的供应商管理体系中包含了\"安全合规供应商认证\"模块，这在求职时是很有说服力的差异点。建议在简历中补充供应商安全合规评估相关经验（即使之前没有专门写）。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "煤矿安全事故将推动矿山智能化、无人化改造需求，相关机械设备（智能巡检机器人、无人开采设备）需求上升。佛山机械制造企业如果有矿山机械相关产品线，可能迎来订单增长。更广泛地，全行业安全生产标准提升，将带动安全设备/系统采购市场扩容。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "安全生产监管趋严，企业需要定期制作安全培训内容、安全演练记录等，这与你的直播技术能力可以产生交集——\"企业安全生产培训视频制作+直播间式培训系统搭建\"是一个可探索的B端服务方向。另外，巡检机器人下井（新闻中提到）是AI+机器人的应用场景，与佛山AI研究院的方向吻合。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "安全生产监管升级，利好安全设备板块。A股可关注：海康威视（安检设备）、大华股份（视频监控）、梅安森（煤矿安全监控）。短期事件驱动，中长期看安全合规投入是持续趋势。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "今日主旋律：AI算力军备竞赛 + 佛山本地制造业升级 + 全球宏观不确定性并存"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "1. AI赛道持续爆发：DeepSeek融资700亿+降价75% + Anthropic三款新模型即将发布，确认AI算力需求持续高速增长，你的液冷创业项目市场验证充分。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "2. 佛山本地机会涌现：AI研究院揭牌 + 白坭新明珠项目投产，你身处的三水白坭正是产业转型升级的核心区域，本地就业机会和创业资源都在增加。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "3. 求职市场信号明确：新能源车出海 + 安全生产合规 + 国产替代，三个方向都指向\"机械/制造+供应链\"岗位的持续需求，继续坚持目标行业优先级。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "4. 宏观风险需要管理：外资流入下降 + 美国消费者信心新低，外部环境有不确定性，求职和创业都以\"稳健\"为第一原则，优先保证现金流。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🤙 八弟（WorkBuddy）· 每日6:15准时推送*。如有需要深入讨论的新闻，直接告诉我*"}];
+const totalItems = 46;
+const speakTemplate = "{company}。详细内容：{body}。";
+
+// ===== 状态 =====
+let currentIndex = 0;
+let isPlaying = false;
+let speechRate = 1.0;
+let readDoneSet = new Set();
+let synth = window.speechSynthesis;
+let currentUtterance = null;
+let selectedVoice = null;
+let voicesReady = false;
+
+// ===== 浏览器检测 =====
+function isQQBrowser() {
+    let ua = navigator.userAgent || '';
+    return /MQQBrowser|QQ\//i.test(ua);
+}
+function isUCBrowser() {
+    let ua = navigator.userAgent || '';
+    return /UCBrowser|UCWEB/i.test(ua);
+}
+function isWeChat() {
+    let ua = navigator.userAgent || '';
+    return /MicroMessenger/i.test(ua);
+}
+function isUnsupportedBrowser() {
+    return isQQBrowser() || isUCBrowser() || isWeChat();
+}
+
+// ===== 初始化 =====
+function init() {
+    // 浏览器检测：不支持的直接提示换浏览器
+    if (isUnsupportedBrowser()) {
+        let browserName = isQQBrowser() ? 'QQ浏览器' : (isUCBrowser() ? 'UC浏览器' : '微信内置浏览器');
+        showBrowserWarning(browserName);
+        return;
+    }
+
+    if (!synth) {
+        showBrowserWarning('当前浏览器');
+        return;
+    }
+
+    // Chrome/Edge: voices 通过异步事件加载
+    let voices = synth.getVoices();
+    if (voices && voices.length > 0) {
+        pickVoice(voices);
+    }
+
+    // 监听语音列表加载（关键！Android Chrome 需要等事件）
+    synth.onvoiceschanged = function() {
+        voices = synth.getVoices();
+        if (voices && voices.length > 0 && !voicesReady) {
+            pickVoice(voices);
+            document.getElementById('floatText').textContent =
+                '✅ 语音引擎就绪 (' + voices.length + '个) — 点🎧开始朗读';
+            document.getElementById('progressText').textContent = '就绪 ✓';
+        }
+    };
+
+    // 超时兜底：2秒后强制尝试
+    setTimeout(function() {
+        if (!voicesReady) {
+            voices = synth.getVoices();
+            if (voices && voices.length > 0) {
+                pickVoice(voices);
+            }
+            document.getElementById('floatText').textContent =
+                selectedVoice
+                    ? '✅ 语音引擎: ' + selectedVoice.name
+                    : '⚠️ 未找到中文语音，尝试系统默认...';
+            document.getElementById('progressText').textContent =
+                selectedVoice ? '就绪 ✓' : '无中文语音 ⚠️';
+            voicesReady = true;
+        }
+    }, 2500);
+}
+
+function showBrowserWarning(browserName) {
+    // 隐藏控制栏播放按钮
+    document.getElementById('playBtn').style.opacity = '0.3';
+    document.getElementById('playBtn').style.pointerEvents = 'none';
+    // 底部显示换浏览器提示
+    document.getElementById('floatHint').style.background = 'rgba(211,47,47,0.95)';
+    document.getElementById('floatText').innerHTML =
+        '❌ ' + browserName + '不支持语音朗读<br><small>👉 请用 <b>Chrome</b> 或 <b>Edge</b> 浏览器打开</small>';
+    document.getElementById('progressText').textContent = '❌ 浏览器不支持';
+    // 页面顶部插入醒目提示横幅
+    let banner = document.createElement('div');
+    banner.style.cssText = 'background:#FFEBEE;border-bottom:2px solid #EF5350;padding:16px;text-align:center;';
+    banner.innerHTML =
+        '<div style="font-size:40px;margin-bottom:8px;">🚫</div>' +
+        '<div style="font-size:15px;font-weight:bold;color:#C62828;margin-bottom:6px;">' +
+        browserName + ' 不支持语音朗读</div>' +
+        '<div style="font-size:14px;color:#555;line-height:1.6;">' +
+        '请用 <b style="color:#1A73E8;">Chrome</b> 或 <b style="color:#0078D4;">Edge</b> 浏览器打开即可朗读<br>' +
+        '<span style="font-size:12px;color:#999;">（应用商店搜索"Chrome"或"Edge"下载）</span></div>';
+    let header = document.querySelector('.header');
+    if (header) {
+        header.parentNode.insertBefore(banner, header);
+    }
+    // 禁用所有岗位点击
+    document.querySelectorAll('.job-item').forEach(function(el) {
+        el.style.pointerEvents = 'none';
+        el.style.opacity = '0.5';
+    });
+}
+
+function pickVoice(voices) {
+    // 优先级：zh-CN 中文女声 > zh-CN 任意 > zh-* > 第一个
+    let preferred = ['zh-CN', 'zh-Hans', 'zh-HK', 'zh-TW', 'zh'];
+    for (let lang of preferred) {
+        for (let v of voices) {
+            if (v.lang && v.lang.startsWith(lang)) {
+                // 优先女声
+                if (v.name.toLowerCase().indexOf('female') >= 0 ||
+                    v.name.indexOf('女') >= 0) {
+                    selectedVoice = v;
+                    voicesReady = true;
+                    return;
+                }
+            }
+        }
+    }
+    // 中文任意
+    for (let lang of preferred) {
+        for (let v of voices) {
+            if (v.lang && v.lang.startsWith(lang)) {
+                selectedVoice = v;
+                voicesReady = true;
+                return;
+            }
+        }
+    }
+    // 无中文语音，用第一个兜底
+    if (voices.length > 0) {
+        selectedVoice = voices[0];
+    }
+    voicesReady = true;
+}
+
+// ===== 构建朗读文本 =====
+function buildSpeakText(item) {
+    let raw = speakTemplate
+        .replace('{company}', item.company || '')
+        .replace('{position}', item.position || '')
+        .replace('{salary}', item.salary || '面议')
+        .replace('{location}', item.location || '')
+        .replace('{body}', item.body || '');
+    return _cleanForTTS(raw);
+}
+
+// ===== TTS 文本清洗：去除所有 Markdown 残留符号 =====
+function _cleanForTTS(text) {
+    if (!text) return text;
+    let cleaned = text;
+    // 去除 Markdown 标题标记 (# ## ### #### 等)
+    cleaned = cleaned.replace(/#{1,6}\s*/g, '');
+    // 去除加粗/斜体标记 (** __ * _)
+    cleaned = cleaned.replace(/\*{1,2}|_/g, '');
+    // 去除管道符 (表格)
+    cleaned = cleaned.replace(/\|/g, ' ');
+    // 去除反引号 (代码)
+    cleaned = cleaned.replace(/`+/g, '');
+    // 去除波浪线
+    cleaned = cleaned.replace(/~+/g, '');
+    // 去除分散的 -  :  标记（但不破坏正常连字符和冒号）
+    cleaned = cleaned.replace(/：/g, ':');
+    // 压缩多余空格
+    cleaned = cleaned.replace(/\s+/g, ' ');
+    // 去除连续连字符
+    cleaned = cleaned.replace(/-{2,}/g, '');
+    return cleaned.trim();
+}
+
+// ===== 朗读单条 =====
+function speakItem(index) {
+    if (index < 0 || index >= totalItems) return;
+
+    synth.cancel();
+    currentIndex = index;
+
+    let item = items[index];
+    let text = buildSpeakText(item);
+
+    let utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'zh-CN';
+    utterance.rate = speechRate;
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+    // 显式指定中文语音引擎（修复部分安卓无声问题）
+    if (selectedVoice) {
+        utterance.voice = selectedVoice;
+    }
+
+    utterance.onstart = function() {
+        updateUI(index);
+        document.getElementById('nowPlaying').classList.add('active');
+        document.getElementById('nowPlayingText').textContent =
+            (item.company || '') + ' ' + (item.position || '');
+    };
+
+    utterance.onend = function() {
+        readDoneSet.add(index);
+        updateReadDone(index);
+        // 自动播放下一条
+        let next = index + 1;
+        if (next < totalItems && isPlaying) {
+            speakItem(next);
+        } else if (next >= totalItems) {
+            stopPlayback();
+            document.getElementById('floatText').textContent = '✅ 全部朗读完成！';
+            document.getElementById('progressText').textContent = '朗读完成';
+            document.getElementById('progressBar').style.width = '100%';
+            document.getElementById('progressLabel').textContent = totalItems + '/' + totalItems;
+        }
+    };
+
+    utterance.onerror = function(e) {
+        if (e.error !== 'canceled' && e.error !== 'interrupted') {
+            let errMsg = '⚠️ 朗读出错: ' + (e.error || 'unknown');
+            document.getElementById('progressText').textContent = errMsg;
+            document.getElementById('floatText').textContent =
+                errMsg + ' — 可尝试用系统自带浏览器打开';
+            console.error('TTS error:', e.error);
+            let next = index + 1;
+            if (next < totalItems && isPlaying) {
+                setTimeout(function() { speakItem(next); }, 500);
+            }
+        }
+    };
+
+    currentUtterance = utterance;
+    synth.speak(utterance);
+}
+
+// ===== 播放控制 =====
+function togglePlay() {
+    if (isPlaying) {
+        pausePlayback();
+    } else {
+        startPlayback();
+    }
+}
+
+function startPlayback() {
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    document.getElementById('progressText').textContent = '朗读中...';
+    document.getElementById('floatText').textContent =
+        selectedVoice
+            ? '🔊 朗读中 (' + selectedVoice.name + ') ...'
+            : '🔊 朗读中 (系统默认语音)...';
+    speakItem(currentIndex);
+}
+
+function pausePlayback() {
+    isPlaying = false;
+    synth.cancel();
+    document.getElementById('playIcon').textContent = '🎧';
+    document.getElementById('playBtn').classList.remove('playing');
+    document.getElementById('nowPlaying').classList.remove('active');
+    document.getElementById('floatText').textContent = '⏸️ 已暂停，点击继续';
+    document.getElementById('progressText').textContent = '已暂停';
+}
+
+function stopPlayback() {
+    isPlaying = false;
+    synth.cancel();
+    document.getElementById('playIcon').textContent = '🎧';
+    document.getElementById('playBtn').classList.remove('playing');
+    document.getElementById('nowPlaying').classList.remove('active');
+    document.getElementById('floatText').textContent = '✅ 朗读完成';
+}
+
+function skipNext() {
+    synth.cancel();
+    let next = (currentIndex + 1) % totalItems;
+    currentIndex = next;
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function skipPrev() {
+    synth.cancel();
+    let prev = currentIndex - 1;
+    if (prev < 0) prev = totalItems - 1;
+    currentIndex = prev;
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function jumpTo(index) {
+    synth.cancel();
+    currentIndex = index;
+    // 点哪里就从哪里开始朗读
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function setSpeed(val) {
+    speechRate = parseFloat(val);
+    document.getElementById('floatText').textContent =
+        '🎵 朗读速度: ' + val + 'x';
+    setTimeout(function() {
+        if (isPlaying) {
+            document.getElementById('floatText').textContent = '🔊 朗读中...';
+        }
+    }, 1500);
+}
+
+// ===== UI更新 =====
+function updateUI(index) {
+    // 进度条
+    let pct = (index / totalItems) * 100;
+    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent = (index + 1) + '/' + totalItems;
+    document.getElementById('progressText').textContent =
+        '正在朗读第 ' + (index + 1) + ' ' + '条新闻'.replace('个岗位','').replace('条新闻','');
+
+    // 高亮当前
+    document.querySelectorAll('.job-item').forEach(function(el) {
+        el.classList.remove('reading');
+    });
+    let currentEl = document.querySelector('.job-item[data-index="' + index + '"]');
+    if (currentEl) {
+        currentEl.classList.add('reading');
+        currentEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+function updateReadDone(index) {
+    let el = document.querySelector('.job-item[data-index="' + index + '"]');
+    if (el) {
+        el.classList.add('read-done');
+    }
+}
+
+// ===== 启动 =====
+init();
+
+// ===== 移动端保持屏幕唤醒（可选） =====
+if (navigator.wakeLock) {
+    try {
+        navigator.wakeLock.request('screen');
+    } catch(e) {}
+}
+</script>
+</body>
+</html>
