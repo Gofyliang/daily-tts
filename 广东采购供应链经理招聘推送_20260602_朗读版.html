@@ -1,0 +1,1294 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>📋 广东采购&供应链经理招聘推送（2026-06-02）</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f5f5f5;
+    color: #333;
+    padding-bottom: 80px;
+}
+
+/* ===== 顶部控制栏 ===== */
+.control-bar {
+    position: sticky; top:0; z-index:100;
+    background: linear-gradient(135deg, #1A73E8 0%, #4FC3F7 100%);
+    padding: 12px 16px;
+    box-shadow: 0 2px 12px rgba(26,115,232,0.3);
+}
+.control-row {
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+}
+.control-btn {
+    width: 48px; height: 48px;
+    border: none; border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    font-size: 22px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
+.control-btn:active { transform: scale(0.9); background: rgba(255,255,255,0.35); }
+.control-btn.play-btn {
+    width: 64px; height: 64px;
+    background: #fff;
+    color: #1A73E8;
+    font-size: 28px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+.control-btn.play-btn.playing { color: #FF6B35; }
+
+.speed-select {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 14px;
+    cursor: pointer;
+    -webkit-appearance: none;
+}
+.speed-select option { color: #333; }
+
+/* ===== 进度信息 ===== */
+.progress-row {
+    display: flex; align-items: center; gap: 10px;
+    margin-top: 8px;
+    color: rgba(255,255,255,0.9);
+    font-size: 13px;
+}
+.progress-bar-outer {
+    flex: 1; height: 4px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 2px;
+    overflow: hidden;
+}
+.progress-bar-inner {
+    height: 100%;
+    background: #fff;
+    border-radius: 2px;
+    transition: width 0.3s;
+    width: 0%;
+}
+.progress-text {
+    white-space: nowrap;
+    min-width: 90px;
+    text-align: right;
+}
+
+/* ===== 当前朗读提示 ===== */
+.now-playing {
+    background: #FFF9C4;
+    padding: 8px 16px;
+    font-size: 13px;
+    color: #F57F17;
+    text-align: center;
+    display: none;
+    border-bottom: 2px solid #FFD54F;
+}
+.now-playing.active { display: block; }
+
+/* ===== 标题区 ===== */
+.header {
+    background: #fff;
+    padding: 20px 16px 12px;
+    border-bottom: 1px solid #eee;
+}
+.header h1 { font-size: 18px; color: #1A73E8; margin-bottom: 4px; }
+.header .subtitle { font-size: 13px; color: #888; }
+
+/* ===== 岗位列表 ===== */
+.job-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 14px 16px;
+    background: #fff;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
+.job-item:active { background: #f5f5f5; }
+.job-item.reading {
+    background: #E3F2FD;
+    border-left: 4px solid #1A73E8;
+    padding-left: 12px;
+}
+.job-item.read-done {
+    opacity: 0.6;
+}
+
+.job-index {
+    width: 32px; height: 32px;
+    background: #f0f0f0;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: bold;
+    color: #888;
+    flex-shrink: 0;
+}
+.job-item.reading .job-index {
+    background: #1A73E8;
+    color: #fff;
+}
+.job-item.read-done .job-index {
+    background: #4CAF50;
+    color: #fff;
+}
+
+.job-info { flex:1; min-width:0; }
+.job-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    display: flex; align-items: center; gap: 6px;
+    flex-wrap: wrap;
+}
+.job-detail {
+    font-size: 13px;
+    color: #666;
+    display: flex; flex-wrap: wrap; gap: 8px;
+}
+.position { color: #1A73E8; }
+.salary { color: #FF6B35; font-weight: bold; }
+.location { color: #888; }
+
+.tag {
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    white-space: nowrap;
+}
+.tag-new { background: #E8F5E9; color: #2E7D32; }
+.tag-repeat { background: #FFF3E0; color: #E65100; }
+.tag-update { background: #E3F2FD; color: #1565C0; }
+
+/* ===== 底部浮动条 ===== */
+.float-hint {
+    position: fixed; bottom: 0; left:0; right:0;
+    background: rgba(26,115,232,0.95);
+    color: #fff;
+    text-align: center;
+    padding: 10px 16px;
+    font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px;
+    z-index: 99;
+}
+.float-hint .icon { font-size: 20px; }
+
+/* ===== 状态标记 ===== */
+.status-badge {
+    display: inline-block;
+    background: #4CAF50;
+    color: #fff;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+    0%,100% { opacity:1; }
+    50% { opacity:0.5; }
+}
+</style>
+</head>
+<body>
+
+<!-- 控制栏 -->
+<div class="control-bar">
+    <div class="control-row">
+        <button class="control-btn" onclick="skipPrev()" title="上一条">⏮️</button>
+        <button class="control-btn play-btn" id="playBtn" onclick="togglePlay()" title="播放/暂停">
+            <span id="playIcon">🎧</span>
+        </button>
+        <button class="control-btn" onclick="skipNext()" title="下一条">⏭️</button>
+        <select class="speed-select" id="speedSelect" onchange="setSpeed(this.value)">
+            <option value="0.8">0.8x</option>
+            <option value="1.0" selected>1x</option>
+            <option value="1.2">1.2x</option>
+            <option value="1.5">1.5x</option>
+        </select>
+    </div>
+    <div class="progress-row">
+        <span id="progressLabel">0/49</span>
+        <div class="progress-bar-outer">
+            <div class="progress-bar-inner" id="progressBar"></div>
+        </div>
+        <span class="progress-text" id="progressText">准备就绪</span>
+    </div>
+</div>
+
+<!-- 当前朗读提示 -->
+<div class="now-playing" id="nowPlaying">
+    🔊 正在朗读：<span id="nowPlayingText"></span>
+</div>
+
+<!-- 标题 -->
+<div class="header">
+    <h1>📋 广东采购&供应链经理招聘推送（2026-06-02）</h1>
+    <p class="subtitle">49个岗位 | 点🎧按钮浏览器自动朗读</p>
+</div>
+
+<!-- 岗位/新闻列表 -->
+<div id="jobList">
+
+        <div class="job-item" data-index="0" onclick="jumpTo(0)">
+            <div class="job-index">1</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">极致汇仪</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">采购经理</span>
+                    <span class="salary">2-3万/月</span>
+                    <span class="location">深圳·宝安·新安</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="1" onclick="jumpTo(1)">
+            <div class="job-index">2</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">深圳市宝科特精密科技有限公司</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">高级采购经理</span>
+                    <span class="salary">1.5-3万/月</span>
+                    <span class="location">深圳·宝安·燕罗</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="2" onclick="jumpTo(2)">
+            <div class="job-index">3</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">山东时堰科技发展有限公司</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">采购经理</span>
+                    <span class="salary">1.5-2.2万·13薪</span>
+                    <span class="location">深圳·龙华·民治</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="3" onclick="jumpTo(3)">
+            <div class="job-index">4</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">GQY视讯</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">集采采购经理（led拼接屏行业）</span>
+                    <span class="salary">1.4-1.8万/月</span>
+                    <span class="location">深圳·南山·粤海</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="4" onclick="jumpTo(4)">
+            <div class="job-index">5</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">深圳市超显科技有限公司</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">采购经理/主管</span>
+                    <span class="salary">1.2-1.8万·13薪</span>
+                    <span class="location">深圳·龙岗·宝龙</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="5" onclick="jumpTo(5)">
+            <div class="job-index">6</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">深圳市大盛唐科技有限公司</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">芯片采购经理</span>
+                    <span class="salary">1.2-2.4万/月</span>
+                    <span class="location">深圳·龙华·大浪</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="6" onclick="jumpTo(6)">
+            <div class="job-index">7</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">深圳市和鑫晟科技有限公司</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">采购开发工程师</span>
+                    <span class="salary">10-15K</span>
+                    <span class="location">深圳-龙岗区</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="7" onclick="jumpTo(7)">
+            <div class="job-index">8</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">东莞友创未来科技有限公司</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">开发采购工程师</span>
+                    <span class="salary">10-15K</span>
+                    <span class="location">深圳-光明区</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="8" onclick="jumpTo(8)">
+            <div class="job-index">9</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">广东英泰格连接技术有限公司</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">采购开发工程师</span>
+                    <span class="salary">9-13K</span>
+                    <span class="location">深圳-光明区</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="9" onclick="jumpTo(9)">
+            <div class="job-index">10</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">深圳市智融自动化科技有限公司</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">开发型采购工程师</span>
+                    <span class="salary">8-15K</span>
+                    <span class="location">深圳-龙岗区</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="10" onclick="jumpTo(10)">
+            <div class="job-index">11</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">深圳市好年璟科技有限公司东莞分公司</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">采购主管</span>
+                    <span class="salary">8-10K</span>
+                    <span class="location">深圳-龙岗区</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="11" onclick="jumpTo(11)">
+            <div class="job-index">12</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">深圳市维极精密有限公司</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">采购专员</span>
+                    <span class="salary">7-9K</span>
+                    <span class="location">深圳-光明区</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="12" onclick="jumpTo(12)">
+            <div class="job-index">13</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">深圳雅畅新能源科技有限公司</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">采购专员</span>
+                    <span class="salary">7-8K</span>
+                    <span class="location">深圳-宝安区</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="13" onclick="jumpTo(13)">
+            <div class="job-index">14</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">深圳市永兴隆工业发展有限公司</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">标准件采购员</span>
+                    <span class="salary">7-8K</span>
+                    <span class="location">深圳-坪山区</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="14" onclick="jumpTo(14)">
+            <div class="job-index">15</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">深圳鑫宏力精密股份有限公司</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">采购外协</span>
+                    <span class="salary">7-8K</span>
+                    <span class="location">深圳-宝安区</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="15" onclick="jumpTo(15)">
+            <div class="job-index">16</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">深圳市智融自动化科技有限公司</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">采购专员</span>
+                    <span class="salary">6.8-9K</span>
+                    <span class="location">深圳-龙岗区</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="16" onclick="jumpTo(16)">
+            <div class="job-index">17</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">深圳市拓展浩翔科技有限公司</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">开发采购员</span>
+                    <span class="salary">6-8K</span>
+                    <span class="location">深圳-宝安区</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="17" onclick="jumpTo(17)">
+            <div class="job-index">18</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">广东英泰格连接技术有限公司</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">采购跟单</span>
+                    <span class="salary">6-9K</span>
+                    <span class="location">深圳-光明区</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="18" onclick="jumpTo(18)">
+            <div class="job-index">19</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">深圳市富士杰智能技术有限公司</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">采购助理</span>
+                    <span class="salary">6-8K</span>
+                    <span class="location">深圳-龙岗区</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="19" onclick="jumpTo(19)">
+            <div class="job-index">20</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">伟兴实业（深圳）有限公司</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">采购专员</span>
+                    <span class="salary">6-6.5K</span>
+                    <span class="location">深圳-光明区</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="20" onclick="jumpTo(20)">
+            <div class="job-index">21</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">深圳市永兴隆工业发展有限公司</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">采购助理</span>
+                    <span class="salary">6-7K</span>
+                    <span class="location">深圳-坪山区</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="21" onclick="jumpTo(21)">
+            <div class="job-index">22</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">深圳雅畅新能源科技有限公司</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">采购跟单</span>
+                    <span class="salary">6-6.5K</span>
+                    <span class="location">深圳-宝安区</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="22" onclick="jumpTo(22)">
+            <div class="job-index">23</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">深圳市先达兴精密科技有限公司</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">外协采购</span>
+                    <span class="salary">5-8K</span>
+                    <span class="location">深圳-宝安区</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="23" onclick="jumpTo(23)">
+            <div class="job-index">24</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">深圳市承运机电有限公司</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">采购文员</span>
+                    <span class="salary">4.5-6K</span>
+                    <span class="location">深圳-宝安区</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="24" onclick="jumpTo(24)">
+            <div class="job-index">25</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">正德瀚远(深圳)科技有限公司</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">采购/采购经理</span>
+                    <span class="salary">8000-15000元/月</span>
+                    <span class="location">深圳·龙岗·龙岗街道</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="25" onclick="jumpTo(25)">
+            <div class="job-index">26</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">深圳市华夏光大电子科技有限公司</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">采购经理</span>
+                    <span class="salary">8000-12000元/月</span>
+                    <span class="location">深圳·宝安·沙井</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="26" onclick="jumpTo(26)">
+            <div class="job-index">27</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">广东沃德精密科技股份有限公司</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">半导体采购高级工程师（零部件）</span>
+                    <span class="salary">12-24K·13薪</span>
+                    <span class="location">东莞-万江区</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="27" onclick="jumpTo(27)">
+            <div class="job-index">28</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">东莞市达瑞电子股份有限公司</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">高级采购开发工程师</span>
+                    <span class="salary">12-20K·13薪</span>
+                    <span class="location">东莞-洪梅镇</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="28" onclick="jumpTo(28)">
+            <div class="job-index">29</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">东莞凤岗嘉辉塑胶五金有限公司</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">高级采购员（活动）</span>
+                    <span class="salary">6-7K</span>
+                    <span class="location">东莞-凤岗镇</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="29" onclick="jumpTo(29)">
+            <div class="job-index">30</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">东莞凤岗嘉辉塑胶五金有限公司</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">高级采购员（双休）</span>
+                    <span class="salary">5-7K</span>
+                    <span class="location">东莞-凤岗镇</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="30" onclick="jumpTo(30)">
+            <div class="job-index">31</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">东莞凤岗嘉辉塑胶五金有限公司</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">高级采购员（物料）</span>
+                    <span class="salary">5-7K</span>
+                    <span class="location">东莞-凤岗镇</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="31" onclick="jumpTo(31)">
+            <div class="job-index">32</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">东莞晋杨电子有限公司</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">高级采购员</span>
+                    <span class="salary">5-8K</span>
+                    <span class="location">东莞-常平镇</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="32" onclick="jumpTo(32)">
+            <div class="job-index">33</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">东莞市薪源环保科技有限公司</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">采购经理/主管</span>
+                    <span class="salary">5000-8000元</span>
+                    <span class="location">东莞·桥头镇</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="33" onclick="jumpTo(33)">
+            <div class="job-index">34</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">麦格米特</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">采购经理/主管</span>
+                    <span class="salary">8000-11000元</span>
+                    <span class="location">东莞·寮步镇</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="34" onclick="jumpTo(34)">
+            <div class="job-index">35</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">天赐材料</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">海外采购经理/主管</span>
+                    <span class="salary">1.5-2.2万·13薪</span>
+                    <span class="location">广州·越秀·东山</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="35" onclick="jumpTo(35)">
+            <div class="job-index">36</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">东莞好年华科技有限公司</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">采购经理/主管</span>
+                    <span class="salary">9-10K</span>
+                    <span class="location">广州-南沙区</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="36" onclick="jumpTo(36)">
+            <div class="job-index">37</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">广州市天霸美容美发用品有限公司</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">采购员</span>
+                    <span class="salary">6.5-7.5K</span>
+                    <span class="location">广州-白云区</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="37" onclick="jumpTo(37)">
+            <div class="job-index">38</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">广州市鹏升电器设备有限公司</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">采购助理</span>
+                    <span class="salary">5-6.5K·13薪</span>
+                    <span class="location">广州-白云区</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="38" onclick="jumpTo(38)">
+            <div class="job-index">39</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">广州弓博汽车零部件科技有限公司</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">采购助理/采购</span>
+                    <span class="salary">5-6K</span>
+                    <span class="location">广州-白云区</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="39" onclick="jumpTo(39)">
+            <div class="job-index">40</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">广东无闻道科技股份有限公司</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">采购员</span>
+                    <span class="salary">5-8K</span>
+                    <span class="location">广州-南沙区</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="40" onclick="jumpTo(40)">
+            <div class="job-index">41</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">北京惠丰佳业汽车销售有限公司</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">采购经理/主管</span>
+                    <span class="salary">9000-13000元</span>
+                    <span class="location">广州·越秀·北京街道</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="41" onclick="jumpTo(41)">
+            <div class="job-index">42</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">东莞东彩精密五金有限公司</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">采购工程师（工厂：佛山）</span>
+                    <span class="salary">6-9K</span>
+                    <span class="location">佛山-三水区</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="42" onclick="jumpTo(42)">
+            <div class="job-index">43</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">佛山金航向电子科技有限公司</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">采购员</span>
+                    <span class="salary">6-8K</span>
+                    <span class="location">佛山-南海区</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="43" onclick="jumpTo(43)">
+            <div class="job-index">44</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">佛山市钜顺精密五金有限公司</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">采购员</span>
+                    <span class="salary">5-8K</span>
+                    <span class="location">佛山-顺德区</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="44" onclick="jumpTo(44)">
+            <div class="job-index">45</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">广东尚坤工业集团有限公司</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">采购助理</span>
+                    <span class="salary">5-6.5K</span>
+                    <span class="location">佛山-三水区</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="45" onclick="jumpTo(45)">
+            <div class="job-index">46</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">佛山唯意电器有限公司</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">采购员</span>
+                    <span class="salary">4.5-6K</span>
+                    <span class="location">佛山-南海区</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="46" onclick="jumpTo(46)">
+            <div class="job-index">47</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">佛山市南海区三丰手机配件有限公司</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">采购文员</span>
+                    <span class="salary">3.8-4.5K</span>
+                    <span class="location">佛山-南海区</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="47" onclick="jumpTo(47)">
+            <div class="job-index">48</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">广东盈威流体控制技术股份有限公司</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">采购经理采购主管</span>
+                    <span class="salary">7000-8000元·13薪</span>
+                    <span class="location">佛山·顺德·大良</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="48" onclick="jumpTo(48)">
+            <div class="job-index">49</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="tag tag-new">🆕 新增</span>
+                    <span class="company">华粤传动科技</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position">采购经理/主管</span>
+                    <span class="salary">8000-16000元</span>
+                    <span class="location">珠海·金湾区·三灶镇</span>
+                </div>
+            </div>
+        </div>
+</div>
+
+<!-- 底部提示 -->
+<div class="float-hint" id="floatHint">
+    <span class="icon">🎧</span>
+    <span id="floatText">点击顶部播放按钮开始朗读</span>
+</div>
+
+<script>
+// ===== 数据 =====
+const items = [{"company": "极致汇仪", "position": "采购经理", "salary": "2-3万/月", "location": "深圳·宝安·新安", "tag": "🆕 新增"}, {"company": "深圳市宝科特精密科技有限公司", "position": "高级采购经理", "salary": "1.5-3万/月", "location": "深圳·宝安·燕罗", "tag": "🆕 新增"}, {"company": "山东时堰科技发展有限公司", "position": "采购经理", "salary": "1.5-2.2万·13薪", "location": "深圳·龙华·民治", "tag": "🆕 新增"}, {"company": "GQY视讯", "position": "集采采购经理（led拼接屏行业）", "salary": "1.4-1.8万/月", "location": "深圳·南山·粤海", "tag": "🆕 新增"}, {"company": "深圳市超显科技有限公司", "position": "采购经理/主管", "salary": "1.2-1.8万·13薪", "location": "深圳·龙岗·宝龙", "tag": "🆕 新增"}, {"company": "深圳市大盛唐科技有限公司", "position": "芯片采购经理", "salary": "1.2-2.4万/月", "location": "深圳·龙华·大浪", "tag": "🆕 新增"}, {"company": "深圳市和鑫晟科技有限公司", "position": "采购开发工程师", "salary": "10-15K", "location": "深圳-龙岗区", "tag": "🆕 新增"}, {"company": "东莞友创未来科技有限公司", "position": "开发采购工程师", "salary": "10-15K", "location": "深圳-光明区", "tag": "🆕 新增"}, {"company": "广东英泰格连接技术有限公司", "position": "采购开发工程师", "salary": "9-13K", "location": "深圳-光明区", "tag": "🆕 新增"}, {"company": "深圳市智融自动化科技有限公司", "position": "开发型采购工程师", "salary": "8-15K", "location": "深圳-龙岗区", "tag": "🆕 新增"}, {"company": "深圳市好年璟科技有限公司东莞分公司", "position": "采购主管", "salary": "8-10K", "location": "深圳-龙岗区", "tag": "🆕 新增"}, {"company": "深圳市维极精密有限公司", "position": "采购专员", "salary": "7-9K", "location": "深圳-光明区", "tag": "🆕 新增"}, {"company": "深圳雅畅新能源科技有限公司", "position": "采购专员", "salary": "7-8K", "location": "深圳-宝安区", "tag": "🆕 新增"}, {"company": "深圳市永兴隆工业发展有限公司", "position": "标准件采购员", "salary": "7-8K", "location": "深圳-坪山区", "tag": "🆕 新增"}, {"company": "深圳鑫宏力精密股份有限公司", "position": "采购外协", "salary": "7-8K", "location": "深圳-宝安区", "tag": "🆕 新增"}, {"company": "深圳市智融自动化科技有限公司", "position": "采购专员", "salary": "6.8-9K", "location": "深圳-龙岗区", "tag": "🆕 新增"}, {"company": "深圳市拓展浩翔科技有限公司", "position": "开发采购员", "salary": "6-8K", "location": "深圳-宝安区", "tag": "🆕 新增"}, {"company": "广东英泰格连接技术有限公司", "position": "采购跟单", "salary": "6-9K", "location": "深圳-光明区", "tag": "🆕 新增"}, {"company": "深圳市富士杰智能技术有限公司", "position": "采购助理", "salary": "6-8K", "location": "深圳-龙岗区", "tag": "🆕 新增"}, {"company": "伟兴实业（深圳）有限公司", "position": "采购专员", "salary": "6-6.5K", "location": "深圳-光明区", "tag": "🆕 新增"}, {"company": "深圳市永兴隆工业发展有限公司", "position": "采购助理", "salary": "6-7K", "location": "深圳-坪山区", "tag": "🆕 新增"}, {"company": "深圳雅畅新能源科技有限公司", "position": "采购跟单", "salary": "6-6.5K", "location": "深圳-宝安区", "tag": "🆕 新增"}, {"company": "深圳市先达兴精密科技有限公司", "position": "外协采购", "salary": "5-8K", "location": "深圳-宝安区", "tag": "🆕 新增"}, {"company": "深圳市承运机电有限公司", "position": "采购文员", "salary": "4.5-6K", "location": "深圳-宝安区", "tag": "🆕 新增"}, {"company": "正德瀚远(深圳)科技有限公司", "position": "采购/采购经理", "salary": "8000-15000元/月", "location": "深圳·龙岗·龙岗街道", "tag": "🆕 新增"}, {"company": "深圳市华夏光大电子科技有限公司", "position": "采购经理", "salary": "8000-12000元/月", "location": "深圳·宝安·沙井", "tag": "🆕 新增"}, {"company": "广东沃德精密科技股份有限公司", "position": "半导体采购高级工程师（零部件）", "salary": "12-24K·13薪", "location": "东莞-万江区", "tag": "🆕 新增"}, {"company": "东莞市达瑞电子股份有限公司", "position": "高级采购开发工程师", "salary": "12-20K·13薪", "location": "东莞-洪梅镇", "tag": "🆕 新增"}, {"company": "东莞凤岗嘉辉塑胶五金有限公司", "position": "高级采购员（活动）", "salary": "6-7K", "location": "东莞-凤岗镇", "tag": "🆕 新增"}, {"company": "东莞凤岗嘉辉塑胶五金有限公司", "position": "高级采购员（双休）", "salary": "5-7K", "location": "东莞-凤岗镇", "tag": "🆕 新增"}, {"company": "东莞凤岗嘉辉塑胶五金有限公司", "position": "高级采购员（物料）", "salary": "5-7K", "location": "东莞-凤岗镇", "tag": "🆕 新增"}, {"company": "东莞晋杨电子有限公司", "position": "高级采购员", "salary": "5-8K", "location": "东莞-常平镇", "tag": "🆕 新增"}, {"company": "东莞市薪源环保科技有限公司", "position": "采购经理/主管", "salary": "5000-8000元", "location": "东莞·桥头镇", "tag": "🆕 新增"}, {"company": "麦格米特", "position": "采购经理/主管", "salary": "8000-11000元", "location": "东莞·寮步镇", "tag": "🆕 新增"}, {"company": "天赐材料", "position": "海外采购经理/主管", "salary": "1.5-2.2万·13薪", "location": "广州·越秀·东山", "tag": "🆕 新增"}, {"company": "东莞好年华科技有限公司", "position": "采购经理/主管", "salary": "9-10K", "location": "广州-南沙区", "tag": "🆕 新增"}, {"company": "广州市天霸美容美发用品有限公司", "position": "采购员", "salary": "6.5-7.5K", "location": "广州-白云区", "tag": "🆕 新增"}, {"company": "广州市鹏升电器设备有限公司", "position": "采购助理", "salary": "5-6.5K·13薪", "location": "广州-白云区", "tag": "🆕 新增"}, {"company": "广州弓博汽车零部件科技有限公司", "position": "采购助理/采购", "salary": "5-6K", "location": "广州-白云区", "tag": "🆕 新增"}, {"company": "广东无闻道科技股份有限公司", "position": "采购员", "salary": "5-8K", "location": "广州-南沙区", "tag": "🆕 新增"}, {"company": "北京惠丰佳业汽车销售有限公司", "position": "采购经理/主管", "salary": "9000-13000元", "location": "广州·越秀·北京街道", "tag": "🆕 新增"}, {"company": "东莞东彩精密五金有限公司", "position": "采购工程师（工厂：佛山）", "salary": "6-9K", "location": "佛山-三水区", "tag": "🆕 新增"}, {"company": "佛山金航向电子科技有限公司", "position": "采购员", "salary": "6-8K", "location": "佛山-南海区", "tag": "🆕 新增"}, {"company": "佛山市钜顺精密五金有限公司", "position": "采购员", "salary": "5-8K", "location": "佛山-顺德区", "tag": "🆕 新增"}, {"company": "广东尚坤工业集团有限公司", "position": "采购助理", "salary": "5-6.5K", "location": "佛山-三水区", "tag": "🆕 新增"}, {"company": "佛山唯意电器有限公司", "position": "采购员", "salary": "4.5-6K", "location": "佛山-南海区", "tag": "🆕 新增"}, {"company": "佛山市南海区三丰手机配件有限公司", "position": "采购文员", "salary": "3.8-4.5K", "location": "佛山-南海区", "tag": "🆕 新增"}, {"company": "广东盈威流体控制技术股份有限公司", "position": "采购经理采购主管", "salary": "7000-8000元·13薪", "location": "佛山·顺德·大良", "tag": "🆕 新增"}, {"company": "华粤传动科技", "position": "采购经理/主管", "salary": "8000-16000元", "location": "珠海·金湾区·三灶镇", "tag": "🆕 新增"}];
+const totalItems = 49;
+const speakTemplate = "{company}。职位：{position}。薪资：{salary}。地点：{location}。";
+
+// ===== 状态 =====
+let currentIndex = 0;
+let isPlaying = false;
+let speechRate = 1.0;
+let readDoneSet = new Set();
+let synth = window.speechSynthesis;
+let currentUtterance = null;
+let selectedVoice = null;
+let voicesReady = false;
+
+// ===== 浏览器检测 =====
+function isQQBrowser() {
+    let ua = navigator.userAgent || '';
+    return /MQQBrowser|QQ\//i.test(ua);
+}
+function isUCBrowser() {
+    let ua = navigator.userAgent || '';
+    return /UCBrowser|UCWEB/i.test(ua);
+}
+function isWeChat() {
+    let ua = navigator.userAgent || '';
+    return /MicroMessenger/i.test(ua);
+}
+function isUnsupportedBrowser() {
+    return isQQBrowser() || isUCBrowser() || isWeChat();
+}
+
+// ===== 初始化 =====
+function init() {
+    // 浏览器检测：不支持的直接提示换浏览器
+    if (isUnsupportedBrowser()) {
+        let browserName = isQQBrowser() ? 'QQ浏览器' : (isUCBrowser() ? 'UC浏览器' : '微信内置浏览器');
+        showBrowserWarning(browserName);
+        return;
+    }
+
+    if (!synth) {
+        showBrowserWarning('当前浏览器');
+        return;
+    }
+
+    // Chrome/Edge: voices 通过异步事件加载
+    let voices = synth.getVoices();
+    if (voices && voices.length > 0) {
+        pickVoice(voices);
+    }
+
+    // 监听语音列表加载（关键！Android Chrome 需要等事件）
+    synth.onvoiceschanged = function() {
+        voices = synth.getVoices();
+        if (voices && voices.length > 0 && !voicesReady) {
+            pickVoice(voices);
+            document.getElementById('floatText').textContent =
+                '✅ 语音引擎就绪 (' + voices.length + '个) — 点🎧开始朗读';
+            document.getElementById('progressText').textContent = '就绪 ✓';
+        }
+    };
+
+    // 超时兜底：2秒后强制尝试
+    setTimeout(function() {
+        if (!voicesReady) {
+            voices = synth.getVoices();
+            if (voices && voices.length > 0) {
+                pickVoice(voices);
+            }
+            if (selectedVoice) {
+                document.getElementById('floatText').textContent =
+                    '✅ 语音引擎: ' + selectedVoice.name;
+                document.getElementById('progressText').textContent = '就绪 ✓';
+            } else {
+                document.getElementById('floatText').textContent =
+                    '⚠️ 未找到中文语音，请用系统自带 Chrome/Edge 打开';
+                document.getElementById('progressText').textContent = '无中文语音 ⚠️';
+            }
+            voicesReady = true;
+        }
+    }, 2500);
+}
+
+function showBrowserWarning(browserName) {
+    // 隐藏控制栏播放按钮
+    document.getElementById('playBtn').style.opacity = '0.3';
+    document.getElementById('playBtn').style.pointerEvents = 'none';
+    // 底部显示换浏览器提示
+    document.getElementById('floatHint').style.background = 'rgba(211,47,47,0.95)';
+    document.getElementById('floatText').innerHTML =
+        '❌ ' + browserName + '不支持语音朗读<br><small>👉 请用 <b>Chrome</b> 或 <b>Edge</b> 浏览器打开</small>';
+    document.getElementById('progressText').textContent = '❌ 浏览器不支持';
+    // 页面顶部插入醒目提示横幅
+    let banner = document.createElement('div');
+    banner.style.cssText = 'background:#FFEBEE;border-bottom:2px solid #EF5350;padding:16px;text-align:center;';
+    banner.innerHTML =
+        '<div style="font-size:40px;margin-bottom:8px;">🚫</div>' +
+        '<div style="font-size:15px;font-weight:bold;color:#C62828;margin-bottom:6px;">' +
+        browserName + ' 不支持语音朗读</div>' +
+        '<div style="font-size:14px;color:#555;line-height:1.6;">' +
+        '请用 <b style="color:#1A73E8;">Chrome</b> 或 <b style="color:#0078D4;">Edge</b> 浏览器打开即可朗读<br>' +
+        '<span style="font-size:12px;color:#999;">（应用商店搜索"Chrome"或"Edge"下载）</span></div>';
+    let header = document.querySelector('.header');
+    if (header) {
+        header.parentNode.insertBefore(banner, header);
+    }
+    // 禁用所有岗位点击
+    document.querySelectorAll('.job-item').forEach(function(el) {
+        el.style.pointerEvents = 'none';
+        el.style.opacity = '0.5';
+    });
+}
+
+function pickVoice(voices) {
+    // 优先级：zh-CN 中文女声 > zh-CN 任意 > zh-* > 第一个
+    let preferred = ['zh-CN', 'zh-Hans', 'zh-HK', 'zh-TW', 'zh'];
+    for (let lang of preferred) {
+        for (let v of voices) {
+            if (v.lang && v.lang.startsWith(lang)) {
+                // 优先女声
+                if (v.name.toLowerCase().indexOf('female') >= 0 ||
+                    v.name.indexOf('女') >= 0) {
+                    selectedVoice = v;
+                    voicesReady = true;
+                    return;
+                }
+            }
+        }
+    }
+    // 中文任意
+    for (let lang of preferred) {
+        for (let v of voices) {
+            if (v.lang && v.lang.startsWith(lang)) {
+                selectedVoice = v;
+                voicesReady = true;
+                return;
+            }
+        }
+    }
+    // 无中文语音 → 用第一个兜底
+    if (voices.length > 0) {
+        selectedVoice = voices[0];  // 用第一个兜底
+    }
+    voicesReady = true;
+}
+
+// ===== 构建朗读文本 =====
+function buildSpeakText(item) {
+    let raw = speakTemplate
+        .replace('{company}', item.company || '')
+        .replace('{position}', item.position || '')
+        .replace('{salary}', item.salary || '面议')
+        .replace('{location}', item.location || '')
+        .replace('{body}', item.body || '');
+    return _cleanForTTS(raw);
+}
+
+// ===== TTS 文本清洗：去除所有 Markdown 残留符号 =====
+function _cleanForTTS(text) {
+    if (!text) return text;
+    let cleaned = text;
+    // 去除 Markdown 标题标记 (# ## ### #### 等)
+    cleaned = cleaned.replace(/#{1,6}\s*/g, '');
+    // 去除加粗/斜体标记 (** __ * _)
+    cleaned = cleaned.replace(/\*{1,2}|_/g, '');
+    // 去除管道符 (表格)
+    cleaned = cleaned.replace(/\|/g, ' ');
+    // 去除反引号 (代码)
+    cleaned = cleaned.replace(/`+/g, '');
+    // 去除波浪线
+    cleaned = cleaned.replace(/~+/g, '');
+    // 去除分散的 -  :  标记（但不破坏正常连字符和冒号）
+    cleaned = cleaned.replace(/：/g, ':');
+    // 压缩多余空格
+    cleaned = cleaned.replace(/\s+/g, ' ');
+    // 去除连续连字符
+    cleaned = cleaned.replace(/-{2,}/g, '');
+    return cleaned.trim();
+}
+
+// ===== 朗读单条 =====
+function speakItem(index) {
+    if (index < 0 || index >= totalItems) return;
+
+    currentIndex = index;
+
+    synth.cancel();
+    let item = items[index];
+    let text = buildSpeakText(item);
+
+    let utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'zh-CN';
+    utterance.rate = speechRate;
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+    if (selectedVoice) {
+        utterance.voice = selectedVoice;
+    }
+
+    utterance.onstart = function() {
+        updateUI(index);
+        document.getElementById('nowPlaying').classList.add('active');
+        document.getElementById('nowPlayingText').textContent =
+            (item.company || '') + ' ' + (item.position || '');
+    };
+
+    utterance.onend = function() {
+        readDoneSet.add(index);
+        updateReadDone(index);
+        let next = index + 1;
+        if (next < totalItems && isPlaying) {
+            speakItem(next);
+        } else if (next >= totalItems) {
+            stopPlayback();
+            document.getElementById('floatText').textContent = '✅ 全部朗读完成！';
+            document.getElementById('progressText').textContent = '朗读完成';
+            document.getElementById('progressBar').style.width = '100%';
+            document.getElementById('progressLabel').textContent = totalItems + '/' + totalItems;
+        }
+    };
+
+    utterance.onerror = function(e) {
+        if (e.error !== 'canceled' && e.error !== 'interrupted') {
+            let errMsg = '⚠️ 朗读出错: ' + (e.error || 'unknown');
+            document.getElementById('progressText').textContent = errMsg;
+            document.getElementById('floatText').textContent =
+                errMsg + ' — 可尝试用系统自带浏览器打开';
+            let next = index + 1;
+            if (next < totalItems && isPlaying) {
+                setTimeout(function() { speakItem(next); }, 500);
+            }
+        }
+    };
+
+    currentUtterance = utterance;
+    synth.speak(utterance);
+}
+
+// ===== 播放控制 =====
+function togglePlay() {
+    if (isPlaying) {
+        pausePlayback();
+    } else {
+        startPlayback();
+    }
+}
+
+function startPlayback() {
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    document.getElementById('progressText').textContent = '朗读中...';
+    document.getElementById('floatText').textContent =
+        selectedVoice
+            ? '🔊 朗读中 (' + selectedVoice.name + ') ...'
+            : '🔊 朗读中 (系统默认语音)...';
+    speakItem(currentIndex);
+}
+
+function pausePlayback() {
+    isPlaying = false;
+    synth.cancel();
+    document.getElementById('playIcon').textContent = '🎧';
+    document.getElementById('playBtn').classList.remove('playing');
+    document.getElementById('nowPlaying').classList.remove('active');
+    document.getElementById('floatText').textContent = '⏸️ 已暂停，点击继续';
+    document.getElementById('progressText').textContent = '已暂停';
+}
+
+function stopPlayback() {
+    isPlaying = false;
+    synth.cancel();
+    document.getElementById('playIcon').textContent = '🎧';
+    document.getElementById('playBtn').classList.remove('playing');
+    document.getElementById('nowPlaying').classList.remove('active');
+    document.getElementById('floatText').textContent = '✅ 朗读完成';
+}
+
+function skipNext() {
+    synth.cancel();
+    let next = (currentIndex + 1) % totalItems;
+    currentIndex = next;
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function skipPrev() {
+    synth.cancel();
+    let prev = currentIndex - 1;
+    if (prev < 0) prev = totalItems - 1;
+    currentIndex = prev;
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function jumpTo(index) {
+    synth.cancel();
+    currentIndex = index;
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function setSpeed(val) {
+    speechRate = parseFloat(val);
+    document.getElementById('floatText').textContent =
+        '🎵 朗读速度: ' + val + 'x';
+    setTimeout(function() {
+        if (isPlaying) {
+            document.getElementById('floatText').textContent = '🔊 朗读中...';
+        }
+    }, 1500);
+}
+
+// ===== UI更新 =====
+function updateUI(index) {
+    // 进度条
+    let pct = (index / totalItems) * 100;
+    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent = (index + 1) + '/' + totalItems;
+    document.getElementById('progressText').textContent =
+        '正在朗读第 ' + (index + 1) + ' ' + '个岗位'.replace('个岗位','').replace('条新闻','');
+
+    // 高亮当前
+    document.querySelectorAll('.job-item').forEach(function(el) {
+        el.classList.remove('reading');
+    });
+    let currentEl = document.querySelector('.job-item[data-index="' + index + '"]');
+    if (currentEl) {
+        currentEl.classList.add('reading');
+        currentEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+function updateReadDone(index) {
+    let el = document.querySelector('.job-item[data-index="' + index + '"]');
+    if (el) {
+        el.classList.add('read-done');
+    }
+}
+
+// ===== 启动 =====
+init();
+
+// ===== 移动端保持屏幕唤醒（可选） =====
+if (navigator.wakeLock) {
+    try {
+        navigator.wakeLock.request('screen');
+    } catch(e) {}
+}
+</script>
+</body>
+</html>
