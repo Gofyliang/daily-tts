@@ -1,0 +1,1554 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>📰 每日要闻（20260602）</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f5f5f5;
+    color: #333;
+    padding-bottom: 80px;
+}
+
+/* ===== 顶部控制栏 ===== */
+.control-bar {
+    position: sticky; top:0; z-index:100;
+    background: linear-gradient(135deg, #1A73E8 0%, #4FC3F7 100%);
+    padding: 12px 16px;
+    box-shadow: 0 2px 12px rgba(26,115,232,0.3);
+}
+.control-row {
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+}
+.control-btn {
+    width: 48px; height: 48px;
+    border: none; border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    font-size: 22px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
+.control-btn:active { transform: scale(0.9); background: rgba(255,255,255,0.35); }
+.control-btn.play-btn {
+    width: 64px; height: 64px;
+    background: #fff;
+    color: #1A73E8;
+    font-size: 28px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+.control-btn.play-btn.playing { color: #FF6B35; }
+
+.speed-select {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 14px;
+    cursor: pointer;
+    -webkit-appearance: none;
+}
+.speed-select option { color: #333; }
+
+/* ===== 进度信息 ===== */
+.progress-row {
+    display: flex; align-items: center; gap: 10px;
+    margin-top: 8px;
+    color: rgba(255,255,255,0.9);
+    font-size: 13px;
+}
+.progress-bar-outer {
+    flex: 1; height: 4px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 2px;
+    overflow: hidden;
+}
+.progress-bar-inner {
+    height: 100%;
+    background: #fff;
+    border-radius: 2px;
+    transition: width 0.3s;
+    width: 0%;
+}
+.progress-text {
+    white-space: nowrap;
+    min-width: 90px;
+    text-align: right;
+}
+
+/* ===== 当前朗读提示 ===== */
+.now-playing {
+    background: #FFF9C4;
+    padding: 8px 16px;
+    font-size: 13px;
+    color: #F57F17;
+    text-align: center;
+    display: none;
+    border-bottom: 2px solid #FFD54F;
+}
+.now-playing.active { display: block; }
+
+/* ===== 标题区 ===== */
+.header {
+    background: #fff;
+    padding: 20px 16px 12px;
+    border-bottom: 1px solid #eee;
+}
+.header h1 { font-size: 18px; color: #1A73E8; margin-bottom: 4px; }
+.header .subtitle { font-size: 13px; color: #888; }
+
+/* ===== 岗位列表 ===== */
+.job-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 14px 16px;
+    background: #fff;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
+.job-item:active { background: #f5f5f5; }
+.job-item.reading {
+    background: #E3F2FD;
+    border-left: 4px solid #1A73E8;
+    padding-left: 12px;
+}
+.job-item.read-done {
+    opacity: 0.6;
+}
+
+.job-index {
+    width: 32px; height: 32px;
+    background: #f0f0f0;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: bold;
+    color: #888;
+    flex-shrink: 0;
+}
+.job-item.reading .job-index {
+    background: #1A73E8;
+    color: #fff;
+}
+.job-item.read-done .job-index {
+    background: #4CAF50;
+    color: #fff;
+}
+
+.job-info { flex:1; min-width:0; }
+.job-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    display: flex; align-items: center; gap: 6px;
+    flex-wrap: wrap;
+}
+.job-detail {
+    font-size: 13px;
+    color: #666;
+    display: flex; flex-wrap: wrap; gap: 8px;
+}
+.position { color: #1A73E8; }
+.salary { color: #FF6B35; font-weight: bold; }
+.location { color: #888; }
+
+.tag {
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    white-space: nowrap;
+}
+.tag-new { background: #E8F5E9; color: #2E7D32; }
+.tag-repeat { background: #FFF3E0; color: #E65100; }
+.tag-update { background: #E3F2FD; color: #1565C0; }
+
+/* ===== 底部浮动条 ===== */
+.float-hint {
+    position: fixed; bottom: 0; left:0; right:0;
+    background: rgba(26,115,232,0.95);
+    color: #fff;
+    text-align: center;
+    padding: 10px 16px;
+    font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px;
+    z-index: 99;
+}
+.float-hint .icon { font-size: 20px; }
+
+/* ===== 状态标记 ===== */
+.status-badge {
+    display: inline-block;
+    background: #4CAF50;
+    color: #fff;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+    0%,100% { opacity:1; }
+    50% { opacity:0.5; }
+}
+</style>
+</head>
+<body>
+
+<!-- 控制栏 -->
+<div class="control-bar">
+    <div class="control-row">
+        <button class="control-btn" onclick="skipPrev()" title="上一条">⏮️</button>
+        <button class="control-btn play-btn" id="playBtn" onclick="togglePlay()" title="播放/暂停">
+            <span id="playIcon">🎧</span>
+        </button>
+        <button class="control-btn" onclick="skipNext()" title="下一条">⏭️</button>
+        <select class="speed-select" id="speedSelect" onchange="setSpeed(this.value)">
+            <option value="0.8">0.8x</option>
+            <option value="1.0" selected>1x</option>
+            <option value="1.2">1.2x</option>
+            <option value="1.5">1.5x</option>
+        </select>
+    </div>
+    <div class="progress-row">
+        <span id="progressLabel">0/86</span>
+        <div class="progress-bar-outer">
+            <div class="progress-bar-inner" id="progressBar"></div>
+        </div>
+        <span class="progress-text" id="progressText">准备就绪</span>
+    </div>
+</div>
+
+<!-- 当前朗读提示 -->
+<div class="now-playing" id="nowPlaying">
+    🔊 正在朗读：<span id="nowPlayingText"></span>
+</div>
+
+<!-- 标题 -->
+<div class="header">
+    <h1>📰 每日要闻（20260602）</h1>
+    <p class="subtitle">86条新闻 | 点🎧按钮浏览器自动朗读</p>
+</div>
+
+<!-- 岗位/新闻列表 -->
+<div id="jobList">
+
+        <div class="job-item" data-index="0" onclick="jumpTo(0)">
+            <div class="job-index">1</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">原文链接： https://baijiahao.baidu.com/s?id=1866793914318185027</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="1" onclick="jumpTo(1)">
+            <div class="job-index">2</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">6月1日，上交所上市审核委员会2026年第31次审议会议结果显示，宇树科技股份有限公司首发符合发行条件、上市条件和信息披露要求，IPO申请正式过会。宇树科技从受理到上会仅用时73天，拟募资42.02亿元用于机器人研发及产能建设，腾讯、阿里等多家明星资本为股东。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="2" onclick="jumpTo(2)">
+            <div class="job-index">3</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">五维深度分析：</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="3" onclick="jumpTo(3)">
+            <div class="job-index">4</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💼 工作就业。人形机器人产业链进入资本市场加速期，供应链管理岗位需求将集中爆发。宇树科技上市后产能扩张，其上游零部件供应商（电机、减速器、传感器、精密加工）的采购/供应链岗位会同步增加。佛山作为机械制造重镇，本地企业有望切入宇树供应链，可重点关注顺德、南海地区机器人零部件企业的招聘动态。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="4" onclick="jumpTo(4)">
+            <div class="job-index">5</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">📈 职业发展。人形机器人赛道从"Demo时代"进入"量产时代"，供应链管理从电子消费品逻辑转向汽车制造逻辑——更强调供应商质量管理（SQE）、成本工程（Cost Engineering）、规模化交付能力。有汽车/机械制造供应链背景的从业者，可快速迁移到人形机器人赛道，职业溢价明显。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="5" onclick="jumpTo(5)">
+            <div class="job-index">6</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🏭 行业发展。人形机器人产业化提速，对机械/制造/供应链行业有三重影响：① 上游精密零部件（谐波减速器、空心杯电机、力控传感器）国产替代加速；② 传统机床/数控/精密加工企业可转型机器人零部件供应商；③ 佛山本地家电/陶瓷/机械企业可探索"机器人+制造"场景，用机器人替代危险/重复工种。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="6" onclick="jumpTo(6)">
+            <div class="job-index">7</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🚀 创业机会。对液冷项目：人形机器人高功率密度算力需求（边缘推理）可能催生新型散热需求，可关注"机器人+液冷"交叉机会。对3D打印项目：机器人外观件/结构件小批量定制是天然场景，可探索为机器人公司提供外观原型打印服务。对直播副业：机器人赛道热度高，做"机器人供应链拆解"专题内容有机会获得流量。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="7" onclick="jumpTo(7)">
+            <div class="job-index">8</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💰 投资机会。宇树科技IPO过会后，A股人形机器人板块有望迎来催化。可关注：① 宇树科技上市后的战略供应商（间接受益）；② A股人形机器人核心零部件公司（谐波减速器、电机、传感器）；③ 科创板AI+机器人双主线。注意：宇树自身尚未上市交易，需等待正式申购。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="8" onclick="jumpTo(8)">
+            <div class="job-index">9</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">原文链接： https://www.aitntnews.com/ainews/zhCN</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="9" onclick="jumpTo(9)">
+            <div class="job-index">10</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">2026年6月1日，OpenAI CEO Sam Altman宣布正式重返机器人赛道，由Sora核心开发者Aditya Ramesh带队，规划先落地工业机器人场景，最终推出个人消费级机器人产品。这是OpenAI继2021年解散机器人团队后，时隔5年再度入局。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="10" onclick="jumpTo(10)">
+            <div class="job-index">11</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">五维深度分析：</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="11" onclick="jumpTo(11)">
+            <div class="job-index">12</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💼 工作就业。OpenAI入局机器人，将直接拉动AI+机器人跨学科人才需求。供应链维度：工业机器人量产对精密零部件采购需求激增，有"AI公司供应链"经验的采购经理将成为稀缺人才。可关注OpenAI供应链团队招聘动态，以及为其代工的国内制造企业（可能在珠三角）。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="12" onclick="jumpTo(12)">
+            <div class="job-index">13</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">📈 职业发展。"AI大模型公司+机器人"成为新职业赛道，供应链管理者的新机会在于：① 了解AI算力供应链（GPU、HBM、液冷）；② 了解机器人硬件供应链（电机、传感器、结构件）；③ 能打通"算力—硬件—量产"全链路。建议补充AI基础设施知识，尤其是液冷/高功率散热。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="13" onclick="jumpTo(13)">
+            <div class="job-index">14</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🏭 行业发展。OpenAI入场将加速"AI+机器人"融合，对机械/供应链行业的影响路径：① 工业机器人智能化升级，传统机械臂企业需补强AI能力；② 机器人量产推动精密制造产能需求，佛山机械企业可争取代工机会；③ 机器人供应链中国化趋势明显，国内采购经理话语权提升。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="14" onclick="jumpTo(14)">
+            <div class="job-index">15</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🚀 创业机会。对液冷项目：OpenAI机器人需要高算力支持（视觉理解、运动规划），边缘算力液冷散热是刚需，可作为技术切入点联系OpenAI供应链团队。对3D打印项目：机器人外观/结构小批量定制是天然场景。对直播副业：OpenAI机器人是超高热度话题，做专题解读可获得流量。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="15" onclick="jumpTo(15)">
+            <div class="job-index">16</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💰 投资机会。OpenAI尚未上市，但"OpenAI+机器人"将催化：① A股AI算力基础设施链（GPU服务器、液冷、HBM）；② 人形机器人零部件供应链；③ 工业机器人集成商。可关注英伟达（美股）作为OpenAI核心算力供应商的长期价值。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="16" onclick="jumpTo(16)">
+            <div class="job-index">17</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">原文链接： https://www.aitntnews.com/ainews/zhCN</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="17" onclick="jumpTo(17)">
+            <div class="job-index">18</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">英伟达在GTC Taipei 2026联合微软发布搭载RTX Spark芯片的Arm架构Windows AI PC，最高提供1 PetaFLOPS AI算力、128GB统一内存，可本地运行各类AI智能体，大幅提升创作、游戏等场景的使用体验。这标志着AI PC从"概念"进入"可用"阶段。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="18" onclick="jumpTo(18)">
+            <div class="job-index">19</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">五维深度分析：</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="19" onclick="jumpTo(19)">
+            <div class="job-index">20</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💼 工作就业。AI PC量产将带动新一代供应链岗位需求：高带宽内存（HBM）、Arm架构芯片、先进封装、液冷散热模组的采购需求上升。佛山/珠三角的电子制造代工企业（尤其是昇腾/英伟达生态合作伙伴）将增加招聘，可关注相关企业的采购/供应链岗位。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="20" onclick="jumpTo(20)">
+            <div class="job-index">21</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">📈 职业发展。AI PC产业链是供应链管理者的重要新方向：① 需要理解AI算力需求与传统PC需求的差异；② 需要管理高价值、高复杂度零部件（HBM、先进封装、液冷模组）的供应风险；③ 有消费电子供应链管理经验的人，可快速迁移到AI PC赛道。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="21" onclick="jumpTo(21)">
+            <div class="job-index">22</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🏭 行业发展。对机械/供应链行业：AI PC的散热需求推动液冷技术从数据中心下沉到桌面级，液冷零部件（泵、冷头、换热器、冷却液）市场规模将倍数级扩张。对直播行业：AI PC可本地运行直播AI助手（实时字幕、智能场控），降低直播技术门槛，利好个人直播间搭建服务。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="22" onclick="jumpTo(22)">
+            <div class="job-index">23</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🚀 创业机会。对液冷项目：这是最强催化信号——英伟达+微软联合定义AI PC散热标准，桌面级液冷从"极客需求"变为"大众需求"，市场规模可能达百亿级。应加速推进液冷机箱产品化，重点对接PC整机厂商和DIY市场。对3D打印项目：AI PC外观件定制是个性化需求场景。对直播副业：AI PC+本地AI助手...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="23" onclick="jumpTo(23)">
+            <div class="job-index">24</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💰 投资机会。英伟达（美股NVDA）直接受益，AI PC供应链相关A股标的：液冷散热模组、高带宽连接器、先进封装、Arm架构生态。可关注：① 英伟达长期持有价值；② A股AI PC供应链龙头；③ 液冷赛道相关公司。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="24" onclick="jumpTo(24)">
+            <div class="job-index">25</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">原文链接： https://www.stats.gov.cn/sj/zxfb/202605/t202605311963824.html</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="25" onclick="jumpTo(25)">
+            <div class="job-index">26</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5月份，制造业采购经理指数（PMI）为50.0%，比上月下降0.3个百分点，位于临界点。高技术制造业PMI连续16个月位于扩张区间，表明新动能持续活跃。非制造业商务活动指数为50.1%，比上月上升0.7个百分点，非制造业景气水平回升。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="26" onclick="jumpTo(26)">
+            <div class="job-index">27</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">五维深度分析：</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="27" onclick="jumpTo(27)">
+            <div class="job-index">28</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💼 工作就业。PMI位于临界点（50.0%）意味着制造业整体招聘需求偏谨慎，但高技术制造业连续16个月扩张，采购/供应链岗位在高技术制造方向仍有增量。建议重点投递：新能源、半导体设备、工业机器人、高端数控机床等"高技术制造"赛道企业，避开传统低端制造。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="28" onclick="jumpTo(28)">
+            <div class="job-index">29</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">📈 职业发展。高技术制造业持续扩张，供应链管理者应主动积累"高技术制造"行业经验：① 学习半导体供应链（晶圆、封装、测试）；② 学习新能源供应链（电池、电机、电控）；③ 学习工业机器人供应链（精密零部件、系统集成）。这些赛道未来35年持续景气，职业安全边际高。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="29" onclick="jumpTo(29)">
+            <div class="job-index">30</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🏭 行业发展。制造业整体景气度处于临界点，但结构分化明显：高技术制造扩张 vs 传统制造承压。对机械/供应链行业：传统机械企业需向"高技术制造"转型（如从通用机床转向数控机床、从传统产线转向机器人产线）。对直播行业：制造业企业数字化转型需求上升，工业直播间（设备展示、技术培训）需求增加。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="30" onclick="jumpTo(30)">
+            <div class="job-index">31</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🚀 创业机会。对液冷项目：高技术制造业扩张 → AI算力基础设施投资增加 → 液冷需求持续旺盛，宏观背景有利。对3D打印项目：高技术制造企业的原型验证、工装夹具定制需求上升，可重点拓展"工业级3D打印服务"方向。对直播副业：制造业景气度分化，企业对"降本增效"类内容需求上升，可做供应链优化专题内容。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="31" onclick="jumpTo(31)">
+            <div class="job-index">32</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💰 投资机会。PMI位于临界点，A股短期震荡概率大，但高技术制造业结构性机会明确。可关注：① 高技术制造ETF/主题基金；② 半导体设备、工业机器人、新能源装备等细分赛道龙头；③ 避开PMI回落明显的传统周期行业（钢铁、煤炭、传统建材）。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="32" onclick="jumpTo(32)">
+            <div class="job-index">33</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">原文链接： https://www.aitntnews.com/ainews/zhCN</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="33" onclick="jumpTo(33)">
+            <div class="job-index">34</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">MiniMax发布M3大模型，是国内首个同时具备前沿编程能力、1M长上下文、原生多模态能力的开源模型，多项评测成绩领先海外同类模型，现已开放体验。这标志着国产大模型在编程能力和长上下文处理上达到国际领先水平。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="34" onclick="jumpTo(34)">
+            <div class="job-index">35</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">五维深度分析：</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="35" onclick="jumpTo(35)">
+            <div class="job-index">36</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💼 工作就业。大模型编程能力突破，将改变软件开发/AI应用开发的供应链：① 企业可用AI替代部分初级开发工作，压缩开发成本；② 但AI应用落地需要"懂业务的供应链/制造专家+AI工具"，复合型人才需求上升。对Gofy：学会用AI编程工具（Cursor、Claude Code）开发自己的应用（液冷项目...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="36" onclick="jumpTo(36)">
+            <div class="job-index">37</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">📈 职业发展。AI编程能力成熟，供应链管理者的新核心竞争力是"AI+供应链"复合型能力：① 能用AI分析供应链数据（需求预测、库存优化、供应商风险评估）；② 能管理AI驱动的供应链系统实施项目；③ 懂得AI应用的采购决策（企业AI软件采购、算力采购）。这是未来3年供应链管理者的核心溢价能力。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="37" onclick="jumpTo(37)">
+            <div class="job-index">38</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🏭 行业发展。AI编程+多模态+长上下文三重能力集齐，将加速制造业AI应用落地：① 工厂可基于开源模型定制自己的生产优化AI；② 多模态能力使AI可直接理解图纸/工艺文件，加速工程AI应用；③ 长上下文使AI可处理完整BOM/供应商合同等复杂文档。对机械/制造行业：AI应用落地提速，数字化供应链管理...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="38" onclick="jumpTo(38)">
+            <div class="job-index">39</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🚀 创业机会。对液冷项目：可用MiniMax M3搭建"液冷方案AI推荐系统"，根据用户GPU型号/机箱空间/预算自动推荐液冷方案，作为产品增值服务。对3D打印项目：可用M3的多模态能力，直接上传参考图片生成3D打印方案，提升客户体验。对直播副业：可用M3辅助快速生成直播脚本、产品文案，提升内容产出...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="39" onclick="jumpTo(39)">
+            <div class="job-index">40</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💰 投资机会。MiniMax尚未上市，但国产开源大模型持续突破，将：① 降低AI应用开发成本，利好AI应用层创业公司；② 加剧大模型竞争格局，利好算力需求持续旺盛（英伟达受益）；③ 可关注A股"AI应用"赛道中已有落地产品的公司，以及MiniMax生态合作伙伴。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="40" onclick="jumpTo(40)">
+            <div class="job-index">41</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">原文链接： https://www.cngma.com/xiehuixinwen/899.html</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="41" onclick="jumpTo(41)">
+            <div class="job-index">42</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">2026年5月28日，由广东省工业和信息化厅主办、广州市工业和信息化局、广东省制造业协会联合承办的2026年"大手拉小手"产业链供应链对接活动（AI人工智能+制造业专场）在华南新材料创新园举行。活动以"人工智能+制造业"深度融合为主线，通过政策宣贯、白皮书发布、技术分享、圆桌对话及供需对接等多元形式...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="42" onclick="jumpTo(42)">
+            <div class="job-index">43</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">五维深度分析：</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="43" onclick="jumpTo(43)">
+            <div class="job-index">44</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💼 工作就业。省政府层面推动"AI+制造业"对接，意味着相关岗位需求将得到政策支持。可重点关注：① 参与对接活动的龙头企业（华为、美的、格力等）的供应链/采购岗位；② 为中小企业提供AI+制造解决方案的服务商招聘需求；③ 佛山本地"AI+制造"转型企业的供应链管理岗位。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="44" onclick="jumpTo(44)">
+            <div class="job-index">45</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">📈 职业发展。"AI+制造业"从概念进入落地阶段，供应链管理者需要新能力：① 理解AI如何应用于供应链场景（需求预测、智能补货、供应商风险评估）；② 能管理AI供应链系统的供应商选择和项目实施；③ 有制造业背景+AI认知的供应链管理者，在未来3年有显著职业溢价。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="45" onclick="jumpTo(45)">
+            <div class="job-index">46</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🏭 行业发展。对机械/供应链行业：AI+制造业深度融合，将重塑供应链管理模式——从"经验驱动"转向"数据驱动"。佛山作为制造业重镇，地方政府积极推动，本地企业AI供应链转型需求旺盛。对直播行业：制造业企业数字化转型过程中，需要更多技术展示/培训类直播内容，直播间搭建服务需求上升。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="46" onclick="jumpTo(46)">
+            <div class="job-index">47</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🚀 创业机会。对液冷项目：AI+制造业深度融合 → AI算力需求持续增加 → 液冷散热需求同步增加，可重点开拓佛山本地AI制造企业客户。对3D打印项目：制造业AI化过程中，企业需要大量原型验证、工装夹具、定制化零件，3D打印是高效解决方案，可重点拓展佛山制造企业客户。对直播副业：可做"佛山制造+AI...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="47" onclick="jumpTo(47)">
+            <div class="job-index">48</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💰 投资机会。广东省政府层面推动"AI+制造业"对接，相关政策支持和补贴可期。可关注：① 广东省"AI+制造"相关产业政策/补贴目录；② A股工业AI/工业互联网/智能制造赛道中，有广东客户基础的标的；③ 佛山本地"AI+制造"转型标杆企业，可能有后续融资/上市机会。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="48" onclick="jumpTo(48)">
+            <div class="job-index">49</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">原文链接： https://www.aitntnews.com/ainews/zhCN</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="49" onclick="jumpTo(49)">
+            <div class="job-index">50</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">深度原理Deep Principle发布材料基座模型MPA，采用LLM三段式训练和混合头设计，在40个真实工业材料任务上取得SOTA成绩，其中35个任务位列第一，平均误差降低超14%。这被业界称为"材料版AlphaFold"，将大幅加速新材料研发效率。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="50" onclick="jumpTo(50)">
+            <div class="job-index">51</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">五维深度分析：</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="51" onclick="jumpTo(51)">
+            <div class="job-index">52</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💼 工作就业。AI+材料科学突破，将催生新材料研发供应链新岗位：① 需要懂AI的材料采购/供应链管理者（新材料研发周期缩短，供应链管理复杂度上升）；② 新材料企业的供应链管理岗位增加（更多新材料从实验室走向产业化）；③ 可关注新能源材料、电子材料、高性能复合材料等方向的企业招聘。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="52" onclick="jumpTo(52)">
+            <div class="job-index">53</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">📈 职业发展。材料AI模型成熟，供应链管理者的新材料知识需要更新：① 了解AI如何加速材料研发（缩短从实验室到量量的周期）；② 了解新材料产业化路径（从研发到供应链的建立）；③ 有"材料+供应链"复合背景的从业者，在新材料赛道有显著职业优势。Gofy的材料科学与工程背景是天然优势。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="53" onclick="jumpTo(53)">
+            <div class="job-index">54</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🏭 行业发展。对机械/制造行业：新材料研发加速 → 新产品上市周期缩短 → 供应链响应速度要求更高。对供应链行业：材料AI降低新材料研发门槛，更多创新型中小材料企业涌现，供应链更加碎片化和定制化，对供应链管理者的柔性管理能力要求提升。对直播行业：新材料科普/应用展示类内容有机会获得专业观众。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="54" onclick="jumpTo(54)">
+            <div class="job-index">55</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🚀 创业机会。对液冷项目：新材料研发加速，可能催生新型导热/散热材料，可关注"AI发现的新材料+液冷应用"交叉机会。对3D打印项目：材料AI加速新打印材料的研发（更高强度、更好表面质量、更低成本），可关注新材料在3D打印中的应用机会。对直播副业：可做"材料AI如何改变制造业"专题内容，发挥Gofy材...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="55" onclick="jumpTo(55)">
+            <div class="job-index">56</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💰 投资机会。材料AI突破将加速新材料产业化，可关注：① A股新材料赛道（新能源材料、电子材料、高性能复合材料）；② 材料AI软件/平台公司；③ 深度原理Deep Principle（未上市）后续融资/上市机会。材料科学是长周期赛道，适合长期配置。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="56" onclick="jumpTo(56)">
+            <div class="job-index">57</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">原文链接： https://www.foundersc.com/infoResearchMacro/19003517.jhtml</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="57" onclick="jumpTo(57)">
+            <div class="job-index">58</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">2026年6月，A股市场经历前期显著反弹后或转入震荡蓄势阶段，消化前期获利盘与局部过热压力。当前市场上涨主要来自企业盈利兑现，而非估值扩张，科技成长板块性价比依然突出。科技成长方向凭借强劲的产业趋势与盈利兑现能力，有望继续成为引领市场的核心主线。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="58" onclick="jumpTo(58)">
+            <div class="job-index">59</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">五维深度分析：</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="59" onclick="jumpTo(59)">
+            <div class="job-index">60</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💼 工作就业。A股震荡蓄势，企业融资环境整体平稳，科技公司盈利兑现能力增强，研发/供应链岗位稳定性提升。制造业企业盈利改善，采购/供应链岗位需求和薪酬水平有望稳中有升。可重点关注已有盈利兑现的科技成长公司，以及高技术制造企业的招聘动态。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="60" onclick="jumpTo(60)">
+            <div class="job-index">61</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">📈 职业发展。科技成长板块性价比突出，在科技公司/高技术制造企业的供应链管理岗位，职业成长性和薪酬水平优于传统行业。建议：① 优先考虑已有盈利兑现的科技公司供应链岗位；② 关注科创板/创业板高技术制造企业的供应链管理者机会；③ 积累"科技公司供应链"经验，为未来职业溢价打基础。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="61" onclick="jumpTo(61)">
+            <div class="job-index">62</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🏭 行业发展。科技成长板块引领市场，对机械/供应链/直播行业均有间接利好：① 科技企业盈利改善 → 研发投入增加 → 对高精度制造/供应链需求上升；② 科技成长板块上涨 → 财富效应 → 消费/直播打赏需求上升；③ 科技企业通过直播/短视频做品牌/招聘，直播间搭建服务需求上升。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="62" onclick="jumpTo(62)">
+            <div class="job-index">63</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🚀 创业机会。对液冷项目：科技企业盈利改善 → AI算力投资持续 → 液冷需求持续旺盛，宏观背景有利。对3D打印项目：科技企业研发投入增加，原型验证/定制零件需求上升，可重点拓展科技企业客户。对直播副业：科技成长板块财富效应，科技从业者消费能力上升，科技类直播内容受众支付能力更强。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="63" onclick="jumpTo(63)">
+            <div class="job-index">64</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💰 投资机会。6月A股震荡蓄势，是布局科技成长板块的窗口期。可关注：① 已有盈利兑现的科技成长标的（不在高位追涨）；② 高技术制造ETF/主题基金；③ 英伟达（美股）作为科技成长板块全球核心资产的长期价值。注意控制仓位，等待震荡蓄势完成后再加仓。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="64" onclick="jumpTo(64)">
+            <div class="job-index">65</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">原文链接： https://hrss.foshan.gov.cn/zwgk/jcxxgk/zcjd/content/post7112728.html</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="65" onclick="jumpTo(65)">
+            <div class="job-index">66</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">佛山市2026年创业担保贷款政策明确：个人创业担保贷款贴息50%，最高可贷60万元。政策面向在佛山创业的个体经营者、小微企业主，旨在降低创业融资成本，支持本地创业活动。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="66" onclick="jumpTo(66)">
+            <div class="job-index">67</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">五维深度分析：</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="67" onclick="jumpTo(67)">
+            <div class="job-index">68</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💼 工作就业。创业担保贷款政策降低创业门槛，可能促使更多求职者考虑创业，短期对就业市场影响暂不明显。但政策信号明确：佛山市政府支持创业，创业环境改善，对正在求职的Gofy来说，创业 vs 就业的权衡需要重新评估。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="68" onclick="jumpTo(68)">
+            <div class="job-index">69</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">📈 职业发展。对Gofy的职业发展路径：① 继续求职（采购/供应链管理岗位）；② 创业（液冷项目/3D打印/直播间搭建服务）。创业担保贷款政策使创业的资金门槛降低，可先以副业形式验证创业项目可行性，再决定是否全职创业。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="69" onclick="jumpTo(69)">
+            <div class="job-index">70</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🏭 行业发展。创业担保贷款政策利好佛山本地创业活动，对机械/供应链/直播行业的影响：① 更多制造业创业者涌现，对供应链管理咨询需求上升；② 更多直播创业者涌现，对直播间搭建服务需求上升；③ 更多科技创业者涌现，对3D打印原型服务需求上升。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="70" onclick="jumpTo(70)">
+            <div class="job-index">71</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🚀 创业机会。这是直接利好！ 对液冷项目：60万元贷款可覆盖第一阶段产品化需求（氟化液验证、样机迭代、小批量试产）。对3D打印项目：贷款可用来升级设备（更高精度树脂打印机、更大尺寸FDM打印机）。对直播副业：可用来采购更专业的直播设备，提升服务品质。建议：先以副业形式跑通商业模式，再申请贷款扩大规模...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="71" onclick="jumpTo(71)">
+            <div class="job-index">72</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💰 投资机会。创业担保贷款政策降低佛山创业活动融资成本，长期利好佛山本地经济活力。对Gofy个人：可申请贷款支持创业项目，降低个人资金投入压力。注意：贷款需按时还款，需确保创业项目有稳定现金流后再申请。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="72" onclick="jumpTo(72)">
+            <div class="job-index">73</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">原文链接： https://www.aitntnews.com/ainews/zhCN</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="73" onclick="jumpTo(73)">
+            <div class="job-index">74</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">微软本周开源SkillOpt框架，将Agent技能文档作为可训练参数，类比神经网络训练逻辑实现技能自我迭代进化，在全部52个评测组合中均达到最优或并列最优成绩，开源一周已收获3300个GitHub Star。这标志着AI Agent从"固定技能"进入"技能可进化"的新阶段。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="74" onclick="jumpTo(74)">
+            <div class="job-index">75</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">五维深度分析：</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="75" onclick="jumpTo(75)">
+            <div class="job-index">76</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💼 工作就业。AI Agent技能可进化，将改变知识工作者（包括供应链管理）的工作方式：① 重复性供应链分析工作可被AI Agent自动完成；② 但AI Agent需要人类专家定义技能、验证结果，供应链专家转型为"AI Agent技能设计师"是新职业方向。对Gofy：可学习如何用AI Agent辅助...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="76" onclick="jumpTo(76)">
+            <div class="job-index">77</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">📈 职业发展。AI Agent技能进化能力成熟，供应链管理者的核心竞争力转向：① 能设计AI Agent技能解决供应链问题；② 能验证AI Agent输出结果的正确性；③ 能管理"人类+AI Agent"混合团队。这是未来5年供应链管理者的核心能力，建议提前学习AI Agent相关知识和技能设计方法...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="77" onclick="jumpTo(77)">
+            <div class="job-index">78</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🏭 行业发展。AI Agent技能可进化，将加速供应链智能化：① 企业可训练自己的供应链AI Agent（需求预测、库存优化、供应商风险评估）；② Agent技能可跨企业复用，供应链最佳实践扩散速度加快；③ 供应链管理服务可向"AI Agent服务"转型，咨询服务产品化。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="78" onclick="jumpTo(78)">
+            <div class="job-index">79</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🚀 创业机会。对液冷项目：可用SkillOpt框架为液冷方案设计AI Agent技能（根据用户需求自动推荐液冷方案），作为产品增值服务。对3D打印项目：可设计"3D打印方案推荐Agent"，提升客户体验。对直播副业：可设计"直播脚本生成Agent"，提升内容产出效率。AI Agent技能设计是新的副...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="79" onclick="jumpTo(79)">
+            <div class="job-index">80</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💰 投资机会。微软（美股MSFT）开源SkillOpt，将加速AI Agent生态发展，长期利好微软AI生态。可关注：① 微软长期持有价值；② A股AI Agent应用层公司；③ AI Agent工具/平台类创业公司的融资机会。AI Agent是继大模型之后的下一个重要投资主题。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="80" onclick="jumpTo(80)">
+            <div class="job-index">81</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">今日核心信号</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 宇树科技IPO过会 + OpenAI重返机器人 → 人形机器人产业化加速，供应链机会明确。2. 英伟达RTX Spark芯片发布 → 桌面级液冷从"极客"变"大众"，液冷创业最强催化。3. 高技术制造业PMI连续16个月扩张 → 制造业结构分化，高技术方向职业安全边际高。4. MiniMax ...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="81" onclick="jumpTo(81)">
+            <div class="job-index">82</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">行动建议</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🔍 求职方向（本周执行）。 重点投递：高技术制造企业（半导体设备、工业机器人、新能源装备）采购/供应链岗位。 关注：宇树科技上市后的战略供应商招聘动态（间接机会）。 研究：佛山"AI+制造"对接活动参与企业名单，定向投递</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="82" onclick="jumpTo(82)">
+            <div class="job-index">83</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🚀 创业方向（本月执行）。 液冷项目：根据英伟达RTX Spark芯片规格，设计桌面级液冷方案，制作技术文档。 3D打印项目：接触佛山本地AI制造企业，推广工业级3D打印原型服务。 直播副业：制作"OpenAI机器人+液冷散热"专题内容，测试流量反应。 了解佛山创业担保贷款申请流程和条件，评估申请可...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="83" onclick="jumpTo(83)">
+            <div class="job-index">84</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">📚 学习方向（持续）。 学习AI Agent技能设计（SkillOpt框架），设计供应链AI Agent技能。 学习材料AI（MPA模型）基本原理，更新材料专业知识。 学习高技术制造业（半导体、工业机器人）供应链特点</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="84" onclick="jumpTo(84)">
+            <div class="job-index">85</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💰 投资方向（本月执行）。 研究A股人形机器人核心零部件公司，建立观察名单。 研究A股AI PC/液冷供应链标的，建立观察名单。 等待6月A股震荡蓄势完成，择机布局科技成长板块</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="85" onclick="jumpTo(85)">
+            <div class="job-index">86</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">📅 生成时间：20260602 06:10。🤖 分析引擎：WorkBuddy 八弟（8D）。📧 推送方式：QQ邮箱 + 微信通知</span>
+                </div>
+            </div>
+        </div>
+</div>
+
+<!-- 底部提示 -->
+<div class="float-hint" id="floatHint">
+    <span class="icon">🎧</span>
+    <span id="floatText">点击顶部播放按钮开始朗读</span>
+</div>
+
+<script>
+// ===== 数据 =====
+const items = [{"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "原文链接： https://baijiahao.baidu.com/s?id=1866793914318185027"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "6月1日，上交所上市审核委员会2026年第31次审议会议结果显示，宇树科技股份有限公司首发符合发行条件、上市条件和信息披露要求，IPO申请正式过会。宇树科技从受理到上会仅用时73天，拟募资42.02亿元用于机器人研发及产能建设，腾讯、阿里等多家明星资本为股东。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "五维深度分析："}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💼 工作就业。人形机器人产业链进入资本市场加速期，供应链管理岗位需求将集中爆发。宇树科技上市后产能扩张，其上游零部件供应商（电机、减速器、传感器、精密加工）的采购/供应链岗位会同步增加。佛山作为机械制造重镇，本地企业有望切入宇树供应链，可重点关注顺德、南海地区机器人零部件企业的招聘动态。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "📈 职业发展。人形机器人赛道从\"Demo时代\"进入\"量产时代\"，供应链管理从电子消费品逻辑转向汽车制造逻辑——更强调供应商质量管理（SQE）、成本工程（Cost Engineering）、规模化交付能力。有汽车/机械制造供应链背景的从业者，可快速迁移到人形机器人赛道，职业溢价明显。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🏭 行业发展。人形机器人产业化提速，对机械/制造/供应链行业有三重影响：① 上游精密零部件（谐波减速器、空心杯电机、力控传感器）国产替代加速；② 传统机床/数控/精密加工企业可转型机器人零部件供应商；③ 佛山本地家电/陶瓷/机械企业可探索\"机器人+制造\"场景，用机器人替代危险/重复工种。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🚀 创业机会。对液冷项目：人形机器人高功率密度算力需求（边缘推理）可能催生新型散热需求，可关注\"机器人+液冷\"交叉机会。对3D打印项目：机器人外观件/结构件小批量定制是天然场景，可探索为机器人公司提供外观原型打印服务。对直播副业：机器人赛道热度高，做\"机器人供应链拆解\"专题内容有机会获得流量。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💰 投资机会。宇树科技IPO过会后，A股人形机器人板块有望迎来催化。可关注：① 宇树科技上市后的战略供应商（间接受益）；② A股人形机器人核心零部件公司（谐波减速器、电机、传感器）；③ 科创板AI+机器人双主线。注意：宇树自身尚未上市交易，需等待正式申购。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "原文链接： https://www.aitntnews.com/ainews/zh-CN"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "2026年6月1日，OpenAI CEO Sam Altman宣布正式重返机器人赛道，由Sora核心开发者Aditya Ramesh带队，规划先落地工业机器人场景，最终推出个人消费级机器人产品。这是OpenAI继2021年解散机器人团队后，时隔5年再度入局。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "五维深度分析："}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💼 工作就业。OpenAI入局机器人，将直接拉动AI+机器人跨学科人才需求。供应链维度：工业机器人量产对精密零部件采购需求激增，有\"AI公司供应链\"经验的采购经理将成为稀缺人才。可关注OpenAI供应链团队招聘动态，以及为其代工的国内制造企业（可能在珠三角）。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "📈 职业发展。\"AI大模型公司+机器人\"成为新职业赛道，供应链管理者的新机会在于：① 了解AI算力供应链（GPU、HBM、液冷）；② 了解机器人硬件供应链（电机、传感器、结构件）；③ 能打通\"算力—硬件—量产\"全链路。建议补充AI基础设施知识，尤其是液冷/高功率散热。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🏭 行业发展。OpenAI入场将加速\"AI+机器人\"融合，对机械/供应链行业的影响路径：① 工业机器人智能化升级，传统机械臂企业需补强AI能力；② 机器人量产推动精密制造产能需求，佛山机械企业可争取代工机会；③ 机器人供应链中国化趋势明显，国内采购经理话语权提升。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🚀 创业机会。对液冷项目：OpenAI机器人需要高算力支持（视觉理解、运动规划），边缘算力液冷散热是刚需，可作为技术切入点联系OpenAI供应链团队。对3D打印项目：机器人外观/结构小批量定制是天然场景。对直播副业：OpenAI机器人是超高热度话题，做专题解读可获得流量。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💰 投资机会。OpenAI尚未上市，但\"OpenAI+机器人\"将催化：① A股AI算力基础设施链（GPU服务器、液冷、HBM）；② 人形机器人零部件供应链；③ 工业机器人集成商。可关注英伟达（美股）作为OpenAI核心算力供应商的长期价值。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "原文链接： https://www.aitntnews.com/ainews/zh-CN"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "英伟达在GTC Taipei 2026联合微软发布搭载RTX Spark芯片的Arm架构Windows AI PC，最高提供1 PetaFLOPS AI算力、128GB统一内存，可本地运行各类AI智能体，大幅提升创作、游戏等场景的使用体验。这标志着AI PC从\"概念\"进入\"可用\"阶段。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "五维深度分析："}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💼 工作就业。AI PC量产将带动新一代供应链岗位需求：高带宽内存（HBM）、Arm架构芯片、先进封装、液冷散热模组的采购需求上升。佛山/珠三角的电子制造代工企业（尤其是昇腾/英伟达生态合作伙伴）将增加招聘，可关注相关企业的采购/供应链岗位。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "📈 职业发展。AI PC产业链是供应链管理者的重要新方向：① 需要理解AI算力需求与传统PC需求的差异；② 需要管理高价值、高复杂度零部件（HBM、先进封装、液冷模组）的供应风险；③ 有消费电子供应链管理经验的人，可快速迁移到AI PC赛道。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🏭 行业发展。对机械/供应链行业：AI PC的散热需求推动液冷技术从数据中心下沉到桌面级，液冷零部件（泵、冷头、换热器、冷却液）市场规模将倍数级扩张。对直播行业：AI PC可本地运行直播AI助手（实时字幕、智能场控），降低直播技术门槛，利好个人直播间搭建服务。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🚀 创业机会。对液冷项目：这是最强催化信号——英伟达+微软联合定义AI PC散热标准，桌面级液冷从\"极客需求\"变为\"大众需求\"，市场规模可能达百亿级。应加速推进液冷机箱产品化，重点对接PC整机厂商和DIY市场。对3D打印项目：AI PC外观件定制是个性化需求场景。对直播副业：AI PC+本地AI助手将大幅降低直播技术门槛，可推出\"AI PC直播间搭建\"服务。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💰 投资机会。英伟达（美股NVDA）直接受益，AI PC供应链相关A股标的：液冷散热模组、高带宽连接器、先进封装、Arm架构生态。可关注：① 英伟达长期持有价值；② A股AI PC供应链龙头；③ 液冷赛道相关公司。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "原文链接： https://www.stats.gov.cn/sj/zxfb/202605/t20260531_1963824.html"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "5月份，制造业采购经理指数（PMI）为50.0%，比上月下降0.3个百分点，位于临界点。高技术制造业PMI连续16个月位于扩张区间，表明新动能持续活跃。非制造业商务活动指数为50.1%，比上月上升0.7个百分点，非制造业景气水平回升。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "五维深度分析："}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💼 工作就业。PMI位于临界点（50.0%）意味着制造业整体招聘需求偏谨慎，但高技术制造业连续16个月扩张，采购/供应链岗位在高技术制造方向仍有增量。建议重点投递：新能源、半导体设备、工业机器人、高端数控机床等\"高技术制造\"赛道企业，避开传统低端制造。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "📈 职业发展。高技术制造业持续扩张，供应链管理者应主动积累\"高技术制造\"行业经验：① 学习半导体供应链（晶圆、封装、测试）；② 学习新能源供应链（电池、电机、电控）；③ 学习工业机器人供应链（精密零部件、系统集成）。这些赛道未来3-5年持续景气，职业安全边际高。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🏭 行业发展。制造业整体景气度处于临界点，但结构分化明显：高技术制造扩张 vs 传统制造承压。对机械/供应链行业：传统机械企业需向\"高技术制造\"转型（如从通用机床转向数控机床、从传统产线转向机器人产线）。对直播行业：制造业企业数字化转型需求上升，工业直播间（设备展示、技术培训）需求增加。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🚀 创业机会。对液冷项目：高技术制造业扩张 → AI算力基础设施投资增加 → 液冷需求持续旺盛，宏观背景有利。对3D打印项目：高技术制造企业的原型验证、工装夹具定制需求上升，可重点拓展\"工业级3D打印服务\"方向。对直播副业：制造业景气度分化，企业对\"降本增效\"类内容需求上升，可做供应链优化专题内容。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💰 投资机会。PMI位于临界点，A股短期震荡概率大，但高技术制造业结构性机会明确。可关注：① 高技术制造ETF/主题基金；② 半导体设备、工业机器人、新能源装备等细分赛道龙头；③ 避开PMI回落明显的传统周期行业（钢铁、煤炭、传统建材）。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "原文链接： https://www.aitntnews.com/ainews/zh-CN"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "MiniMax发布M3大模型，是国内首个同时具备前沿编程能力、1M长上下文、原生多模态能力的开源模型，多项评测成绩领先海外同类模型，现已开放体验。这标志着国产大模型在编程能力和长上下文处理上达到国际领先水平。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "五维深度分析："}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💼 工作就业。大模型编程能力突破，将改变软件开发/AI应用开发的供应链：① 企业可用AI替代部分初级开发工作，压缩开发成本；② 但AI应用落地需要\"懂业务的供应链/制造专家+AI工具\"，复合型人才需求上升。对Gofy：学会用AI编程工具（Cursor、Claude Code）开发自己的应用（液冷项目控制软件、3D打印订单管理系统），可大幅降低开发成本。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "📈 职业发展。AI编程能力成熟，供应链管理者的新核心竞争力是\"AI+供应链\"复合型能力：① 能用AI分析供应链数据（需求预测、库存优化、供应商风险评估）；② 能管理AI驱动的供应链系统实施项目；③ 懂得AI应用的采购决策（企业AI软件采购、算力采购）。这是未来3年供应链管理者的核心溢价能力。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🏭 行业发展。AI编程+多模态+长上下文三重能力集齐，将加速制造业AI应用落地：① 工厂可基于开源模型定制自己的生产优化AI；② 多模态能力使AI可直接理解图纸/工艺文件，加速工程AI应用；③ 长上下文使AI可处理完整BOM/供应商合同等复杂文档。对机械/制造行业：AI应用落地提速，数字化供应链管理者需求上升。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🚀 创业机会。对液冷项目：可用MiniMax M3搭建\"液冷方案AI推荐系统\"，根据用户GPU型号/机箱空间/预算自动推荐液冷方案，作为产品增值服务。对3D打印项目：可用M3的多模态能力，直接上传参考图片生成3D打印方案，提升客户体验。对直播副业：可用M3辅助快速生成直播脚本、产品文案，提升内容产出效率。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💰 投资机会。MiniMax尚未上市，但国产开源大模型持续突破，将：① 降低AI应用开发成本，利好AI应用层创业公司；② 加剧大模型竞争格局，利好算力需求持续旺盛（英伟达受益）；③ 可关注A股\"AI应用\"赛道中已有落地产品的公司，以及MiniMax生态合作伙伴。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "原文链接： https://www.cngma.com/xiehuixinwen/899.html"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "2026年5月28日，由广东省工业和信息化厅主办、广州市工业和信息化局、广东省制造业协会联合承办的2026年\"大手拉小手\"产业链供应链对接活动（AI人工智能+制造业专场）在华南新材料创新园举行。活动以\"人工智能+制造业\"深度融合为主线，通过政策宣贯、白皮书发布、技术分享、圆桌对话及供需对接等多元形式，搭建龙头企业和中小制造企业对接平台。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "五维深度分析："}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💼 工作就业。省政府层面推动\"AI+制造业\"对接，意味着相关岗位需求将得到政策支持。可重点关注：① 参与对接活动的龙头企业（华为、美的、格力等）的供应链/采购岗位；② 为中小企业提供AI+制造解决方案的服务商招聘需求；③ 佛山本地\"AI+制造\"转型企业的供应链管理岗位。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "📈 职业发展。\"AI+制造业\"从概念进入落地阶段，供应链管理者需要新能力：① 理解AI如何应用于供应链场景（需求预测、智能补货、供应商风险评估）；② 能管理AI供应链系统的供应商选择和项目实施；③ 有制造业背景+AI认知的供应链管理者，在未来3年有显著职业溢价。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🏭 行业发展。对机械/供应链行业：AI+制造业深度融合，将重塑供应链管理模式——从\"经验驱动\"转向\"数据驱动\"。佛山作为制造业重镇，地方政府积极推动，本地企业AI供应链转型需求旺盛。对直播行业：制造业企业数字化转型过程中，需要更多技术展示/培训类直播内容，直播间搭建服务需求上升。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🚀 创业机会。对液冷项目：AI+制造业深度融合 → AI算力需求持续增加 → 液冷散热需求同步增加，可重点开拓佛山本地AI制造企业客户。对3D打印项目：制造业AI化过程中，企业需要大量原型验证、工装夹具、定制化零件，3D打印是高效解决方案，可重点拓展佛山制造企业客户。对直播副业：可做\"佛山制造+AI转型\"专题内容，服务本地制造企业。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💰 投资机会。广东省政府层面推动\"AI+制造业\"对接，相关政策支持和补贴可期。可关注：① 广东省\"AI+制造\"相关产业政策/补贴目录；② A股工业AI/工业互联网/智能制造赛道中，有广东客户基础的标的；③ 佛山本地\"AI+制造\"转型标杆企业，可能有后续融资/上市机会。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "原文链接： https://www.aitntnews.com/ainews/zh-CN"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "深度原理Deep Principle发布材料基座模型MPA，采用LLM三段式训练和混合头设计，在40个真实工业材料任务上取得SOTA成绩，其中35个任务位列第一，平均误差降低超14%。这被业界称为\"材料版AlphaFold\"，将大幅加速新材料研发效率。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "五维深度分析："}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💼 工作就业。AI+材料科学突破，将催生新材料研发供应链新岗位：① 需要懂AI的材料采购/供应链管理者（新材料研发周期缩短，供应链管理复杂度上升）；② 新材料企业的供应链管理岗位增加（更多新材料从实验室走向产业化）；③ 可关注新能源材料、电子材料、高性能复合材料等方向的企业招聘。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "📈 职业发展。材料AI模型成熟，供应链管理者的新材料知识需要更新：① 了解AI如何加速材料研发（缩短从实验室到量量的周期）；② 了解新材料产业化路径（从研发到供应链的建立）；③ 有\"材料+供应链\"复合背景的从业者，在新材料赛道有显著职业优势。Gofy的材料科学与工程背景是天然优势。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🏭 行业发展。对机械/制造行业：新材料研发加速 → 新产品上市周期缩短 → 供应链响应速度要求更高。对供应链行业：材料AI降低新材料研发门槛，更多创新型中小材料企业涌现，供应链更加碎片化和定制化，对供应链管理者的柔性管理能力要求提升。对直播行业：新材料科普/应用展示类内容有机会获得专业观众。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🚀 创业机会。对液冷项目：新材料研发加速，可能催生新型导热/散热材料，可关注\"AI发现的新材料+液冷应用\"交叉机会。对3D打印项目：材料AI加速新打印材料的研发（更高强度、更好表面质量、更低成本），可关注新材料在3D打印中的应用机会。对直播副业：可做\"材料AI如何改变制造业\"专题内容，发挥Gofy材料专业背景优势。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💰 投资机会。材料AI突破将加速新材料产业化，可关注：① A股新材料赛道（新能源材料、电子材料、高性能复合材料）；② 材料AI软件/平台公司；③ 深度原理Deep Principle（未上市）后续融资/上市机会。材料科学是长周期赛道，适合长期配置。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "原文链接： https://www.foundersc.com/infoResearchMacro/19003517.jhtml"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "2026年6月，A股市场经历前期显著反弹后或转入震荡蓄势阶段，消化前期获利盘与局部过热压力。当前市场上涨主要来自企业盈利兑现，而非估值扩张，科技成长板块性价比依然突出。科技成长方向凭借强劲的产业趋势与盈利兑现能力，有望继续成为引领市场的核心主线。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "五维深度分析："}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💼 工作就业。A股震荡蓄势，企业融资环境整体平稳，科技公司盈利兑现能力增强，研发/供应链岗位稳定性提升。制造业企业盈利改善，采购/供应链岗位需求和薪酬水平有望稳中有升。可重点关注已有盈利兑现的科技成长公司，以及高技术制造企业的招聘动态。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "📈 职业发展。科技成长板块性价比突出，在科技公司/高技术制造企业的供应链管理岗位，职业成长性和薪酬水平优于传统行业。建议：① 优先考虑已有盈利兑现的科技公司供应链岗位；② 关注科创板/创业板高技术制造企业的供应链管理者机会；③ 积累\"科技公司供应链\"经验，为未来职业溢价打基础。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🏭 行业发展。科技成长板块引领市场，对机械/供应链/直播行业均有间接利好：① 科技企业盈利改善 → 研发投入增加 → 对高精度制造/供应链需求上升；② 科技成长板块上涨 → 财富效应 → 消费/直播打赏需求上升；③ 科技企业通过直播/短视频做品牌/招聘，直播间搭建服务需求上升。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🚀 创业机会。对液冷项目：科技企业盈利改善 → AI算力投资持续 → 液冷需求持续旺盛，宏观背景有利。对3D打印项目：科技企业研发投入增加，原型验证/定制零件需求上升，可重点拓展科技企业客户。对直播副业：科技成长板块财富效应，科技从业者消费能力上升，科技类直播内容受众支付能力更强。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💰 投资机会。6月A股震荡蓄势，是布局科技成长板块的窗口期。可关注：① 已有盈利兑现的科技成长标的（不在高位追涨）；② 高技术制造ETF/主题基金；③ 英伟达（美股）作为科技成长板块全球核心资产的长期价值。注意控制仓位，等待震荡蓄势完成后再加仓。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "原文链接： https://hrss.foshan.gov.cn/zwgk/jcxxgk/zcjd/content/post_7112728.html"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "佛山市2026年创业担保贷款政策明确：个人创业担保贷款贴息50%，最高可贷60万元。政策面向在佛山创业的个体经营者、小微企业主，旨在降低创业融资成本，支持本地创业活动。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "五维深度分析："}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💼 工作就业。创业担保贷款政策降低创业门槛，可能促使更多求职者考虑创业，短期对就业市场影响暂不明显。但政策信号明确：佛山市政府支持创业，创业环境改善，对正在求职的Gofy来说，创业 vs 就业的权衡需要重新评估。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "📈 职业发展。对Gofy的职业发展路径：① 继续求职（采购/供应链管理岗位）；② 创业（液冷项目/3D打印/直播间搭建服务）。创业担保贷款政策使创业的资金门槛降低，可先以副业形式验证创业项目可行性，再决定是否全职创业。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🏭 行业发展。创业担保贷款政策利好佛山本地创业活动，对机械/供应链/直播行业的影响：① 更多制造业创业者涌现，对供应链管理咨询需求上升；② 更多直播创业者涌现，对直播间搭建服务需求上升；③ 更多科技创业者涌现，对3D打印原型服务需求上升。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🚀 创业机会。这是直接利好！ 对液冷项目：60万元贷款可覆盖第一阶段产品化需求（氟化液验证、样机迭代、小批量试产）。对3D打印项目：贷款可用来升级设备（更高精度树脂打印机、更大尺寸FDM打印机）。对直播副业：可用来采购更专业的直播设备，提升服务品质。建议：先以副业形式跑通商业模式，再申请贷款扩大规模。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💰 投资机会。创业担保贷款政策降低佛山创业活动融资成本，长期利好佛山本地经济活力。对Gofy个人：可申请贷款支持创业项目，降低个人资金投入压力。注意：贷款需按时还款，需确保创业项目有稳定现金流后再申请。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "原文链接： https://www.aitntnews.com/ainews/zh-CN"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "微软本周开源SkillOpt框架，将Agent技能文档作为可训练参数，类比神经网络训练逻辑实现技能自我迭代进化，在全部52个评测组合中均达到最优或并列最优成绩，开源一周已收获3300个GitHub Star。这标志着AI Agent从\"固定技能\"进入\"技能可进化\"的新阶段。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "五维深度分析："}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💼 工作就业。AI Agent技能可进化，将改变知识工作者（包括供应链管理）的工作方式：① 重复性供应链分析工作可被AI Agent自动完成；② 但AI Agent需要人类专家定义技能、验证结果，供应链专家转型为\"AI Agent技能设计师\"是新职业方向。对Gofy：可学习如何用AI Agent辅助供应链工作，提升个人效率。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "📈 职业发展。AI Agent技能进化能力成熟，供应链管理者的核心竞争力转向：① 能设计AI Agent技能解决供应链问题；② 能验证AI Agent输出结果的正确性；③ 能管理\"人类+AI Agent\"混合团队。这是未来5年供应链管理者的核心能力，建议提前学习AI Agent相关知识和技能设计方法。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🏭 行业发展。AI Agent技能可进化，将加速供应链智能化：① 企业可训练自己的供应链AI Agent（需求预测、库存优化、供应商风险评估）；② Agent技能可跨企业复用，供应链最佳实践扩散速度加快；③ 供应链管理服务可向\"AI Agent服务\"转型，咨询服务产品化。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🚀 创业机会。对液冷项目：可用SkillOpt框架为液冷方案设计AI Agent技能（根据用户需求自动推荐液冷方案），作为产品增值服务。对3D打印项目：可设计\"3D打印方案推荐Agent\"，提升客户体验。对直播副业：可设计\"直播脚本生成Agent\"，提升内容产出效率。AI Agent技能设计是新的副业方向。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💰 投资机会。微软（美股MSFT）开源SkillOpt，将加速AI Agent生态发展，长期利好微软AI生态。可关注：① 微软长期持有价值；② A股AI Agent应用层公司；③ AI Agent工具/平台类创业公司的融资机会。AI Agent是继大模型之后的下一个重要投资主题。"}, {"company": "今日核心信号", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 宇树科技IPO过会 + OpenAI重返机器人 → 人形机器人产业化加速，供应链机会明确。2. 英伟达RTX Spark芯片发布 → 桌面级液冷从\"极客\"变\"大众\"，液冷创业最强催化。3. 高技术制造业PMI连续16个月扩张 → 制造业结构分化，高技术方向职业安全边际高。4. MiniMax M3 + 微软SkillOpt开源 → AI应用成本下降、能力上升，三个创业项目均受益。5. 佛山创业担保贷款贴息50% → 创业资金门槛降低，可认真考虑创业vs就业权衡"}, {"company": "行动建议", "position": "", "salary": "", "location": "", "tag": "", "body": "🔍 求职方向（本周执行）。[ ] 重点投递：高技术制造企业（半导体设备、工业机器人、新能源装备）采购/供应链岗位。[ ] 关注：宇树科技上市后的战略供应商招聘动态（间接机会）。[ ] 研究：佛山\"AI+制造\"对接活动参与企业名单，定向投递"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🚀 创业方向（本月执行）。[ ] 液冷项目：根据英伟达RTX Spark芯片规格，设计桌面级液冷方案，制作技术文档。[ ] 3D打印项目：接触佛山本地AI制造企业，推广工业级3D打印原型服务。[ ] 直播副业：制作\"OpenAI机器人+液冷散热\"专题内容，测试流量反应。[ ] 了解佛山创业担保贷款申请流程和条件，评估申请可行性"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "📚 学习方向（持续）。[ ] 学习AI Agent技能设计（SkillOpt框架），设计供应链AI Agent技能。[ ] 学习材料AI（MPA模型）基本原理，更新材料专业知识。[ ] 学习高技术制造业（半导体、工业机器人）供应链特点"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💰 投资方向（本月执行）。[ ] 研究A股人形机器人核心零部件公司，建立观察名单。[ ] 研究A股AI PC/液冷供应链标的，建立观察名单。[ ] 等待6月A股震荡蓄势完成，择机布局科技成长板块"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "📅 生成时间：2026-06-02 06:10*。🤖 分析引擎：WorkBuddy 八弟（8D）*。📧 推送方式：QQ邮箱 + 微信通知*"}];
+const totalItems = 86;
+const speakTemplate = "{company}。详细内容：{body}。";
+
+// ===== 状态 =====
+let currentIndex = 0;
+let isPlaying = false;
+let speechRate = 1.0;
+let readDoneSet = new Set();
+let synth = window.speechSynthesis;
+let currentUtterance = null;
+let selectedVoice = null;
+let voicesReady = false;
+
+// ===== 浏览器检测 =====
+function isQQBrowser() {
+    let ua = navigator.userAgent || '';
+    return /MQQBrowser|QQ\//i.test(ua);
+}
+function isUCBrowser() {
+    let ua = navigator.userAgent || '';
+    return /UCBrowser|UCWEB/i.test(ua);
+}
+function isWeChat() {
+    let ua = navigator.userAgent || '';
+    return /MicroMessenger/i.test(ua);
+}
+function isUnsupportedBrowser() {
+    return isQQBrowser() || isUCBrowser() || isWeChat();
+}
+
+// ===== 初始化 =====
+function init() {
+    // 浏览器检测：不支持的直接提示换浏览器
+    if (isUnsupportedBrowser()) {
+        let browserName = isQQBrowser() ? 'QQ浏览器' : (isUCBrowser() ? 'UC浏览器' : '微信内置浏览器');
+        showBrowserWarning(browserName);
+        return;
+    }
+
+    if (!synth) {
+        showBrowserWarning('当前浏览器');
+        return;
+    }
+
+    // Chrome/Edge: voices 通过异步事件加载
+    let voices = synth.getVoices();
+    if (voices && voices.length > 0) {
+        pickVoice(voices);
+    }
+
+    // 监听语音列表加载（关键！Android Chrome 需要等事件）
+    synth.onvoiceschanged = function() {
+        voices = synth.getVoices();
+        if (voices && voices.length > 0 && !voicesReady) {
+            pickVoice(voices);
+            document.getElementById('floatText').textContent =
+                '✅ 语音引擎就绪 (' + voices.length + '个) — 点🎧开始朗读';
+            document.getElementById('progressText').textContent = '就绪 ✓';
+        }
+    };
+
+    // 超时兜底：2秒后强制尝试
+    setTimeout(function() {
+        if (!voicesReady) {
+            voices = synth.getVoices();
+            if (voices && voices.length > 0) {
+                pickVoice(voices);
+            }
+            if (selectedVoice) {
+                document.getElementById('floatText').textContent =
+                    '✅ 语音引擎: ' + selectedVoice.name;
+                document.getElementById('progressText').textContent = '就绪 ✓';
+            } else {
+                document.getElementById('floatText').textContent =
+                    '⚠️ 未找到中文语音，请用系统自带 Chrome/Edge 打开';
+                document.getElementById('progressText').textContent = '无中文语音 ⚠️';
+            }
+            voicesReady = true;
+        }
+    }, 2500);
+}
+
+function showBrowserWarning(browserName) {
+    // 隐藏控制栏播放按钮
+    document.getElementById('playBtn').style.opacity = '0.3';
+    document.getElementById('playBtn').style.pointerEvents = 'none';
+    // 底部显示换浏览器提示
+    document.getElementById('floatHint').style.background = 'rgba(211,47,47,0.95)';
+    document.getElementById('floatText').innerHTML =
+        '❌ ' + browserName + '不支持语音朗读<br><small>👉 请用 <b>Chrome</b> 或 <b>Edge</b> 浏览器打开</small>';
+    document.getElementById('progressText').textContent = '❌ 浏览器不支持';
+    // 页面顶部插入醒目提示横幅
+    let banner = document.createElement('div');
+    banner.style.cssText = 'background:#FFEBEE;border-bottom:2px solid #EF5350;padding:16px;text-align:center;';
+    banner.innerHTML =
+        '<div style="font-size:40px;margin-bottom:8px;">🚫</div>' +
+        '<div style="font-size:15px;font-weight:bold;color:#C62828;margin-bottom:6px;">' +
+        browserName + ' 不支持语音朗读</div>' +
+        '<div style="font-size:14px;color:#555;line-height:1.6;">' +
+        '请用 <b style="color:#1A73E8;">Chrome</b> 或 <b style="color:#0078D4;">Edge</b> 浏览器打开即可朗读<br>' +
+        '<span style="font-size:12px;color:#999;">（应用商店搜索"Chrome"或"Edge"下载）</span></div>';
+    let header = document.querySelector('.header');
+    if (header) {
+        header.parentNode.insertBefore(banner, header);
+    }
+    // 禁用所有岗位点击
+    document.querySelectorAll('.job-item').forEach(function(el) {
+        el.style.pointerEvents = 'none';
+        el.style.opacity = '0.5';
+    });
+}
+
+function pickVoice(voices) {
+    // 优先级：zh-CN 中文女声 > zh-CN 任意 > zh-* > 第一个
+    let preferred = ['zh-CN', 'zh-Hans', 'zh-HK', 'zh-TW', 'zh'];
+    for (let lang of preferred) {
+        for (let v of voices) {
+            if (v.lang && v.lang.startsWith(lang)) {
+                // 优先女声
+                if (v.name.toLowerCase().indexOf('female') >= 0 ||
+                    v.name.indexOf('女') >= 0) {
+                    selectedVoice = v;
+                    voicesReady = true;
+                    return;
+                }
+            }
+        }
+    }
+    // 中文任意
+    for (let lang of preferred) {
+        for (let v of voices) {
+            if (v.lang && v.lang.startsWith(lang)) {
+                selectedVoice = v;
+                voicesReady = true;
+                return;
+            }
+        }
+    }
+    // 无中文语音 → 用第一个兜底
+    if (voices.length > 0) {
+        selectedVoice = voices[0];  // 用第一个兜底
+    }
+    voicesReady = true;
+}
+
+// ===== 构建朗读文本 =====
+function buildSpeakText(item) {
+    let raw = speakTemplate
+        .replace('{company}', item.company || '')
+        .replace('{position}', item.position || '')
+        .replace('{salary}', item.salary || '面议')
+        .replace('{location}', item.location || '')
+        .replace('{body}', item.body || '');
+    return _cleanForTTS(raw);
+}
+
+// ===== TTS 文本清洗：去除所有 Markdown 残留符号 =====
+function _cleanForTTS(text) {
+    if (!text) return text;
+    let cleaned = text;
+    // 去除 Markdown 标题标记 (# ## ### #### 等)
+    cleaned = cleaned.replace(/#{1,6}\s*/g, '');
+    // 去除加粗/斜体标记 (** __ * _)
+    cleaned = cleaned.replace(/\*{1,2}|_/g, '');
+    // 去除管道符 (表格)
+    cleaned = cleaned.replace(/\|/g, ' ');
+    // 去除反引号 (代码)
+    cleaned = cleaned.replace(/`+/g, '');
+    // 去除波浪线
+    cleaned = cleaned.replace(/~+/g, '');
+    // 去除分散的 -  :  标记（但不破坏正常连字符和冒号）
+    cleaned = cleaned.replace(/：/g, ':');
+    // 压缩多余空格
+    cleaned = cleaned.replace(/\s+/g, ' ');
+    // 去除连续连字符
+    cleaned = cleaned.replace(/-{2,}/g, '');
+    return cleaned.trim();
+}
+
+// ===== 朗读单条 =====
+function speakItem(index) {
+    if (index < 0 || index >= totalItems) return;
+
+    currentIndex = index;
+
+    synth.cancel();
+    let item = items[index];
+    let text = buildSpeakText(item);
+
+    let utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'zh-CN';
+    utterance.rate = speechRate;
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+    if (selectedVoice) {
+        utterance.voice = selectedVoice;
+    }
+
+    utterance.onstart = function() {
+        updateUI(index);
+        document.getElementById('nowPlaying').classList.add('active');
+        document.getElementById('nowPlayingText').textContent =
+            (item.company || '') + ' ' + (item.position || '');
+    };
+
+    utterance.onend = function() {
+        readDoneSet.add(index);
+        updateReadDone(index);
+        let next = index + 1;
+        if (next < totalItems && isPlaying) {
+            speakItem(next);
+        } else if (next >= totalItems) {
+            stopPlayback();
+            document.getElementById('floatText').textContent = '✅ 全部朗读完成！';
+            document.getElementById('progressText').textContent = '朗读完成';
+            document.getElementById('progressBar').style.width = '100%';
+            document.getElementById('progressLabel').textContent = totalItems + '/' + totalItems;
+        }
+    };
+
+    utterance.onerror = function(e) {
+        if (e.error !== 'canceled' && e.error !== 'interrupted') {
+            let errMsg = '⚠️ 朗读出错: ' + (e.error || 'unknown');
+            document.getElementById('progressText').textContent = errMsg;
+            document.getElementById('floatText').textContent =
+                errMsg + ' — 可尝试用系统自带浏览器打开';
+            let next = index + 1;
+            if (next < totalItems && isPlaying) {
+                setTimeout(function() { speakItem(next); }, 500);
+            }
+        }
+    };
+
+    currentUtterance = utterance;
+    synth.speak(utterance);
+}
+
+// ===== 播放控制 =====
+function togglePlay() {
+    if (isPlaying) {
+        pausePlayback();
+    } else {
+        startPlayback();
+    }
+}
+
+function startPlayback() {
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    document.getElementById('progressText').textContent = '朗读中...';
+    document.getElementById('floatText').textContent =
+        selectedVoice
+            ? '🔊 朗读中 (' + selectedVoice.name + ') ...'
+            : '🔊 朗读中 (系统默认语音)...';
+    speakItem(currentIndex);
+}
+
+function pausePlayback() {
+    isPlaying = false;
+    synth.cancel();
+    document.getElementById('playIcon').textContent = '🎧';
+    document.getElementById('playBtn').classList.remove('playing');
+    document.getElementById('nowPlaying').classList.remove('active');
+    document.getElementById('floatText').textContent = '⏸️ 已暂停，点击继续';
+    document.getElementById('progressText').textContent = '已暂停';
+}
+
+function stopPlayback() {
+    isPlaying = false;
+    synth.cancel();
+    document.getElementById('playIcon').textContent = '🎧';
+    document.getElementById('playBtn').classList.remove('playing');
+    document.getElementById('nowPlaying').classList.remove('active');
+    document.getElementById('floatText').textContent = '✅ 朗读完成';
+}
+
+function skipNext() {
+    synth.cancel();
+    let next = (currentIndex + 1) % totalItems;
+    currentIndex = next;
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function skipPrev() {
+    synth.cancel();
+    let prev = currentIndex - 1;
+    if (prev < 0) prev = totalItems - 1;
+    currentIndex = prev;
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function jumpTo(index) {
+    synth.cancel();
+    currentIndex = index;
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function setSpeed(val) {
+    speechRate = parseFloat(val);
+    document.getElementById('floatText').textContent =
+        '🎵 朗读速度: ' + val + 'x';
+    setTimeout(function() {
+        if (isPlaying) {
+            document.getElementById('floatText').textContent = '🔊 朗读中...';
+        }
+    }, 1500);
+}
+
+// ===== UI更新 =====
+function updateUI(index) {
+    // 进度条
+    let pct = (index / totalItems) * 100;
+    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent = (index + 1) + '/' + totalItems;
+    document.getElementById('progressText').textContent =
+        '正在朗读第 ' + (index + 1) + ' ' + '条新闻'.replace('个岗位','').replace('条新闻','');
+
+    // 高亮当前
+    document.querySelectorAll('.job-item').forEach(function(el) {
+        el.classList.remove('reading');
+    });
+    let currentEl = document.querySelector('.job-item[data-index="' + index + '"]');
+    if (currentEl) {
+        currentEl.classList.add('reading');
+        currentEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+function updateReadDone(index) {
+    let el = document.querySelector('.job-item[data-index="' + index + '"]');
+    if (el) {
+        el.classList.add('read-done');
+    }
+}
+
+// ===== 启动 =====
+init();
+
+// ===== 移动端保持屏幕唤醒（可选） =====
+if (navigator.wakeLock) {
+    try {
+        navigator.wakeLock.request('screen');
+    } catch(e) {}
+}
+</script>
+</body>
+</html>
