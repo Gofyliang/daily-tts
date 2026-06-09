@@ -1,0 +1,1334 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>📰 每日要闻（20260610）</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f5f5f5;
+    color: #333;
+    padding-bottom: 80px;
+}
+
+/* ===== 顶部控制栏 ===== */
+.control-bar {
+    position: sticky; top:0; z-index:100;
+    background: linear-gradient(135deg, #1A73E8 0%, #4FC3F7 100%);
+    padding: 12px 16px;
+    box-shadow: 0 2px 12px rgba(26,115,232,0.3);
+}
+.control-row {
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+}
+.control-btn {
+    width: 48px; height: 48px;
+    border: none; border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    font-size: 22px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
+.control-btn:active { transform: scale(0.9); background: rgba(255,255,255,0.35); }
+.control-btn.play-btn {
+    width: 64px; height: 64px;
+    background: #fff;
+    color: #1A73E8;
+    font-size: 28px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+.control-btn.play-btn.playing { color: #FF6B35; }
+
+.speed-select {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 14px;
+    cursor: pointer;
+    -webkit-appearance: none;
+}
+.speed-select option { color: #333; }
+
+/* ===== 进度信息 ===== */
+.progress-row {
+    display: flex; align-items: center; gap: 10px;
+    margin-top: 8px;
+    color: rgba(255,255,255,0.9);
+    font-size: 13px;
+}
+.progress-bar-outer {
+    flex: 1; height: 4px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 2px;
+    overflow: hidden;
+}
+.progress-bar-inner {
+    height: 100%;
+    background: #fff;
+    border-radius: 2px;
+    transition: width 0.3s;
+    width: 0%;
+}
+.progress-text {
+    white-space: nowrap;
+    min-width: 90px;
+    text-align: right;
+}
+
+/* ===== 当前朗读提示 ===== */
+.now-playing {
+    background: #FFF9C4;
+    padding: 8px 16px;
+    font-size: 13px;
+    color: #F57F17;
+    text-align: center;
+    display: none;
+    border-bottom: 2px solid #FFD54F;
+}
+.now-playing.active { display: block; }
+
+/* ===== 标题区 ===== */
+.header {
+    background: #fff;
+    padding: 20px 16px 12px;
+    border-bottom: 1px solid #eee;
+}
+.header h1 { font-size: 18px; color: #1A73E8; margin-bottom: 4px; }
+.header .subtitle { font-size: 13px; color: #888; }
+
+/* ===== 岗位列表 ===== */
+.job-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 14px 16px;
+    background: #fff;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
+.job-item:active { background: #f5f5f5; }
+.job-item.reading {
+    background: #E3F2FD;
+    border-left: 4px solid #1A73E8;
+    padding-left: 12px;
+}
+.job-item.read-done {
+    opacity: 0.6;
+}
+
+.job-index {
+    width: 32px; height: 32px;
+    background: #f0f0f0;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: bold;
+    color: #888;
+    flex-shrink: 0;
+}
+.job-item.reading .job-index {
+    background: #1A73E8;
+    color: #fff;
+}
+.job-item.read-done .job-index {
+    background: #4CAF50;
+    color: #fff;
+}
+
+.job-info { flex:1; min-width:0; }
+.job-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    display: flex; align-items: center; gap: 6px;
+    flex-wrap: wrap;
+}
+.job-detail {
+    font-size: 13px;
+    color: #666;
+    display: flex; flex-wrap: wrap; gap: 8px;
+}
+.position { color: #1A73E8; }
+.salary { color: #FF6B35; font-weight: bold; }
+.location { color: #888; }
+
+.tag {
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    white-space: nowrap;
+}
+.tag-new { background: #E8F5E9; color: #2E7D32; }
+.tag-repeat { background: #FFF3E0; color: #E65100; }
+.tag-update { background: #E3F2FD; color: #1565C0; }
+
+/* ===== 底部浮动条 ===== */
+.float-hint {
+    position: fixed; bottom: 0; left:0; right:0;
+    background: rgba(26,115,232,0.95);
+    color: #fff;
+    text-align: center;
+    padding: 10px 16px;
+    font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px;
+    z-index: 99;
+}
+.float-hint .icon { font-size: 20px; }
+
+/* ===== 状态标记 ===== */
+.status-badge {
+    display: inline-block;
+    background: #4CAF50;
+    color: #fff;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+    0%,100% { opacity:1; }
+    50% { opacity:0.5; }
+}
+</style>
+</head>
+<body>
+
+<!-- 控制栏 -->
+<div class="control-bar">
+    <div class="control-row">
+        <button class="control-btn" onclick="skipPrev()" title="上一条">⏮️</button>
+        <button class="control-btn play-btn" id="playBtn" onclick="togglePlay()" title="播放/暂停">
+            <span id="playIcon">🎧</span>
+        </button>
+        <button class="control-btn" onclick="skipNext()" title="下一条">⏭️</button>
+        <select class="speed-select" id="speedSelect" onchange="setSpeed(this.value)">
+            <option value="0.8">0.8x</option>
+            <option value="1.0" selected>1x</option>
+            <option value="1.2">1.2x</option>
+            <option value="1.5">1.5x</option>
+        </select>
+    </div>
+    <div class="progress-row">
+        <span id="progressLabel">0/66</span>
+        <div class="progress-bar-outer">
+            <div class="progress-bar-inner" id="progressBar"></div>
+        </div>
+        <span class="progress-text" id="progressText">准备就绪</span>
+    </div>
+</div>
+
+<!-- 当前朗读提示 -->
+<div class="now-playing" id="nowPlaying">
+    🔊 正在朗读：<span id="nowPlayingText"></span>
+</div>
+
+<!-- 标题 -->
+<div class="header">
+    <h1>📰 每日要闻（20260610）</h1>
+    <p class="subtitle">66条新闻 | 点🎧按钮浏览器自动朗读</p>
+</div>
+
+<!-- 岗位/新闻列表 -->
+<div id="jobList">
+
+        <div class="job-item" data-index="0" onclick="jumpTo(0)">
+            <div class="job-index">1</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">1. 🍎 苹果WWDC 2026：Siri史诗级升级+iOS 27+macOS Golden Gate，库克谢幕之作</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：ZoneMac / Winzheng / 新浪财经 ｜ 时间：20260609</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="1" onclick="jumpTo(1)">
+            <div class="job-index">2</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：苹果WWDC 2026于6月9日开幕，CEO蒂姆·库克以此作为任内最后一届开发者大会。核心发布包括：(1) 独立Siri App——可集中管理对话历史，通过iCloud跨设备同步；(2) Siri AI——基于Gemini模型，支持跨App执行任务、屏幕感知、联网问答；(3) iOS 27——...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="2" onclick="jumpTo(2)">
+            <div class="job-index">3</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">苹果AI生态的大规模升级为供应链管理和智能办公领域带来新工具需求。Siri跨App执行能力意味着未来iPhone/iPad上的采购流程、供应商沟通、库存查询等场景都可以用语音AI一键完成，这对具备供应链专业经验的求职者来说既是工具红利，也是需要快速上手的新技能。中国大陆暂时不可用也留出了12年的技能...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="3" onclick="jumpTo(3)">
+            <div class="job-index">4</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">macOS Golden Gate中Siri进入桌面工作流，对供应链管理岗位的日常工作流（邮件处理、ERP操作、报表生成）将带来范式级变化。掌握"Siri AI+Apple Intelligence"组合的人将在求职市场中领先一步。建议Gofy关注iOS 27正式发布后的AI功能，尽早建立"供应链管...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="4" onclick="jumpTo(4)">
+            <div class="job-index">5</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">WWDC的AI发布标志着消费级AI助手进入"操作系统原生"阶段，从聊天App升级为系统能力。对机械制造/供应链行业而言，AI将从"辅助工具"升级为"基础设施"，企业招聘时会越来越看重候选人的AI工具熟练度。佛山本地制造业企业的数字化转型也将因此加速。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="5" onclick="jumpTo(5)">
+            <div class="job-index">6</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">独立Siri App+跨App执行能力为3D打印/直播副业打开新通路：未来用户可能直接用Siri语音操作3D建模App、下单打印、管理订单。对液冷项目而言，苹果AI生态对端侧算力的需求增加（iOS 27部分AI功能要求iPhone 17 Pro级别芯片），意味着高性能散热需求将从数据中心下沉到消费电...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="6" onclick="jumpTo(6)">
+            <div class="job-index">7</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">苹果WWDC发布后，iOS 27对AI芯片的需求将直接利好苹果供应链企业（芯片代工、散热模组、存储等）。同时，Siri AI接入Gemini意味着Google在AI领域的商业变现能力进一步增强，Alphabet(GOOGL)长期看好。中国大陆暂不可用Siri AI，短期利好国产AI助手替代（如百度文...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="7" onclick="jumpTo(7)">
+            <div class="job-index">8</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">2. 🤖 DeepSeek招聘IDC设计规划工程师，计划自建GW级数据中心，液冷技术纳入研究</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：TechWeb / 新浪财经 ｜ 时间：20260609</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="8" onclick="jumpTo(8)">
+            <div class="job-index">9</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：DeepSeek社会招聘职位列表显示，正在招聘"IDC设计规划工程师"，岗位职责包括数据中心规划、机房基础设施架构设计、电力系统、制冷系统、网络基础设施及容量规划。特别值得注意的是，岗位要求中明确提到"研究并评估新型技术路线，包括液冷、绿电、新型储能等"。这意味着DeepSeek将从租用算力全...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="9" onclick="jumpTo(9)">
+            <div class="job-index">10</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">DeepSeek自建数据中心招聘释放了一个重要信号：AI基础设施人才需求正在从芯片设计向数据中心建设/运营全链条延伸。对Gofy而言，IDC供应链管理是一个全新且高速增长的就业赛道——数据中心建设涉及服务器采购、冷却系统、电力设备、网络设备等大量供应链管理工作，直接匹配Gofy的采购供应链背景。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="10" onclick="jumpTo(10)">
+            <div class="job-index">11</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">DeepSeek把液冷明确写入岗位要求，意味着液冷技术正从"可选"变为"必选"。对于有17年供应链管理经验、同时又在研究液冷技术的Gofy来说，这是一个极其精准的职业交叉点——兼具传统供应链管理经验和液冷技术理解的人才，在AI数据中心建设浪潮中将极度稀缺。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="11" onclick="jumpTo(11)">
+            <div class="job-index">12</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">DeepSeek+阿里Token Foundry事业部+英伟达海力士深度合作，三股力量同时推动中国AI基础设施建设进入"军备竞赛"阶段。数据中心液冷市场正在从"规模化元年"（2026）加速进入"爆发期"。GW级数据中心的冷却需求远超传统风冷上限，浸没式液冷将成为标配。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="12" onclick="jumpTo(12)">
+            <div class="job-index">13</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🎯 这是今日与Gofy液冷创业项目最直接相关的信号！ DeepSeek将液冷明确纳入IDC规划，意味着液冷需求不再是"未来趋势"而是"当前刚需"。GW级数据中心的液冷系统涉及冷却液（氟化液）、冷却塔、CDU、管路系统等全产业链，Gofy的浸没式液冷主机项目可以定位为"AI数据中心液冷技术验证的消费级...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="13" onclick="jumpTo(13)">
+            <div class="job-index">14</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">DeepSeek自建数据中心将带动A股液冷/数据中心产业链机会：英维克（精密温控）、高澜股份（液冷）、曙光数创（浸没液冷）、申菱环境（数据中心空调）等标的将直接受益。同时，氟化液供应链（巨化股份、昊华科技等）需求将大幅增长。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="14" onclick="jumpTo(14)">
+            <div class="job-index">15</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">3. 💻 腾讯WorkBuddy企业版正式发布，AI Agent从"聊天框"进"生产系统"</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：上海证券报 / 中国经营报 / 腾讯新闻 ｜ 时间：20260605至0609持续报道</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="15" onclick="jumpTo(15)">
+            <div class="job-index">16</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：6月5日腾讯云AI产业应用大会上，WorkBuddy企业版正式发布，提供三大核心能力：(1) 7×24数字员工——云端部署，离职员工的知识索引不会消失，沉淀为企业AI资产；(2) 基于"项目"的人+AI协作——同一项目空间里，人、数字员工和工具共享上下文；(3) 企业级管理后台——组织架构管理...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="16" onclick="jumpTo(16)">
+            <div class="job-index">17</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">WorkBuddy企业版的"7×24数字员工"正在重新定义企业组织形态。对Gofy的求职场景而言，这意味着：(1) 未来面试中"是否会使用AI Agent工具"将成为标配问题；(2) 供应链管理岗位的日常工作将高度依赖AI Agent处理采购订单、供应商评估、库存分析等；(3) 目前WorkBudd...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="17" onclick="jumpTo(17)">
+            <div class="job-index">18</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">WorkBuddy将岗位角色、领域方法论和技能打包为"专家"模板——这恰好匹配Gofy的供应链管理专业能力。如果Gofy能将17年供应链经验封装为WorkBuddy的专家Agent模板，等于将个人经验产品化、可复用化，在求职市场中形成极强的差异化竞争优势。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="18" onclick="jumpTo(18)">
+            <div class="job-index">19</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">WorkBuddy企业版的发布标志着中国AI Agent行业进入"企业级落地"阶段。对制造业而言，AI Agent将从个人工具升级为组织基础设施，供应链管理、采购流程、质量管控等环节将率先被AI改造。佛山作为制造业重镇，本地的数字化服务商和AI Agent实施需求将快速增长。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="19" onclick="jumpTo(19)">
+            <div class="job-index">20</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">WorkBuddy已与微信支付内测AI支付功能，探索"餐饮消费Agent化"。对Gofy的3D打印副业而言，微信AI生态（开发者内测中，可授权读取小程序）将极大降低获客和下单的技术门槛——用户通过微信直接语音下单3D人像打印将成为可能。同时，WorkBuddy的企业版架构也验证了"AI+垂直行业"的...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="20" onclick="jumpTo(20)">
+            <div class="job-index">21</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">腾讯AI Agent生态的完善直接利好腾讯控股(00700.HK)，WorkBuddy企业版的商业化将开辟新的收入增长极。同时，与WorkBuddy合作的中兴通讯、安克创新等企业将受益于AI办公效率提升。A股AI Agent概念股（如中科曙光、用友网络等）也将间接受益。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="21" onclick="jumpTo(21)">
+            <div class="job-index">22</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">4. 📊 A股6月9日强势反弹（创业板+3.93%），但缩量2.67万亿存隐忧</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：百家号 / 东方财富 ｜ 时间：20260609</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="22" onclick="jumpTo(22)">
+            <div class="job-index">23</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：6月9日A股四大指数集体反攻：上证指数涨1.28%收4010.03点（重新站上4000点），创业板指暴涨3.93%。三市总成交额2.67万亿元，较前一日缩量约1567亿。超3300只个股上涨，但多数仅是回血（从3%回到0.5%），呈现"赚指数不赚钱"特征。领涨板块为半导体、CPO、PCB、存储...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="23" onclick="jumpTo(23)">
+            <div class="job-index">24</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">A股短期波动对求职的直接影响有限，但科技板块超跌反弹说明市场对AI/半导体赛道的长期信心未破。对于正在求职的Gofy，科技制造业（半导体、AI硬件）依然是招聘需求最旺盛的方向，不应因短期市场调整而改变求职方向。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="24" onclick="jumpTo(24)">
+            <div class="job-index">25</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">存储芯片、CPO、PCB等板块成为反弹先锋，说明市场对AI算力硬件的需求叙事仍然强劲。这些板块的供应链管理岗位（采购、供应商开发）将面临持续的招聘需求，与Gofy的供应链管理背景高度匹配。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="25" onclick="jumpTo(25)">
+            <div class="job-index">26</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">缩量反弹意味着增量资金尚未入场，6月10日CPI数据将成为短期方向选择的关键。但从中长期看，"十五五"朱格拉周期+AI基建投资的大趋势不变，科技制造业的基本面依然扎实。佛山制造业企业的经营环境总体向好。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="26" onclick="jumpTo(26)">
+            <div class="job-index">27</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">A股短期博弈对液冷项目和3D打印副业的直接影响有限。但半导体板块的持续高关注度为液冷项目提供了良好的行业叙事支撑——算力芯片=散热刚需。世界杯即将开幕（明日），3D打印项目可以借势推出"世界杯主题定制手办"等营销内容。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="27" onclick="jumpTo(27)">
+            <div class="job-index">28</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">6月10日CPI数据公布前，建议保持观望。若CPI低于预期（降息预期升温），科技成长股可能继续反弹；若CPI高于预期，红利防御板块可能重新走强。关注银行、红利方向是否重启护盘，若科技回调+红利不发力，4000点难以形成有效支撑。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="28" onclick="jumpTo(28)">
+            <div class="job-index">29</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">5. 🚀 SpaceX IPO倒计时2天：估值1.77万亿美元，史上最大IPO</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：新浪财经 / 腾讯新闻 / 澎湃新闻 ｜ 时间：20260609更新</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="29" onclick="jumpTo(29)">
+            <div class="job-index">30</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：SpaceX将于6月12日在纳斯达克挂牌上市（股票代码SPCX），发行价135美元/股，发行5.556亿股，募资750亿美元，估值1.77万亿美元。此次IPO将完全由新发行股票构成，采取非传统"一口价"定价策略。2025年SpaceX营收187亿美元，运营亏损19亿美元。同时，SpaceX已与...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="30" onclick="jumpTo(30)">
+            <div class="job-index">31</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">SpaceX上市后募资750亿美元，大量资金将投入卫星互联网（Starlink）、星舰（Starship）和太空数据中心建设，将创造大量高端制造业供应链岗位。虽然这些岗位主要在美国，但SpaceX的全球供应链（包括与中国供应商的合作）也将扩张，对有国际采购经验的供应链经理是潜在机会。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="31" onclick="jumpTo(31)">
+            <div class="job-index">32</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">SpaceX IPO的成功将进一步提升"硬科技+供应链管理"复合型人才的市场价值。对Gofy而言，SpaceX等硬科技公司的供应链管理方法论（可制造性设计DFM、NPI管理、TCO模型等）与Gofy17年的实战经验高度吻合，可以作为求职叙事的一部分。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="32" onclick="jumpTo(32)">
+            <div class="job-index">33</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">SpaceX IPO+OpenAI秘密递交IPO+Anthropic接近上市，"御三家"AI相关IPO合计募资超2000亿美元。这笔巨量资金将涌入AI算力、太空通信、数据中心等硬科技基础设施，全球供应链将面临历史性的需求拉动——芯片、散热、电力设备、精密机械加工等领域的供应商将迎来黄金时代。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="33" onclick="jumpTo(33)">
+            <div class="job-index">34</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">SpaceX与Anthropic的"太空数据中心"合作证明了极端环境散热（太空真空散热）是AI基础设施的前沿方向。虽然与Gofy的消费级液冷PC距离较远，但"AI算力=散热刚需=液冷解决方案"的行业叙事得到了顶级玩家的背书。同时，SpaceX IPO带动的全球科技投资热情，有利于液冷项目的融资故事。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="34" onclick="jumpTo(34)">
+            <div class="job-index">35</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">SpaceX IPO（6/12）将成为全球资本市场年度最大事件。短期需警惕IPO虹吸效应——750亿美元融资可能抽走A股/港股的增量资金。但中长期看，SpaceX上市将带动A股卫星互联网（中国卫通、中国卫星）、商业航天（星际荣耀等未上市）板块的关注度。买入SpaceX股票的机会仅限有美股账户的投资者...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="35" onclick="jumpTo(35)">
+            <div class="job-index">36</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">6. 📱 华为HDC 2026倒计时2天：鸿蒙AI生态全面进化</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：华为开发者大会官网 / 今日头条 / 网易 ｜ 时间：20260607更新</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="36" onclick="jumpTo(36)">
+            <div class="job-index">37</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：华为开发者大会HDC 2026将于6月1214日在东莞松山湖举办，主题为鸿蒙生态全新进化与AI前沿突破。据此前nova16系列发布会上的官宣，HDC 2026将发布HarmonyOS新版本和鸿蒙AI核心能力。值得注意的是，此前网传"今年不发鸿蒙7"已被华为官方证伪——鸿蒙7将正式亮相。大会将涵...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="37" onclick="jumpTo(37)">
+            <div class="job-index">38</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">华为HDC连续在东莞松山湖举办，对广佛地区的技术从业者是天然的地理优势。华为鸿蒙生态的扩张（手机→车机→IoT→工业）将持续创造广东本地的高端制造业和供应链管理岗位。对于正在求职的Gofy，华为及鸿蒙生态链企业（如比亚迪、广汽等车机合作方）是值得关注的求职方向。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="38" onclick="jumpTo(38)">
+            <div class="job-index">39</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">鸿蒙AI核心能力的发布意味着华为将AI能力系统性地植入操作系统层，这将影响从消费电子到工业物联网的全产业链。对供应链管理岗位而言，鸿蒙AI未来可能覆盖智能制造、供应链可视化、设备预测性维护等工业场景，掌握鸿蒙AI工具将成为制造业供应链人才的加分项。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="39" onclick="jumpTo(39)">
+            <div class="job-index">40</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">鸿蒙生态的持续壮大（目前已覆盖手机、电脑、车机、IoT）将加速中国制造业的数字化智能化转型。广佛地区作为制造业重镇，大量中小制造企业有望通过鸿蒙AI实现产线智能化、管理数字化，从而创造供应链管理咨询和实施的新需求。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="40" onclick="jumpTo(40)">
+            <div class="job-index">41</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">华为在东莞松山湖，距离Gofy所在的佛山仅约1.5小时车程，地理优势明显。鸿蒙AI+制造业场景的结合为Gofy的供应链管理咨询副业提供了落地场景——可以定位为"鸿蒙AI+制造业供应链管理"的咨询专家。同时，鸿蒙车机生态的发展也利好汽车供应链方向。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="41" onclick="jumpTo(41)">
+            <div class="job-index">42</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">鸿蒙7发布将短期利好华为概念股（如润和软件、软通动力、中科创达等），尤其是鸿蒙AI相关标的。比亚迪、广汽等车机合作方也将受益。关注HDC 2026主题演讲（6月12日）中是否会发布超预期的AI能力，这可能引发A股鸿蒙概念板块的短期行情。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="42" onclick="jumpTo(42)">
+            <div class="job-index">43</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">7. ⚽ 2026美加墨世界杯明日开幕：首次三地开幕式+48队参赛</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：FIFA / 新浪财经 / 参考消息 ｜ 时间：20260609</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="43" onclick="jumpTo(43)">
+            <div class="job-index">44</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：2026年美加墨世界杯将于6月11日（北京时间6月12日03:00）在墨西哥城阿兹特克体育场正式开幕，这是世界杯历史上首次由三个国家联合承办，也是首次扩军至48支球队。本届世界杯将举行三场开幕式（墨西哥6/11、加拿大和洛杉矶6/12），FIFA主席因凡蒂诺称"开幕式将把音乐、文化和足球结合在...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="44" onclick="jumpTo(44)">
+            <div class="job-index">45</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">世界杯对就业的直接影响有限，但全球性大型赛事对供应链管理（赛事物资、场馆运营、物流配送）提出了极高要求。如果有意进入体育赛事供应链管理领域，这是一次学习和观察全球顶级赛事供应链运作的绝佳机会。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="45" onclick="jumpTo(45)">
+            <div class="job-index">46</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">世界杯期间的全球供应链运作（跨国物流、场馆设施管理、赛事物资采购）是供应链管理的最佳实践案例。Gofy可以在分析中关注世界杯供应链的运作细节，积累"大型活动供应链管理"的知识点。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="46" onclick="jumpTo(46)">
+            <div class="job-index">47</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">世界杯带动的消费电子（大屏电视、投影仪、音响）、体育用品、餐饮等领域的短期需求激增，将利好珠三角相关制造业的订单。佛山作为家电和建材制造重镇，可能间接受益于世界杯期间的海外订单增长。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="47" onclick="jumpTo(47)">
+            <div class="job-index">48</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">世界杯是3D打印项目的短期营销热点——可以推出"世界杯球星定制人像"、"世界杯纪念手办"、"球队Logo 3D打印摆件"等世界杯主题产品，通过抖音/小红书内容营销快速获客。同时，世界杯期间的直播流量高峰也为直播副业提供了内容素材（赛事解说、观赛互动等）。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="48" onclick="jumpTo(48)">
+            <div class="job-index">49</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">世界杯将短期利好体育消费板块（安踏、李宁等运动品牌）、家电出口板块（美的、格力、TCL等）、啤酒饮料板块（青岛啤酒、华润啤酒等）。但需注意，世界杯概念属于短期事件驱动，不建议追高。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="49" onclick="jumpTo(49)">
+            <div class="job-index">50</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">8. 🏭 佛山入选2026年现代商贸流通体系试点，获2亿中央资金</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：南方新闻网 / 佛山市政府 ｜ 时间：20260605确认</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="50" onclick="jumpTo(50)">
+            <div class="job-index">51</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：佛山再添一项国家级试点。2026年现代商贸流通体系试点城市名单公示期满，佛山作为本批次广东省唯一入选城市正式入围，将获得2亿元中央财政资金支持，用于2026至2028年现代商贸流通体系建设工作。试点重点任务包括数智供应链建设、城乡商贸流通网络完善、再生资源回收体系构建等三大方向。这是继佛山此前...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="51" onclick="jumpTo(51)">
+            <div class="job-index">52</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">佛山2亿元商贸流通试点资金将直接创造供应链管理、物流规划、数字化系统实施等相关岗位需求。对正在佛山求职的Gofy来说，这增加了本地高端供应链管理岗位的需求确定性。参与试点项目的企业（大型商贸流通企业、物流园区运营商等）将优先招聘有供应链管理经验的人才。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="52" onclick="jumpTo(52)">
+            <div class="job-index">53</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">数智供应链建设是本次试点的核心任务之一，这正好是Gofy的核心能力领域。Gofy可以主动关注佛山商贸流通试点的参与企业名单，针对性投递简历，将"国家级试点项目经验"作为求职的差异化亮点。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="53" onclick="jumpTo(53)">
+            <div class="job-index">54</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">佛山作为广东省唯一入选城市，意味着在商贸流通领域的政策资源将集中倾斜。对本地制造业来说，更高效的供应链网络将降低物流成本、提升订单交付效率，有助于佛山制造企业在全国乃至全球市场的竞争力提升。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="54" onclick="jumpTo(54)">
+            <div class="job-index">55</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">数智供应链建设可能衍生出供应链管理咨询、物流SaaS工具、仓储智能化改造等创业机会，与Gofy的供应链管理咨询副业方向高度吻合。2亿元中央资金将带动数倍的社会资本跟进，佛山本地的供应链服务市场将迎来新一轮增长。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="55" onclick="jumpTo(55)">
+            <div class="job-index">56</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">佛山本地物流/供应链相关上市公司（如顺丰控股、中国外运、嘉诚国际等）可能间接受益于试点政策。但直接的投资机会有限，更多是长期产业利好。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="56" onclick="jumpTo(56)">
+            <div class="job-index">57</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">9. 🧠 小米MiMo-V2.5-Pro发布：万亿参数模型仅需8张GPU，输出速度1000+ tokens/s</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：AITNT全球AI日报 ｜ 时间：20260610</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="57" onclick="jumpTo(57)">
+            <div class="job-index">58</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：小米发布万亿参数级模型MiMoV2.5ProUltraSpeed，仅需8张通用GPU即可让万亿参数模型输出速度超1000 tokens/s，速度是标准版的10倍，API价格为标准版的3倍。该模型可更快生成代码和应用，是AI大模型推理效率的重大突破。此前，小米大模型已多次降价，从MiMoV2到V...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="58" onclick="jumpTo(58)">
+            <div class="job-index">59</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">万亿参数模型仅需8张GPU就能跑到1000+ tokens/s，意味着AI大模型的使用成本和硬件门槛大幅降低。对供应链管理岗位来说，企业级AI工具（如智能采购系统、供应商评估AI）的部署成本将显著下降，中小企业也能用上大模型能力，AI辅助供应链管理将更快普及。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="59" onclick="jumpTo(59)">
+            <div class="job-index">60</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">AI工具的普及意味着求职者不仅要会用AI，更要会用AI提升供应链管理的专业水平（如用AI分析供应商数据、优化采购策略）。Gofy可以领先一步，在日常工作中（如简历优化、行业研究）主动使用大模型工具，积累"AI+N"的实战经验。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="60" onclick="jumpTo(60)">
+            <div class="job-index">61</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">小米大模型推理效率的提升将加速AI在制造业的应用落地——从产线质检到供应链优化，AI的边际成本正在趋近于零。对机械制造/供应链行业来说，AI不再是"锦上添花"而是"基础设施"，企业将越来越看重候选人的AI工具使用能力。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="61" onclick="jumpTo(61)">
+            <div class="job-index">62</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">万亿参数模型仅需8张GPU意味着液冷方案的"潜在客户群"大幅扩大——以前只有超大规模数据中心才需要液冷，现在中小企业自建AI推理集群也可能需要。同时，AI推理成本的持续下降对3D打印项目（AI生成3D模型）和直播副业（AI生成直播脚本/封面）都是直接利好。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="62" onclick="jumpTo(62)">
+            <div class="job-index">63</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">小米大模型的技术突破体现了小米在AI领域的持续投入，利好小米集团(01810.HK)的长期估值。AI推理效率提升也将利好AI应用层公司（如用友网络、广联达等），硬件门槛降低意味着更多企业可以部署AI应用。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="63" onclick="jumpTo(63)">
+            <div class="job-index">64</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🔴 本周必做</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 关注6/10 CPI数据 → 判断A股短期方向，决定是否调整投资配置。2. 关注6/12 SpaceX IPO首日表现 → 全球科技投资情绪风向标。3. 关注6/12华为HDC主题演讲 → 评估鸿蒙AI在制造业的落地场景</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="64" onclick="jumpTo(64)">
+            <div class="job-index">65</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🟡 建议做</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">4. 利用世界杯热点 → 3D打印项目推出"球星定制手办"营销内容。5. 深度使用WorkBuddy → 积累"供应链管理+AI Agent"复合能力标签。6. 追踪DeepSeek IDC招聘进展 → 作为液冷项目需求验证数据。7. 关注佛山商贸流通试点 → 对接参与企业寻求供应链管理岗位</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="65" onclick="jumpTo(65)">
+            <div class="job-index">66</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🟢 学习储备</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">8. 研究iOS 27 AI功能（Public Beta预计7月）→ Siri AI对供应链管理的赋能。9. 梳理A股液冷产业链标的（英维克/高澜/曙光数创/申菱环境）。10. 关注世界杯供应链管理的最佳实践案例</span>
+                </div>
+            </div>
+        </div>
+</div>
+
+<!-- 底部提示 -->
+<div class="float-hint" id="floatHint">
+    <span class="icon">🎧</span>
+    <span id="floatText">点击顶部播放按钮开始朗读</span>
+</div>
+
+<script>
+// ===== 数据 =====
+const items = [{"company": "1. 🍎 苹果WWDC 2026：Siri史诗级升级+iOS 27+macOS Golden Gate，库克谢幕之作", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：ZoneMac / Winzheng / 新浪财经 ｜ 时间：2026-06-09"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：苹果WWDC 2026于6月9日开幕，CEO蒂姆·库克以此作为任内最后一届开发者大会。核心发布包括：(1) 独立Siri App——可集中管理对话历史，通过iCloud跨设备同步；(2) Siri AI——基于Gemini模型，支持跨App执行任务、屏幕感知、联网问答；(3) iOS 27——App启动速度提升30%、AirDrop速度提升80%、Mail/AI深度融合；(4) macOS 27 Golden Gate——Siri进入桌面工作流，Liquid Glass设计升级；(5) 六大系统同步更新（iPadOS/watchOS/tvOS/visionOS 27）。注意：中国大陆Siri AI与Apple Intelligence暂不可用，欧盟iOS/iPadOS初期也不可用。正式版预计2026年秋季发布。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "苹果AI生态的大规模升级为供应链管理和智能办公领域带来新工具需求。Siri跨App执行能力意味着未来iPhone/iPad上的采购流程、供应商沟通、库存查询等场景都可以用语音AI一键完成，这对具备供应链专业经验的求职者来说既是工具红利，也是需要快速上手的新技能。中国大陆暂时不可用也留出了1-2年的技能储备窗口。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "macOS Golden Gate中Siri进入桌面工作流，对供应链管理岗位的日常工作流（邮件处理、ERP操作、报表生成）将带来范式级变化。掌握\"Siri AI+Apple Intelligence\"组合的人将在求职市场中领先一步。建议Gofy关注iOS 27正式发布后的AI功能，尽早建立\"供应链管理+AI工具\"的双重能力标签。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "WWDC的AI发布标志着消费级AI助手进入\"操作系统原生\"阶段，从聊天App升级为系统能力。对机械制造/供应链行业而言，AI将从\"辅助工具\"升级为\"基础设施\"，企业招聘时会越来越看重候选人的AI工具熟练度。佛山本地制造业企业的数字化转型也将因此加速。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "独立Siri App+跨App执行能力为3D打印/直播副业打开新通路：未来用户可能直接用Siri语音操作3D建模App、下单打印、管理订单。对液冷项目而言，苹果AI生态对端侧算力的需求增加（iOS 27部分AI功能要求iPhone 17 Pro级别芯片），意味着高性能散热需求将从数据中心下沉到消费电子，液冷PC的叙事逻辑得到强化。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "苹果WWDC发布后，iOS 27对AI芯片的需求将直接利好苹果供应链企业（芯片代工、散热模组、存储等）。同时，Siri AI接入Gemini意味着Google在AI领域的商业变现能力进一步增强，Alphabet(GOOGL)长期看好。中国大陆暂不可用Siri AI，短期利好国产AI助手替代（如百度文心、阿里通义等）。"}, {"company": "2. 🤖 DeepSeek招聘IDC设计规划工程师，计划自建GW级数据中心，液冷技术纳入研究", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：TechWeb / 新浪财经 ｜ 时间：2026-06-09"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：DeepSeek社会招聘职位列表显示，正在招聘\"IDC设计规划工程师\"，岗位职责包括数据中心规划、机房基础设施架构设计、电力系统、制冷系统、网络基础设施及容量规划。特别值得注意的是，岗位要求中明确提到\"研究并评估新型技术路线，包括液冷、绿电、新型储能等\"。这意味着DeepSeek将从租用算力全面转向自建MW至GW级数据中心，以支撑模型迭代和Agent产品化的长期需求。此前DeepSeek刚完成500亿融资，海南也放出800万补贴吸引注册。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "DeepSeek自建数据中心招聘释放了一个重要信号：AI基础设施人才需求正在从芯片设计向数据中心建设/运营全链条延伸。对Gofy而言，IDC供应链管理是一个全新且高速增长的就业赛道——数据中心建设涉及服务器采购、冷却系统、电力设备、网络设备等大量供应链管理工作，直接匹配Gofy的采购供应链背景。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "DeepSeek把液冷明确写入岗位要求，意味着液冷技术正从\"可选\"变为\"必选\"。对于有17年供应链管理经验、同时又在研究液冷技术的Gofy来说，这是一个极其精准的职业交叉点——兼具传统供应链管理经验和液冷技术理解的人才，在AI数据中心建设浪潮中将极度稀缺。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "DeepSeek+阿里Token Foundry事业部+英伟达-海力士深度合作，三股力量同时推动中国AI基础设施建设进入\"军备竞赛\"阶段。数据中心液冷市场正在从\"规模化元年\"（2026）加速进入\"爆发期\"。GW级数据中心的冷却需求远超传统风冷上限，浸没式液冷将成为标配。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🎯 这是今日与Gofy液冷创业项目最直接相关的信号！ DeepSeek将液冷明确纳入IDC规划，意味着液冷需求不再是\"未来趋势\"而是\"当前刚需\"。GW级数据中心的液冷系统涉及冷却液（氟化液）、冷却塔、CDU、管路系统等全产业链，Gofy的浸没式液冷主机项目可以定位为\"AI数据中心液冷技术验证的消费级入口\"——先用个人产品验证技术，再向企业级市场延伸。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "DeepSeek自建数据中心将带动A股液冷/数据中心产业链机会：英维克（精密温控）、高澜股份（液冷）、曙光数创（浸没液冷）、申菱环境（数据中心空调）等标的将直接受益。同时，氟化液供应链（巨化股份、昊华科技等）需求将大幅增长。"}, {"company": "3. 💻 腾讯WorkBuddy企业版正式发布，AI Agent从\"聊天框\"进\"生产系统\"", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：上海证券报 / 中国经营报 / 腾讯新闻 ｜ 时间：2026-06-05至06-09持续报道"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：6月5日腾讯云AI产业应用大会上，WorkBuddy企业版正式发布，提供三大核心能力：(1) 7×24数字员工——云端部署，离职员工的知识索引不会消失，沉淀为企业AI资产；(2) 基于\"项目\"的人+AI协作——同一项目空间里，人、数字员工和工具共享上下文；(3) 企业级管理后台——组织架构管理、用量统计、成本归集。同步发布办公智能体套件Agent Suite，通过One ID打通腾讯文档、腾讯网盘、腾讯乐享三大产品。据易观报告，WorkBuddy在国内PC端AI原生办公智能体中月访问量排名第一。腾讯预测2026年下半年企业级AI智能体将迎来集中落地爆发期。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "WorkBuddy企业版的\"7×24数字员工\"正在重新定义企业组织形态。对Gofy的求职场景而言，这意味着：(1) 未来面试中\"是否会使用AI Agent工具\"将成为标配问题；(2) 供应链管理岗位的日常工作将高度依赖AI Agent处理采购订单、供应商评估、库存分析等；(3) 目前WorkBuddy已与中兴通讯、美团、平安银行等20+企业共建，意味着这些企业的供应链岗位可能优先要求WorkBuddy使用经验。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "WorkBuddy将岗位角色、领域方法论和技能打包为\"专家\"模板——这恰好匹配Gofy的供应链管理专业能力。如果Gofy能将17年供应链经验封装为WorkBuddy的专家Agent模板，等于将个人经验产品化、可复用化，在求职市场中形成极强的差异化竞争优势。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "WorkBuddy企业版的发布标志着中国AI Agent行业进入\"企业级落地\"阶段。对制造业而言，AI Agent将从个人工具升级为组织基础设施，供应链管理、采购流程、质量管控等环节将率先被AI改造。佛山作为制造业重镇，本地的数字化服务商和AI Agent实施需求将快速增长。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "WorkBuddy已与微信支付内测AI支付功能，探索\"餐饮消费Agent化\"。对Gofy的3D打印副业而言，微信AI生态（开发者内测中，可授权读取小程序）将极大降低获客和下单的技术门槛——用户通过微信直接语音下单3D人像打印将成为可能。同时，WorkBuddy的企业版架构也验证了\"AI+垂直行业\"的创业方向。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "腾讯AI Agent生态的完善直接利好腾讯控股(00700.HK)，WorkBuddy企业版的商业化将开辟新的收入增长极。同时，与WorkBuddy合作的中兴通讯、安克创新等企业将受益于AI办公效率提升。A股AI Agent概念股（如中科曙光、用友网络等）也将间接受益。"}, {"company": "4. 📊 A股6月9日强势反弹（创业板+3.93%），但缩量2.67万亿存隐忧", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：百家号 / 东方财富 ｜ 时间：2026-06-09"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：6月9日A股四大指数集体反攻：上证指数涨1.28%收4010.03点（重新站上4000点），创业板指暴涨3.93%。三市总成交额2.67万亿元，较前一日缩量约1567亿。超3300只个股上涨，但多数仅是回血（从-3%回到-0.5%），呈现\"赚指数不赚钱\"特征。领涨板块为半导体、CPO、PCB、存储芯片等超跌科技股，银行、煤炭、白酒等红利板块延续疲弱。6月10日需关注中美CPI数据对盘面的影响。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "A股短期波动对求职的直接影响有限，但科技板块超跌反弹说明市场对AI/半导体赛道的长期信心未破。对于正在求职的Gofy，科技制造业（半导体、AI硬件）依然是招聘需求最旺盛的方向，不应因短期市场调整而改变求职方向。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "存储芯片、CPO、PCB等板块成为反弹先锋，说明市场对AI算力硬件的需求叙事仍然强劲。这些板块的供应链管理岗位（采购、供应商开发）将面临持续的招聘需求，与Gofy的供应链管理背景高度匹配。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "缩量反弹意味着增量资金尚未入场，6月10日CPI数据将成为短期方向选择的关键。但从中长期看，\"十五五\"朱格拉周期+AI基建投资的大趋势不变，科技制造业的基本面依然扎实。佛山制造业企业的经营环境总体向好。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "A股短期博弈对液冷项目和3D打印副业的直接影响有限。但半导体板块的持续高关注度为液冷项目提供了良好的行业叙事支撑——算力芯片=散热刚需。世界杯即将开幕（明日），3D打印项目可以借势推出\"世界杯主题定制手办\"等营销内容。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "6月10日CPI数据公布前，建议保持观望。若CPI低于预期（降息预期升温），科技成长股可能继续反弹；若CPI高于预期，红利防御板块可能重新走强。关注银行、红利方向是否重启护盘，若科技回调+红利不发力，4000点难以形成有效支撑。"}, {"company": "5. 🚀 SpaceX IPO倒计时2天：估值1.77万亿美元，史上最大IPO", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：新浪财经 / 腾讯新闻 / 澎湃新闻 ｜ 时间：2026-06-09更新"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：SpaceX将于6月12日在纳斯达克挂牌上市（股票代码SPCX），发行价135美元/股，发行5.556亿股，募资750亿美元，估值1.77万亿美元。此次IPO将完全由新发行股票构成，采取非传统\"一口价\"定价策略。2025年SpaceX营收187亿美元，运营亏损19亿美元。同时，SpaceX已与Anthropic达成百亿美元级算力合作大单，将为其AI模型提供太空数据中心支持。晨星公允价值估计在万亿级别以上。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "SpaceX上市后募资750亿美元，大量资金将投入卫星互联网（Starlink）、星舰（Starship）和太空数据中心建设，将创造大量高端制造业供应链岗位。虽然这些岗位主要在美国，但SpaceX的全球供应链（包括与中国供应商的合作）也将扩张，对有国际采购经验的供应链经理是潜在机会。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "SpaceX IPO的成功将进一步提升\"硬科技+供应链管理\"复合型人才的市场价值。对Gofy而言，SpaceX等硬科技公司的供应链管理方法论（可制造性设计DFM、NPI管理、TCO模型等）与Gofy17年的实战经验高度吻合，可以作为求职叙事的一部分。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "SpaceX IPO+OpenAI秘密递交IPO+Anthropic接近上市，\"御三家\"AI相关IPO合计募资超2000亿美元。这笔巨量资金将涌入AI算力、太空通信、数据中心等硬科技基础设施，全球供应链将面临历史性的需求拉动——芯片、散热、电力设备、精密机械加工等领域的供应商将迎来黄金时代。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "SpaceX与Anthropic的\"太空数据中心\"合作证明了极端环境散热（太空真空散热）是AI基础设施的前沿方向。虽然与Gofy的消费级液冷PC距离较远，但\"AI算力=散热刚需=液冷解决方案\"的行业叙事得到了顶级玩家的背书。同时，SpaceX IPO带动的全球科技投资热情，有利于液冷项目的融资故事。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "SpaceX IPO（6/12）将成为全球资本市场年度最大事件。短期需警惕IPO虹吸效应——750亿美元融资可能抽走A股/港股的增量资金。但中长期看，SpaceX上市将带动A股卫星互联网（中国卫通、中国卫星）、商业航天（星际荣耀等未上市）板块的关注度。买入SpaceX股票的机会仅限有美股账户的投资者。"}, {"company": "6. 📱 华为HDC 2026倒计时2天：鸿蒙AI生态全面进化", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：华为开发者大会官网 / 今日头条 / 网易 ｜ 时间：2026-06-07更新"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：华为开发者大会HDC 2026将于6月12-14日在东莞松山湖举办，主题为鸿蒙生态全新进化与AI前沿突破。据此前nova16系列发布会上的官宣，HDC 2026将发布HarmonyOS新版本和鸿蒙AI核心能力。值得注意的是，此前网传\"今年不发鸿蒙7\"已被华为官方证伪——鸿蒙7将正式亮相。大会将涵盖主题演讲、鸿蒙星光大道、互动展区、专业论坛等环节。华为同时透露将展示HarmonyOS在手机、电脑、车机、IoT等全场景的AI融合能力。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "华为HDC连续在东莞松山湖举办，对广佛地区的技术从业者是天然的地理优势。华为鸿蒙生态的扩张（手机→车机→IoT→工业）将持续创造广东本地的高端制造业和供应链管理岗位。对于正在求职的Gofy，华为及鸿蒙生态链企业（如比亚迪、广汽等车机合作方）是值得关注的求职方向。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "鸿蒙AI核心能力的发布意味着华为将AI能力系统性地植入操作系统层，这将影响从消费电子到工业物联网的全产业链。对供应链管理岗位而言，鸿蒙AI未来可能覆盖智能制造、供应链可视化、设备预测性维护等工业场景，掌握鸿蒙AI工具将成为制造业供应链人才的加分项。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "鸿蒙生态的持续壮大（目前已覆盖手机、电脑、车机、IoT）将加速中国制造业的数字化智能化转型。广佛地区作为制造业重镇，大量中小制造企业有望通过鸿蒙AI实现产线智能化、管理数字化，从而创造供应链管理咨询和实施的新需求。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "华为在东莞松山湖，距离Gofy所在的佛山仅约1.5小时车程，地理优势明显。鸿蒙AI+制造业场景的结合为Gofy的供应链管理咨询副业提供了落地场景——可以定位为\"鸿蒙AI+制造业供应链管理\"的咨询专家。同时，鸿蒙车机生态的发展也利好汽车供应链方向。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "鸿蒙7发布将短期利好华为概念股（如润和软件、软通动力、中科创达等），尤其是鸿蒙AI相关标的。比亚迪、广汽等车机合作方也将受益。关注HDC 2026主题演讲（6月12日）中是否会发布超预期的AI能力，这可能引发A股鸿蒙概念板块的短期行情。"}, {"company": "7. ⚽ 2026美加墨世界杯明日开幕：首次三地开幕式+48队参赛", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：FIFA / 新浪财经 / 参考消息 ｜ 时间：2026-06-09"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：2026年美加墨世界杯将于6月11日（北京时间6月12日03:00）在墨西哥城阿兹特克体育场正式开幕，这是世界杯历史上首次由三个国家联合承办，也是首次扩军至48支球队。本届世界杯将举行三场开幕式（墨西哥6/11、加拿大和洛杉矶6/12），FIFA主席因凡蒂诺称\"开幕式将把音乐、文化和足球结合在一起\"。揭幕战为墨西哥队的主场比赛。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "世界杯对就业的直接影响有限，但全球性大型赛事对供应链管理（赛事物资、场馆运营、物流配送）提出了极高要求。如果有意进入体育赛事供应链管理领域，这是一次学习和观察全球顶级赛事供应链运作的绝佳机会。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "世界杯期间的全球供应链运作（跨国物流、场馆设施管理、赛事物资采购）是供应链管理的最佳实践案例。Gofy可以在分析中关注世界杯供应链的运作细节，积累\"大型活动供应链管理\"的知识点。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "世界杯带动的消费电子（大屏电视、投影仪、音响）、体育用品、餐饮等领域的短期需求激增，将利好珠三角相关制造业的订单。佛山作为家电和建材制造重镇，可能间接受益于世界杯期间的海外订单增长。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "世界杯是3D打印项目的短期营销热点——可以推出\"世界杯球星定制人像\"、\"世界杯纪念手办\"、\"球队Logo 3D打印摆件\"等世界杯主题产品，通过抖音/小红书内容营销快速获客。同时，世界杯期间的直播流量高峰也为直播副业提供了内容素材（赛事解说、观赛互动等）。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "世界杯将短期利好体育消费板块（安踏、李宁等运动品牌）、家电出口板块（美的、格力、TCL等）、啤酒饮料板块（青岛啤酒、华润啤酒等）。但需注意，世界杯概念属于短期事件驱动，不建议追高。"}, {"company": "8. 🏭 佛山入选2026年现代商贸流通体系试点，获2亿中央资金", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：南方新闻网 / 佛山市政府 ｜ 时间：2026-06-05确认"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：佛山再添一项国家级试点。2026年现代商贸流通体系试点城市名单公示期满，佛山作为本批次广东省唯一入选城市正式入围，将获得2亿元中央财政资金支持，用于2026至2028年现代商贸流通体系建设工作。试点重点任务包括数智供应链建设、城乡商贸流通网络完善、再生资源回收体系构建等三大方向。这是继佛山此前多项国家级试点之后的又一突破。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "佛山2亿元商贸流通试点资金将直接创造供应链管理、物流规划、数字化系统实施等相关岗位需求。对正在佛山求职的Gofy来说，这增加了本地高端供应链管理岗位的需求确定性。参与试点项目的企业（大型商贸流通企业、物流园区运营商等）将优先招聘有供应链管理经验的人才。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "数智供应链建设是本次试点的核心任务之一，这正好是Gofy的核心能力领域。Gofy可以主动关注佛山商贸流通试点的参与企业名单，针对性投递简历，将\"国家级试点项目经验\"作为求职的差异化亮点。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "佛山作为广东省唯一入选城市，意味着在商贸流通领域的政策资源将集中倾斜。对本地制造业来说，更高效的供应链网络将降低物流成本、提升订单交付效率，有助于佛山制造企业在全国乃至全球市场的竞争力提升。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "数智供应链建设可能衍生出供应链管理咨询、物流SaaS工具、仓储智能化改造等创业机会，与Gofy的供应链管理咨询副业方向高度吻合。2亿元中央资金将带动数倍的社会资本跟进，佛山本地的供应链服务市场将迎来新一轮增长。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "佛山本地物流/供应链相关上市公司（如顺丰控股、中国外运、嘉诚国际等）可能间接受益于试点政策。但直接的投资机会有限，更多是长期产业利好。"}, {"company": "9. 🧠 小米MiMo-V2.5-Pro发布：万亿参数模型仅需8张GPU，输出速度1000+ tokens/s", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：AITNT全球AI日报 ｜ 时间：2026-06-10"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：小米发布万亿参数级模型MiMo-V2.5-Pro-UltraSpeed，仅需8张通用GPU即可让万亿参数模型输出速度超1000 tokens/s，速度是标准版的10倍，API价格为标准版的3倍。该模型可更快生成代码和应用，是AI大模型推理效率的重大突破。此前，小米大模型已多次降价，从MiMo-V2到V2.5累计降价超99%。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "万亿参数模型仅需8张GPU就能跑到1000+ tokens/s，意味着AI大模型的使用成本和硬件门槛大幅降低。对供应链管理岗位来说，企业级AI工具（如智能采购系统、供应商评估AI）的部署成本将显著下降，中小企业也能用上大模型能力，AI辅助供应链管理将更快普及。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "AI工具的普及意味着求职者不仅要会用AI，更要会用AI提升供应链管理的专业水平（如用AI分析供应商数据、优化采购策略）。Gofy可以领先一步，在日常工作中（如简历优化、行业研究）主动使用大模型工具，积累\"AI+N\"的实战经验。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "小米大模型推理效率的提升将加速AI在制造业的应用落地——从产线质检到供应链优化，AI的边际成本正在趋近于零。对机械制造/供应链行业来说，AI不再是\"锦上添花\"而是\"基础设施\"，企业将越来越看重候选人的AI工具使用能力。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "万亿参数模型仅需8张GPU意味着液冷方案的\"潜在客户群\"大幅扩大——以前只有超大规模数据中心才需要液冷，现在中小企业自建AI推理集群也可能需要。同时，AI推理成本的持续下降对3D打印项目（AI生成3D模型）和直播副业（AI生成直播脚本/封面）都是直接利好。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "小米大模型的技术突破体现了小米在AI领域的持续投入，利好小米集团(01810.HK)的长期估值。AI推理效率提升也将利好AI应用层公司（如用友网络、广联达等），硬件门槛降低意味着更多企业可以部署AI应用。"}, {"company": "🔴 本周必做", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 关注6/10 CPI数据 → 判断A股短期方向，决定是否调整投资配置。2. 关注6/12 SpaceX IPO首日表现 → 全球科技投资情绪风向标。3. 关注6/12华为HDC主题演讲 → 评估鸿蒙AI在制造业的落地场景"}, {"company": "🟡 建议做", "position": "", "salary": "", "location": "", "tag": "", "body": "4. 利用世界杯热点 → 3D打印项目推出\"球星定制手办\"营销内容。5. 深度使用WorkBuddy → 积累\"供应链管理+AI Agent\"复合能力标签。6. 追踪DeepSeek IDC招聘进展 → 作为液冷项目需求验证数据。7. 关注佛山商贸流通试点 → 对接参与企业寻求供应链管理岗位"}, {"company": "🟢 学习储备", "position": "", "salary": "", "location": "", "tag": "", "body": "8. 研究iOS 27 AI功能（Public Beta预计7月）→ Siri AI对供应链管理的赋能。9. 梳理A股液冷产业链标的（英维克/高澜/曙光数创/申菱环境）。10. 关注世界杯供应链管理的最佳实践案例"}];
+const totalItems = 66;
+const speakTemplate = "{company}。详细内容：{body}。";
+
+// ===== 状态 =====
+let currentIndex = 0;
+let isPlaying = false;
+let speechRate = 1.0;
+let readDoneSet = new Set();
+let synth = window.speechSynthesis;
+let currentUtterance = null;
+let selectedVoice = null;
+let voicesReady = false;
+
+// ===== 浏览器检测 =====
+function isQQBrowser() {
+    let ua = navigator.userAgent || '';
+    return /MQQBrowser|QQ\//i.test(ua);
+}
+function isUCBrowser() {
+    let ua = navigator.userAgent || '';
+    return /UCBrowser|UCWEB/i.test(ua);
+}
+function isWeChat() {
+    let ua = navigator.userAgent || '';
+    return /MicroMessenger/i.test(ua);
+}
+function isUnsupportedBrowser() {
+    return isQQBrowser() || isUCBrowser() || isWeChat();
+}
+
+// ===== 初始化 =====
+function init() {
+    // 浏览器检测：不支持的直接提示换浏览器
+    if (isUnsupportedBrowser()) {
+        let browserName = isQQBrowser() ? 'QQ浏览器' : (isUCBrowser() ? 'UC浏览器' : '微信内置浏览器');
+        showBrowserWarning(browserName);
+        return;
+    }
+
+    if (!synth) {
+        showBrowserWarning('当前浏览器');
+        return;
+    }
+
+    // Chrome/Edge: voices 通过异步事件加载
+    let voices = synth.getVoices();
+    if (voices && voices.length > 0) {
+        pickVoice(voices);
+    }
+
+    // 监听语音列表加载（关键！Android Chrome 需要等事件）
+    synth.onvoiceschanged = function() {
+        voices = synth.getVoices();
+        if (voices && voices.length > 0 && !voicesReady) {
+            pickVoice(voices);
+            document.getElementById('floatText').textContent =
+                '✅ 语音引擎就绪 (' + voices.length + '个) — 点🎧开始朗读';
+            document.getElementById('progressText').textContent = '就绪 ✓';
+        }
+    };
+
+    // 超时兜底：2秒后强制尝试
+    setTimeout(function() {
+        if (!voicesReady) {
+            voices = synth.getVoices();
+            if (voices && voices.length > 0) {
+                pickVoice(voices);
+            }
+            if (selectedVoice) {
+                document.getElementById('floatText').textContent =
+                    '✅ 语音引擎: ' + selectedVoice.name;
+                document.getElementById('progressText').textContent = '就绪 ✓';
+            } else {
+                document.getElementById('floatText').textContent =
+                    '⚠️ 未找到中文语音，请用系统自带 Chrome/Edge 打开';
+                document.getElementById('progressText').textContent = '无中文语音 ⚠️';
+            }
+            voicesReady = true;
+        }
+    }, 2500);
+}
+
+function showBrowserWarning(browserName) {
+    // 隐藏控制栏播放按钮
+    document.getElementById('playBtn').style.opacity = '0.3';
+    document.getElementById('playBtn').style.pointerEvents = 'none';
+    // 底部显示换浏览器提示
+    document.getElementById('floatHint').style.background = 'rgba(211,47,47,0.95)';
+    document.getElementById('floatText').innerHTML =
+        '❌ ' + browserName + '不支持语音朗读<br><small>👉 请用 <b>Chrome</b> 或 <b>Edge</b> 浏览器打开</small>';
+    document.getElementById('progressText').textContent = '❌ 浏览器不支持';
+    // 页面顶部插入醒目提示横幅
+    let banner = document.createElement('div');
+    banner.style.cssText = 'background:#FFEBEE;border-bottom:2px solid #EF5350;padding:16px;text-align:center;';
+    banner.innerHTML =
+        '<div style="font-size:40px;margin-bottom:8px;">🚫</div>' +
+        '<div style="font-size:15px;font-weight:bold;color:#C62828;margin-bottom:6px;">' +
+        browserName + ' 不支持语音朗读</div>' +
+        '<div style="font-size:14px;color:#555;line-height:1.6;">' +
+        '请用 <b style="color:#1A73E8;">Chrome</b> 或 <b style="color:#0078D4;">Edge</b> 浏览器打开即可朗读<br>' +
+        '<span style="font-size:12px;color:#999;">（应用商店搜索"Chrome"或"Edge"下载）</span></div>';
+    let header = document.querySelector('.header');
+    if (header) {
+        header.parentNode.insertBefore(banner, header);
+    }
+    // 禁用所有岗位点击
+    document.querySelectorAll('.job-item').forEach(function(el) {
+        el.style.pointerEvents = 'none';
+        el.style.opacity = '0.5';
+    });
+}
+
+function pickVoice(voices) {
+    // 优先级：zh-CN 中文女声 > zh-CN 任意 > zh-* > 第一个
+    let preferred = ['zh-CN', 'zh-Hans', 'zh-HK', 'zh-TW', 'zh'];
+    for (let lang of preferred) {
+        for (let v of voices) {
+            if (v.lang && v.lang.startsWith(lang)) {
+                // 优先女声
+                if (v.name.toLowerCase().indexOf('female') >= 0 ||
+                    v.name.indexOf('女') >= 0) {
+                    selectedVoice = v;
+                    voicesReady = true;
+                    return;
+                }
+            }
+        }
+    }
+    // 中文任意
+    for (let lang of preferred) {
+        for (let v of voices) {
+            if (v.lang && v.lang.startsWith(lang)) {
+                selectedVoice = v;
+                voicesReady = true;
+                return;
+            }
+        }
+    }
+    // 无中文语音 → 用第一个兜底
+    if (voices.length > 0) {
+        selectedVoice = voices[0];  // 用第一个兜底
+    }
+    voicesReady = true;
+}
+
+// ===== 构建朗读文本 =====
+function buildSpeakText(item) {
+    let raw = speakTemplate
+        .replace('{company}', item.company || '')
+        .replace('{position}', item.position || '')
+        .replace('{salary}', item.salary || '面议')
+        .replace('{location}', item.location || '')
+        .replace('{body}', item.body || '');
+    return _cleanForTTS(raw);
+}
+
+// ===== TTS 文本清洗：去除所有 Markdown 残留符号 =====
+function _cleanForTTS(text) {
+    if (!text) return text;
+    let cleaned = text;
+    // 去除 Markdown 标题标记 (# ## ### #### 等)
+    cleaned = cleaned.replace(/#{1,6}\s*/g, '');
+    // 去除加粗/斜体标记 (** __ * _)
+    cleaned = cleaned.replace(/\*{1,2}|_/g, '');
+    // 去除管道符 (表格)
+    cleaned = cleaned.replace(/\|/g, ' ');
+    // 去除反引号 (代码)
+    cleaned = cleaned.replace(/`+/g, '');
+    // 去除波浪线
+    cleaned = cleaned.replace(/~+/g, '');
+    // 去除分散的 -  :  标记（但不破坏正常连字符和冒号）
+    cleaned = cleaned.replace(/：/g, ':');
+    // 压缩多余空格
+    cleaned = cleaned.replace(/\s+/g, ' ');
+    // 去除连续连字符
+    cleaned = cleaned.replace(/-{2,}/g, '');
+    return cleaned.trim();
+}
+
+// ===== 朗读单条 =====
+function speakItem(index) {
+    if (index < 0 || index >= totalItems) return;
+
+    currentIndex = index;
+
+    synth.cancel();
+    let item = items[index];
+    let text = buildSpeakText(item);
+
+    let utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'zh-CN';
+    utterance.rate = speechRate;
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+    if (selectedVoice) {
+        utterance.voice = selectedVoice;
+    }
+
+    utterance.onstart = function() {
+        updateUI(index);
+        document.getElementById('nowPlaying').classList.add('active');
+        document.getElementById('nowPlayingText').textContent =
+            (item.company || '') + ' ' + (item.position || '');
+    };
+
+    utterance.onend = function() {
+        readDoneSet.add(index);
+        updateReadDone(index);
+        let next = index + 1;
+        if (next < totalItems && isPlaying) {
+            speakItem(next);
+        } else if (next >= totalItems) {
+            stopPlayback();
+            document.getElementById('floatText').textContent = '✅ 全部朗读完成！';
+            document.getElementById('progressText').textContent = '朗读完成';
+            document.getElementById('progressBar').style.width = '100%';
+            document.getElementById('progressLabel').textContent = totalItems + '/' + totalItems;
+        }
+    };
+
+    utterance.onerror = function(e) {
+        if (e.error !== 'canceled' && e.error !== 'interrupted') {
+            let errMsg = '⚠️ 朗读出错: ' + (e.error || 'unknown');
+            document.getElementById('progressText').textContent = errMsg;
+            document.getElementById('floatText').textContent =
+                errMsg + ' — 可尝试用系统自带浏览器打开';
+            let next = index + 1;
+            if (next < totalItems && isPlaying) {
+                setTimeout(function() { speakItem(next); }, 500);
+            }
+        }
+    };
+
+    currentUtterance = utterance;
+    synth.speak(utterance);
+}
+
+// ===== 播放控制 =====
+function togglePlay() {
+    if (isPlaying) {
+        pausePlayback();
+    } else {
+        startPlayback();
+    }
+}
+
+function startPlayback() {
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    document.getElementById('progressText').textContent = '朗读中...';
+    document.getElementById('floatText').textContent =
+        selectedVoice
+            ? '🔊 朗读中 (' + selectedVoice.name + ') ...'
+            : '🔊 朗读中 (系统默认语音)...';
+    speakItem(currentIndex);
+}
+
+function pausePlayback() {
+    isPlaying = false;
+    synth.cancel();
+    document.getElementById('playIcon').textContent = '🎧';
+    document.getElementById('playBtn').classList.remove('playing');
+    document.getElementById('nowPlaying').classList.remove('active');
+    document.getElementById('floatText').textContent = '⏸️ 已暂停，点击继续';
+    document.getElementById('progressText').textContent = '已暂停';
+}
+
+function stopPlayback() {
+    isPlaying = false;
+    synth.cancel();
+    document.getElementById('playIcon').textContent = '🎧';
+    document.getElementById('playBtn').classList.remove('playing');
+    document.getElementById('nowPlaying').classList.remove('active');
+    document.getElementById('floatText').textContent = '✅ 朗读完成';
+}
+
+function skipNext() {
+    synth.cancel();
+    let next = (currentIndex + 1) % totalItems;
+    currentIndex = next;
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function skipPrev() {
+    synth.cancel();
+    let prev = currentIndex - 1;
+    if (prev < 0) prev = totalItems - 1;
+    currentIndex = prev;
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function jumpTo(index) {
+    synth.cancel();
+    currentIndex = index;
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function setSpeed(val) {
+    speechRate = parseFloat(val);
+    document.getElementById('floatText').textContent =
+        '🎵 朗读速度: ' + val + 'x';
+    setTimeout(function() {
+        if (isPlaying) {
+            document.getElementById('floatText').textContent = '🔊 朗读中...';
+        }
+    }, 1500);
+}
+
+// ===== UI更新 =====
+function updateUI(index) {
+    // 进度条
+    let pct = (index / totalItems) * 100;
+    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent = (index + 1) + '/' + totalItems;
+    document.getElementById('progressText').textContent =
+        '正在朗读第 ' + (index + 1) + ' ' + '条新闻'.replace('个岗位','').replace('条新闻','');
+
+    // 高亮当前
+    document.querySelectorAll('.job-item').forEach(function(el) {
+        el.classList.remove('reading');
+    });
+    let currentEl = document.querySelector('.job-item[data-index="' + index + '"]');
+    if (currentEl) {
+        currentEl.classList.add('reading');
+        currentEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+function updateReadDone(index) {
+    let el = document.querySelector('.job-item[data-index="' + index + '"]');
+    if (el) {
+        el.classList.add('read-done');
+    }
+}
+
+// ===== 启动 =====
+init();
+
+// ===== 移动端保持屏幕唤醒（可选） =====
+if (navigator.wakeLock) {
+    try {
+        navigator.wakeLock.request('screen');
+    } catch(e) {}
+}
+</script>
+</body>
+</html>
