@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>📰 每日要闻（20260617）</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f5f5f5;
+    color: #333;
+    padding-bottom: 80px;
+}
+
+/* ===== 顶部控制栏 ===== */
+.control-bar {
+    position: sticky; top:0; z-index:100;
+    background: linear-gradient(135deg, #1A73E8 0%, #4FC3F7 100%);
+    padding: 12px 16px;
+    box-shadow: 0 2px 12px rgba(26,115,232,0.3);
+}
+.control-row {
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+}
+.control-btn {
+    width: 48px; height: 48px;
+    border: none; border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    font-size: 22px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
+.control-btn:active { transform: scale(0.9); background: rgba(255,255,255,0.35); }
+.control-btn.play-btn {
+    width: 64px; height: 64px;
+    background: #fff;
+    color: #1A73E8;
+    font-size: 28px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+.control-btn.play-btn.playing { color: #FF6B35; }
+
+.speed-select {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 14px;
+    cursor: pointer;
+    -webkit-appearance: none;
+}
+.speed-select option { color: #333; }
+
+/* ===== 进度信息 ===== */
+.progress-row {
+    display: flex; align-items: center; gap: 10px;
+    margin-top: 8px;
+    color: rgba(255,255,255,0.9);
+    font-size: 13px;
+}
+.progress-bar-outer {
+    flex: 1; height: 4px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 2px;
+    overflow: hidden;
+}
+.progress-bar-inner {
+    height: 100%;
+    background: #fff;
+    border-radius: 2px;
+    transition: width 0.3s;
+    width: 0%;
+}
+.progress-text {
+    white-space: nowrap;
+    min-width: 90px;
+    text-align: right;
+}
+
+/* ===== 当前朗读提示 ===== */
+.now-playing {
+    background: #FFF9C4;
+    padding: 8px 16px;
+    font-size: 13px;
+    color: #F57F17;
+    text-align: center;
+    display: none;
+    border-bottom: 2px solid #FFD54F;
+}
+.now-playing.active { display: block; }
+
+/* ===== 标题区 ===== */
+.header {
+    background: #fff;
+    padding: 20px 16px 12px;
+    border-bottom: 1px solid #eee;
+}
+.header h1 { font-size: 18px; color: #1A73E8; margin-bottom: 4px; }
+.header .subtitle { font-size: 13px; color: #888; }
+
+/* ===== 岗位列表 ===== */
+.job-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 14px 16px;
+    background: #fff;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
+.job-item:active { background: #f5f5f5; }
+.job-item.reading {
+    background: #E3F2FD;
+    border-left: 4px solid #1A73E8;
+    padding-left: 12px;
+}
+.job-item.read-done {
+    opacity: 0.6;
+}
+
+.job-index {
+    width: 32px; height: 32px;
+    background: #f0f0f0;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: bold;
+    color: #888;
+    flex-shrink: 0;
+}
+.job-item.reading .job-index {
+    background: #1A73E8;
+    color: #fff;
+}
+.job-item.read-done .job-index {
+    background: #4CAF50;
+    color: #fff;
+}
+
+.job-info { flex:1; min-width:0; }
+.job-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    display: flex; align-items: center; gap: 6px;
+    flex-wrap: wrap;
+}
+.job-detail {
+    font-size: 13px;
+    color: #666;
+    display: flex; flex-wrap: wrap; gap: 8px;
+}
+.position { color: #1A73E8; }
+.salary { color: #FF6B35; font-weight: bold; }
+.location { color: #888; }
+
+.tag {
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    white-space: nowrap;
+}
+.tag-new { background: #E8F5E9; color: #2E7D32; }
+.tag-repeat { background: #FFF3E0; color: #E65100; }
+.tag-update { background: #E3F2FD; color: #1565C0; }
+
+/* ===== 底部浮动条 ===== */
+.float-hint {
+    position: fixed; bottom: 0; left:0; right:0;
+    background: rgba(26,115,232,0.95);
+    color: #fff;
+    text-align: center;
+    padding: 10px 16px;
+    font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px;
+    z-index: 99;
+}
+.float-hint .icon { font-size: 20px; }
+
+/* ===== 状态标记 ===== */
+.status-badge {
+    display: inline-block;
+    background: #4CAF50;
+    color: #fff;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+    0%,100% { opacity:1; }
+    50% { opacity:0.5; }
+}
+</style>
+</head>
+<body>
+
+<!-- 控制栏 -->
+<div class="control-bar">
+    <div class="control-row">
+        <button class="control-btn" onclick="skipPrev()" title="上一条">⏮️</button>
+        <button class="control-btn play-btn" id="playBtn" onclick="togglePlay()" title="播放/暂停">
+            <span id="playIcon">🎧</span>
+        </button>
+        <button class="control-btn" onclick="skipNext()" title="下一条">⏭️</button>
+        <select class="speed-select" id="speedSelect" onchange="setSpeed(this.value)">
+            <option value="0.8">0.8x</option>
+            <option value="1.0" selected>1x</option>
+            <option value="1.2">1.2x</option>
+            <option value="1.5">1.5x</option>
+        </select>
+    </div>
+    <div class="progress-row">
+        <span id="progressLabel">0/58</span>
+        <div class="progress-bar-outer">
+            <div class="progress-bar-inner" id="progressBar"></div>
+        </div>
+        <span class="progress-text" id="progressText">准备就绪</span>
+    </div>
+</div>
+
+<!-- 当前朗读提示 -->
+<div class="now-playing" id="nowPlaying">
+    🔊 正在朗读：<span id="nowPlayingText"></span>
+</div>
+
+<!-- 标题 -->
+<div class="header">
+    <h1>📰 每日要闻（20260617）</h1>
+    <p class="subtitle">58条新闻 | 点🎧按钮浏览器自动朗读</p>
+</div>
+
+<!-- 岗位/新闻列表 -->
+<div id="jobList">
+
+        <div class="job-item" data-index="0" onclick="jumpTo(0)">
+            <div class="job-index">1</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：DeepSeek完成成立近三年来的首次外部融资，募资总额超500亿元人民币，投后估值33804000亿元，刷新国产大模型单轮融资纪录。投资方包括腾讯（100亿）、宁德时代（50亿）、网易、京东、国家大基金等；创始人梁文锋个人出资200亿元并通过特殊架构保住绝对控制权。融资将推进GW级算力布局，...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="1" onclick="jumpTo(1)">
+            <div class="job-index">2</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">五维分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 💼 工作就业：DeepSeek扩军意味着AI大模型岗位需求井喷，尤其IDC设计、液冷技术、算力调度等岗位。Gofy的液冷技术背景与DeepSeek的GW级算力布局高度匹配，可作为差异化求职路径。AI基础设施人才在佛山/广州市场上属于稀缺型人才。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="2" onclick="jumpTo(2)">
+            <div class="job-index">3</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">2. 📈 职业发展：DeepSeek从"不融资"转向"大规模融资"标志着国产AI进入产业资本阶段，供应链管理人才在AI算力基础设施领域的价值将快速上升。Gofy的TCO模型经验可迁移到AI算力采购成本优化。关注DeepSeek及其供应链合作伙伴的招聘动态。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="3" onclick="jumpTo(3)">
+            <div class="job-index">4</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3. 🏭 行业发展：GW级算力布局意味着数据中心建设将进入爆发期，液冷散热是刚需。梁文锋个人出资200亿元显示对算力基础设施的极度重视，算力供应链（服务器、液冷、电力、光纤）将迎来系统性机会。AI基础设施赛道正从"技术驱动"转向"资本+产能驱动"。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="4" onclick="jumpTo(4)">
+            <div class="job-index">5</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">4. 🚀 创业机会：DeepSeek大规模融资+GW级算力=液冷散热市场的确定性需求。Gofy的浸没式液冷项目可定位为"DeepSeek算力供应链的散热解决方案供应商"。宁德时代50亿入局说明能源+算力交叉领域获得产业资本认可，液冷+能源管理是潜在方向。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="5" onclick="jumpTo(5)">
+            <div class="job-index">6</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5. 💰 投资机会：DeepSeek估值33804000亿元，腾讯/宁德时代/国家大基金联合投资是最强背书。关注：①液冷散热概念股（依米康/英维克/高澜股份）；②AI算力基础设施（中科曙光/浪潮信息）；③国产AI芯片（与DeepSeek生态绑定公司）。短期利好AI算力产业链，中期关注DeepSeek...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="6" onclick="jumpTo(6)">
+            <div class="job-index">7</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：SpaceX上市仅4天后宣布首笔重大收购——以600亿美元全股票交易方式收购AI编程工具Cursor开发商Anysphere。Cursor现有股东将按600亿美元隐含股权价值换取SpaceX A类普通股，交易预计2026年Q3完成。若交易终止，SpaceX需向Anysphere支付40亿美元监...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="7" onclick="jumpTo(7)">
+            <div class="job-index">8</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">五维分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 💼 工作就业：SpaceX收购Cursor后将成为AI编程+航天双巨头，对AI编程、Agent开发、全栈工程师的需求大幅增加。Gofy虽非编程岗，但供应链管理在航天+AI双重供应链中的价值不可替代——SpaceX的元器件采购、制造外包、成本管控都需要资深采购管理人才。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="8" onclick="jumpTo(8)">
+            <div class="job-index">9</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">2. 📈 职业发展：SpaceX从"航天公司"升级为"AI+航天"双生态，意味着其供应链从传统航天元器件扩展到AI芯片、服务器、数据中心全链条。Gofy的MIM、熔模铸造、精密加工采购经验在航天供应链中有直接对标价值。关注SpaceX中国供应链团队招聘。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="9" onclick="jumpTo(9)">
+            <div class="job-index">10</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3. 🏭 行业发展：SpaceX收购Cursor是"AI编程"从独立赛道融入大平台的标志性事件，预示AI Agent将被大型平台整合而非独立发展。AI编程工具的竞争将从"产品力"转向"生态绑定"。对整个AI应用层而言，独立创业窗口正在收窄，"平台+AI"成为主流模式。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="10" onclick="jumpTo(10)">
+            <div class="job-index">11</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">4. 🚀 创业机会：SpaceX从航天切入AI编程，说明"AI+硬件"跨界整合是趋势。Gofy的液冷项目定位"AI硬件"与SpaceX战略方向一致。但Cursor被收购也警示：独立AI工具公司面临被巨头整合的风险，3D打印/直播副业应考虑与大平台（抖音/小红书/微信）深度绑定。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="11" onclick="jumpTo(11)">
+            <div class="job-index">12</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5. 💰 投资机会：SpaceX SPCX股价上市后持续强势（5日累涨约50%），收购Cursor将进一步推升市场对其AI叙事的预期。关注：①AI编程概念股（A股对标：金山办公/科大讯飞）；②SpaceX供应链概念（中概股中的航天/卫星供应商）；③Cursor竞争对手（GitHub Copilot/...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="12" onclick="jumpTo(12)">
+            <div class="job-index">13</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：2026陆家嘴论坛今日在上海开幕，主题"全球治理倡议下的金融发展与合作：新愿景、新挑战和新机遇"。70余名中外嘉宾参会，设8场全体大会+2场专项活动。核心议题包括：全球金融治理改革、科技金融全生命周期服务、沪港金融协同、可持续金融创新。同步通报上海国际金融中心建设最新进展：科创板"1+6"改革...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="13" onclick="jumpTo(13)">
+            <div class="job-index">14</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">五维分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 💼 工作就业：陆家嘴论坛聚焦"科技金融"意味着金融行业将加大对科技企业（含AI/机器人/新能源）的融资支持力度，制造业+科技企业的供应链岗位需求将随融资扩容而增加。Gofy可关注金融机构的产业研究/供应链金融岗位——懂制造又懂金融的复合型人才极度稀缺。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="14" onclick="jumpTo(14)">
+            <div class="job-index">15</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">2. 📈 职业发展：科创板"1+6"改革纳入32家未盈利企业+8家新增上市，说明科创企业上市门槛持续降低，供应链管理在科创企业中的职业天花板正在打开。跨境金融"18条"65项落地，意味着跨境供应链管理岗位需求将增加。Gofy的英语能力+采购背景+海外供应商经验在跨境供应链中是硬优势。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="15" onclick="jumpTo(15)">
+            <div class="job-index">16</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3. 🏭 行业发展：再保险平台交易保费同比+256%、自贸离岸债、跨境资金收付超1200亿元——金融基础设施的快速完善将为制造业和供应链提供更强支撑。科创板ETF规模2400亿元、中长期资金占比近半，说明机构资金正系统性流入科技制造赛道。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="16" onclick="jumpTo(16)">
+            <div class="job-index">17</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">4. 🚀 创业机会：科技金融全生命周期服务体系是论坛核心议题，意味着政策层面将支持科创企业从种子期到成熟期的全周期融资。Gofy的液冷项目+3D打印项目均可申请科创金融支持。跨境金融便利化也为进口原材料（氟化液等）提供了更便捷的支付通道。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="17" onclick="jumpTo(17)">
+            <div class="job-index">18</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5. 💰 投资机会：陆家嘴论坛通常伴随重大政策发布，今年重点关注：①科创板改革深化（未盈利企业上市加速）；②跨境金融新政策（互联互通扩容）；③可持续金融创新（ESG/绿色金融产品）。论坛期间可能的政策利好将直接提振金融和科技板块。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="18" onclick="jumpTo(18)">
+            <div class="job-index">19</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：美联储新任主席凯文·沃什将主持任内首次FOMC会议（6/1617），决议将于北京时间6月18日凌晨公布。CME"美联储观察"显示6月维持利率不变概率98.5%。市场聚焦三个鹰派信号：①政策信号是否偏鹰；②沃什个人风格表态；③FOMC机制改革。沃什此前偏稳健宽松，但CPI 4.2%+非农17.2...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="19" onclick="jumpTo(19)">
+            <div class="job-index">20</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">五维分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 💼 工作就业：美联储维持高利率=全球流动性偏紧=企业扩张意愿偏低=招聘市场短期不会大幅改善。但沃什偏稳健的立场意味着不会急转弯，为就业市场提供了"软着陆"的预期。Gofy应保持求职节奏，不必因宏观不确定性而观望。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="20" onclick="jumpTo(20)">
+            <div class="job-index">21</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">2. 📈 职业发展：高利率环境下，企业更看重"成本控制"能力——这恰恰是Gofy采购经理的核心竞争力。在降息预期反复推迟的背景下，"能省钱的人"比"能花钱的人"更有职场价值。供应链降本8%15%的实绩在当前宏观环境下是硬通货。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="21" onclick="jumpTo(21)">
+            <div class="job-index">22</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3. 🏭 行业发展：美联储高利率+美伊和谈=原油价格下跌（输入性通缩）+美元强势=新兴市场资本流出压力。对佛山制造业而言，原材料成本下降是利好，但出口价格竞争力可能因人民币贬值而部分对冲。整体偏中性偏利好。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="22" onclick="jumpTo(22)">
+            <div class="job-index">23</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">4. 🚀 创业机会：高利率环境下创业融资成本上升，Gofy应优先使用自有资金+佛山创业贷款（贴息50%/最高60万）等低成本资金。美联储不加息但偏鹰=不会进一步紧缩但也不会快速宽松，创业窗口期存在但不宽裕。液冷项目应加速验证，争取在降息周期前完成产品定型。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="23" onclick="jumpTo(23)">
+            <div class="job-index">24</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5. 💰 投资机会：沃什首秀最可能结果是"按兵不动+鹰派措辞"组合——不加息但暗示未来可能收紧。这种组合下：①美债收益率上行利好银行/保险；②科技股估值承压但业绩驱动型个股有支撑；③黄金短期回调（降息预期推迟），中期仍有配置价值。A股受FOMC影响有限，国内流动性主要看央行。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="24" onclick="jumpTo(24)">
+            <div class="job-index">25</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：SpaceX上市第二交易日延续强势，股价大幅收涨近20%。承销商正式全额行使超额配售权，IPO净募资总额升至857亿美元，远超沙特阿美2019年294亿美元纪录，成为全球资本市场有史以来规模最大的首次公开募股。盘后SpaceX夜盘涨超11%，若维持涨幅市值将超越亚马逊。马斯克身家突破1.3万亿...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="25" onclick="jumpTo(25)">
+            <div class="job-index">26</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">五维分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 💼 工作就业：SpaceX上市后持续强势+收购Cursor=大规模扩军信号。航天+AI双生态的供应链管理人才是刚需。Gofy可关注：①SpaceX中国供应链团队的采购/供应商管理岗位；②SpaceX供应商（尤其是佛山/广东地区的精密加工/铸造件供应商）的对接岗位。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="26" onclick="jumpTo(26)">
+            <div class="job-index">27</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">2. 📈 职业发展：SpaceX成为市值超2万亿美元的全球科技巨头，其供应链管理将需要更多"跨文化+跨品类"人才。Gofy的英语能力+MIM/熔模铸造采购经验+17年供应链管理背景，在SpaceX航天供应链中有直接对标价值。关键路径：先进入SpaceX的中国供应商体系，再内转。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="27" onclick="jumpTo(27)">
+            <div class="job-index">28</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3. 🏭 行业发展：SpaceX连续强势打破"史上最大IPO必破发"的魔咒，说明市场对"AI+航天"叙事的高度认可。857亿美元净募资=全球资本正在系统性从传统行业流向太空+AI赛道。对中国商业航天（蓝箭/天兵/星际荣耀）和液冷产业链都是重大利好。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="28" onclick="jumpTo(28)">
+            <div class="job-index">29</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">4. 🚀 创业机会：SpaceX净募资857亿美元+收购Cursor=大规模资本开支信号，AI算力基础设施（含液冷散热）是最直接受益赛道。Gofy的浸没式液冷项目可定位为"SpaceX数据中心供应链的散热方案"——虽非直接供应商，但SpaceX带动的液冷行业标准将外溢到整个市场。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="29" onclick="jumpTo(29)">
+            <div class="job-index">30</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5. 💰 投资机会：SPCX上市5日累涨约50%，短期已充分反映乐观预期，不建议追高。但SpaceX产业链值得关注：①A股液冷概念股（依米康/英维克/高澜股份）；②中国商业航天概念；③太空光伏概念（近2200亿市值铝业股已获关注）。中期逻辑：SpaceX市值超亚马逊→AI+航天成为美股最大主题→全球...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="30" onclick="jumpTo(30)">
+            <div class="job-index">31</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：AI基础设施服务商硅基流动完成超20亿元B轮融资，华兴资本担任独家财务顾问。投资方阵容豪华：携程战投、晶科能源、金蝶股份、联通新沃、壁仞战投、蔚来资本、商汤战投、巨人网络、国泰君安创新投、国开金融、中关村科学城等。目前日均Token调用量达数万亿，服务超1000万用户和1万家企业，营收同比增超...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="31" onclick="jumpTo(31)">
+            <div class="job-index">32</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">五维分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 💼 工作就业：硅基流动营收同比增10倍+20亿融资=大规模扩招信号。AI基础设施（Token供应/算力调度/MaaS平台）岗位需求正在爆发。Gofy可关注硅基流动及其生态伙伴的供应链/采购岗位——高增长AI企业对有经验的采购经理需求迫切。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="32" onclick="jumpTo(32)">
+            <div class="job-index">33</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">2. 📈 职业发展：投资方覆盖能源（晶科/蔚来）、芯片（壁仞）、云服务（联通）、SaaS（金蝶/携程）、金融（国泰君安/国开金融）——说明AI基础设施已进入"产业资本+国资"双重验证阶段。供应链管理在"Token工厂"中的价值不仅是成本控制，更涉及算力调度效率、GPU供应链稳定性、能源采购优化等新维...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="33" onclick="jumpTo(33)">
+            <div class="job-index">34</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3. 🏭 行业发展：硅基流动日均Token调用量数万亿+营收增10倍=AI推理需求正在从"开发测试"进入"生产部署"阶段。"Token工厂"模式意味着AI算力将像电力一样标准化供应，液冷散热作为算力基础设施的底层支撑，需求将随Token用量线性增长。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="34" onclick="jumpTo(34)">
+            <div class="job-index">35</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">4. 🚀 创业机会：硅基流动投资方中包含晶科能源和蔚来——能源+AI的交叉领域获得产业资本认可。Gofy的浸没式液冷项目可定位为"AI算力基础设施的散热环节"——与硅基流动"Token工厂"的逻辑一致。关键洞察：未来液冷不是"数据中心的选配"，而是"Token工厂的标配"。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="35" onclick="jumpTo(35)">
+            <div class="job-index">36</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5. 💰 投资机会：硅基流动20亿B轮融资创AI基础设施纪录，投资方阵容涵盖A股多家上市公司（金蝶/晶科/联通），关注相关概念股。更广泛的逻辑：AI基础设施=MaaS层+算力层+散热层+能源层，四层均有投资机会。液冷散热是"确定性的增量市场"。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="36" onclick="jumpTo(36)">
+            <div class="job-index">37</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：6月16日A股三大指数涨跌不一：上证指数0.11%报4091.89点，深证成指+0.93%报15675.25点，创业板指+1.72%报4102.94点。两市成交3.06万亿元（较上日+335亿）。热点轮动快，逾百股涨停。领涨板块：PCB概念（十余只涨停）、PET铜箔、电子化学品、元件、小金属、...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="37" onclick="jumpTo(37)">
+            <div class="job-index">38</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">五维分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 💼 工作就业：PCB/PET铜箔/电子化学品领涨=电子供应链景气度高企。佛山是PCB和电子元器件产业重镇，相关供应链岗位需求旺盛。Gofy的采购经验覆盖塑胶、钣金、五金冲压、铸造件等，可向电子供应链延伸。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="38" onclick="jumpTo(38)">
+            <div class="job-index">39</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">2. 📈 职业发展：创业板+1.72%但上证0.11%=结构性行情持续，科技成长传统价值。供应链管理在科技成长企业中的职业发展空间更大。煤炭/油气/房地产领跌=传统行业持续萎缩，Gofy"只考虑机械/制造业对口行业"的求职策略是正确的。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="39" onclick="jumpTo(39)">
+            <div class="job-index">40</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3. 🏭 行业发展：PCB十余只涨停=AI算力硬件需求从芯片向PCB板传导，电子制造供应链景气度上升。PET铜箔是新能源电池关键材料，与11部门新能源重卡方案形成政策+市场双驱动。3.06万亿成交+热点轮动快=资金在寻找新主线，液冷散热可能是下一个轮动方向。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="40" onclick="jumpTo(40)">
+            <div class="job-index">41</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">4. 🚀 创业机会：PCB概念涨停潮说明AI硬件供应链已从"预期"进入"业绩兑现"阶段。Gofy的3D打印项目可关注PCB快速打样市场——3D打印在电子制造工装/夹具/外壳原型中有应用空间。液冷项目应关注PCB散热需求，AI高算力PCB对散热要求极高。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="41" onclick="jumpTo(41)">
+            <div class="job-index">42</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5. 💰 投资机会：3.06万亿成交+2700只上涨=市场做多情绪尚可但非普涨。重点关注：①PCB概念（已涨停，短期追高风险大，等回调）；②PET铜箔（先导智能+15.96%领涨）；③液冷散热（尚未启动，可能是下一个轮动方向）；④回避煤炭/油气/房地产等领跌板块。本周FOMC+陆家嘴论坛+5月经济数...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="42" onclick="jumpTo(42)">
+            <div class="job-index">43</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：摩尔线程开源MusaCoder27B大模型，在KernelBench基准测试中以88.6%通过率获得第一，超越Claude Opus等国际模型。该模型可自动生成GPU内核，全流程基于国产GPU训练完成，验证了国产GPU在AI训练领域的可用性。这是国产AI芯片生态的里程碑事件。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="43" onclick="jumpTo(43)">
+            <div class="job-index">44</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">五维分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 💼 工作就业：摩尔线程MusaCoder27B证明国产GPU可完成AI训练全流程，国产AI芯片产业链岗位需求将加速增长。Gofy可关注国产AI芯片企业的供应链岗位——摩尔线程、壁仞、燧原等均在扩产阶段，对有经验的采购经理需求迫切。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="44" onclick="jumpTo(44)">
+            <div class="job-index">45</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">2. 📈 职业发展：国产GPU训练完成AI大模型=国产替代从"可用"迈向"好用"的关键一步。供应链管理在国产芯片量产阶段的角色至关重要——良率提升、成本下降、产能爬坡都需要精细的供应链管理。Gofy的MIM/熔模铸造经验可迁移到半导体封装材料采购。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="45" onclick="jumpTo(45)">
+            <div class="job-index">46</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3. 🏭 行业发展：摩尔线程+壁仞+燧原+昆仑芯，国产AI芯片在2026年已形成"多强并立"格局。国产GPU训练AI大模型成功=国产算力产业链从"技术验证"进入"商业量产"阶段。液冷散热在国产AI芯片生态中同样有需求——国产GPU功耗同样需要高效散热方案。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="46" onclick="jumpTo(46)">
+            <div class="job-index">47</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">4. 🚀 创业机会：国产GPU训练AI模型成功=国产算力基础设施加速替代进口，液冷散热作为算力基础设施的标配环节将随国产替代同步增长。Gofy的液冷项目可重点适配国产GPU（摩尔线程/壁仞/燧原）的散热需求，差异化定位"国产算力散热方案"。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="47" onclick="jumpTo(47)">
+            <div class="job-index">48</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5. 💰 投资机会：摩尔线程、壁仞等均在IPO进程中，关注国产AI芯片概念股。更直接的机会：国产GPU量产=国产算力成本下降=AI应用层受益。长期逻辑：国产替代是不可逆趋势，半导体设备/材料/散热全链条均有投资价值。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="48" onclick="jumpTo(48)">
+            <div class="job-index">49</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：支付宝上线20年来最大改版——AI版开启邀请制内测。核心包含「资产」页面和AI助手「阿宝」，用户可通过自然语言让AI调度各类原有服务，打造Agent服务入口。支付宝成为超级App+AI Agent融合的标志性案例。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="49" onclick="jumpTo(49)">
+            <div class="job-index">50</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">五维分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 💼 工作就业：支付宝AI版意味着"AI Agent"从概念进入10亿级用户场景落地，对AI产品经理、Agent开发工程师、NLP工程师需求将爆发式增长。但对传统运营/客服岗位可能产生替代效应。Gofy应关注"AI+金融服务"方向的供应链/采购岗位。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="50" onclick="jumpTo(50)">
+            <div class="job-index">51</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">2. 📈 职业发展：支付宝AI版=Agent从技术圈进入大众圈，"AI+行业"人才价值将系统性上升。Gofy的供应链管理+英语+技术背景，可定位为"AI+供应链"方向的跨界人才。关键路径：学习Agent开发基础→结合供应链专业→打造"供应链AI Agent"个人品牌。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="51" onclick="jumpTo(51)">
+            <div class="job-index">52</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3. 🏭 行业发展：支付宝AI版意味着中国互联网巨头全面进入Agent时代（腾讯混元+支付宝阿宝+字节豆包+百度文心）。Agent服务入口的竞争将从"功能比拼"转向"生态绑定"。对3D打印/直播/液冷项目而言，选择哪个Agent平台作为服务入口将成为关键战略决策。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="52" onclick="jumpTo(52)">
+            <div class="job-index">53</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">4. 🚀 创业机会：支付宝AI版=用户习惯从"主动搜索"变为"对话式交互"的范式转移。Gofy的3D打印项目可开发"支付宝小程序+阿宝Agent"的服务入口——用户通过自然语言描述需求→AI生成3D模型→下单打印。液冷项目也可通过Agent提供"AI散热方案推荐"服务。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="53" onclick="jumpTo(53)">
+            <div class="job-index">54</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5. 💰 投资机会：支付宝AI版是蚂蚁集团上市前的核心叙事升级。关注：①蚂蚁集团概念股；②AI Agent概念股（A股对标：科大讯飞/汉王科技/拓尔思）；③支付宝生态服务商（小程序开发/服务商）。中期逻辑：AI Agent=下一代操作系统，平台型公司估值将系统性提升。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="54" onclick="jumpTo(54)">
+            <div class="job-index">55</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📌 求职方向</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🔴 重点关注：DeepSeek/硅基流动等AI基础设施企业的供应链岗位——17年采购管理+液冷技术背景是强差异化优势。🔴 重点关注：SpaceX中国供应商体系中的采购/供应商管理岗位——MIM/熔模铸造经验有直接对标。🟡 建议关注：陆家嘴论坛科技金融议题——科创企业供应链金融/跨境供应链管理是新兴岗...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="55" onclick="jumpTo(55)">
+            <div class="job-index">56</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📌 创业方向</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🔴 本周必做：液冷项目适配国产GPU（摩尔线程/壁仞）散热需求——"国产算力散热方案"是差异化定位。🔴 本周必做：3D打印项目评估支付宝小程序+阿宝Agent入口——用户交互范式正在改变。🟡 建议做：关注DeepSeek GW级算力布局中的液冷散热需求——500亿融资后算力基建将加速</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="56" onclick="jumpTo(56)">
+            <div class="job-index">57</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📌 学习储备</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🔴 本周学习：AI Agent开发基础——支付宝/腾讯全面Agent化后，"供应链AI Agent"将是新职业方向。🟡 持续学习：国产AI芯片生态（摩尔线程/壁仞/燧原）——国产替代是不可逆趋势。🟡 持续关注：FOMC决议（6/18凌晨公布）+5月中国经济数据——宏观环境对创业/投资节奏影响大</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="57" onclick="jumpTo(57)">
+            <div class="job-index">58</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📌 投资参考</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🟢 短期关注：PCB/液冷散热概念（A股轮动方向，但已涨停品种等回调）。🟢 中期布局：国产AI芯片/算力基础设施（DeepSeek 500亿+硅基流动20亿=产业链确定性最强）。⚠️ 风险提示：FOMC偏鹰+美银"1994式"警报=短期市场波动加大，控制仓位</span>
+                </div>
+            </div>
+        </div>
+</div>
+
+<!-- 底部提示 -->
+<div class="float-hint" id="floatHint">
+    <span class="icon">🎧</span>
+    <span id="floatText">点击顶部播放按钮开始朗读</span>
+</div>
+
+<script>
+// ===== 数据 =====
+const items = [{"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：DeepSeek完成成立近三年来的首次外部融资，募资总额超500亿元人民币，投后估值3380-4000亿元，刷新国产大模型单轮融资纪录。投资方包括腾讯（100亿）、宁德时代（50亿）、网易、京东、国家大基金等；创始人梁文锋个人出资200亿元并通过特殊架构保住绝对控制权。融资将推进GW级算力布局，此前\"不融资、不商业化、不路演\"的铁律正式打破。"}, {"company": "五维分析", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 💼 工作就业：DeepSeek扩军意味着AI大模型岗位需求井喷，尤其IDC设计、液冷技术、算力调度等岗位。Gofy的液冷技术背景与DeepSeek的GW级算力布局高度匹配，可作为差异化求职路径。AI基础设施人才在佛山/广州市场上属于稀缺型人才。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "2. 📈 职业发展：DeepSeek从\"不融资\"转向\"大规模融资\"标志着国产AI进入产业资本阶段，供应链管理人才在AI算力基础设施领域的价值将快速上升。Gofy的TCO模型经验可迁移到AI算力采购成本优化。关注DeepSeek及其供应链合作伙伴的招聘动态。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "3. 🏭 行业发展：GW级算力布局意味着数据中心建设将进入爆发期，液冷散热是刚需。梁文锋个人出资200亿元显示对算力基础设施的极度重视，算力供应链（服务器、液冷、电力、光纤）将迎来系统性机会。AI基础设施赛道正从\"技术驱动\"转向\"资本+产能驱动\"。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "4. 🚀 创业机会：DeepSeek大规模融资+GW级算力=液冷散热市场的确定性需求。Gofy的浸没式液冷项目可定位为\"DeepSeek算力供应链的散热解决方案供应商\"。宁德时代50亿入局说明能源+算力交叉领域获得产业资本认可，液冷+能源管理是潜在方向。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "5. 💰 投资机会：DeepSeek估值3380-4000亿元，腾讯/宁德时代/国家大基金联合投资是最强背书。关注：①液冷散热概念股（依米康/英维克/高澜股份）；②AI算力基础设施（中科曙光/浪潮信息）；③国产AI芯片（与DeepSeek生态绑定公司）。短期利好AI算力产业链，中期关注DeepSeek供应链上市/并购机会。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：SpaceX上市仅4天后宣布首笔重大收购——以600亿美元全股票交易方式收购AI编程工具Cursor开发商Anysphere。Cursor现有股东将按600亿美元隐含股权价值换取SpaceX A类普通股，交易预计2026年Q3完成。若交易终止，SpaceX需向Anysphere支付40亿美元监管费用。此举标志着SpaceX从航天公司向\"AI+航天\"综合科技巨头转型。"}, {"company": "五维分析", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 💼 工作就业：SpaceX收购Cursor后将成为AI编程+航天双巨头，对AI编程、Agent开发、全栈工程师的需求大幅增加。Gofy虽非编程岗，但供应链管理在航天+AI双重供应链中的价值不可替代——SpaceX的元器件采购、制造外包、成本管控都需要资深采购管理人才。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "2. 📈 职业发展：SpaceX从\"航天公司\"升级为\"AI+航天\"双生态，意味着其供应链从传统航天元器件扩展到AI芯片、服务器、数据中心全链条。Gofy的MIM、熔模铸造、精密加工采购经验在航天供应链中有直接对标价值。关注SpaceX中国供应链团队招聘。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "3. 🏭 行业发展：SpaceX收购Cursor是\"AI编程\"从独立赛道融入大平台的标志性事件，预示AI Agent将被大型平台整合而非独立发展。AI编程工具的竞争将从\"产品力\"转向\"生态绑定\"。对整个AI应用层而言，独立创业窗口正在收窄，\"平台+AI\"成为主流模式。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "4. 🚀 创业机会：SpaceX从航天切入AI编程，说明\"AI+硬件\"跨界整合是趋势。Gofy的液冷项目定位\"AI硬件\"与SpaceX战略方向一致。但Cursor被收购也警示：独立AI工具公司面临被巨头整合的风险，3D打印/直播副业应考虑与大平台（抖音/小红书/微信）深度绑定。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "5. 💰 投资机会：SpaceX SPCX股价上市后持续强势（5日累涨约50%），收购Cursor将进一步推升市场对其AI叙事的预期。关注：①AI编程概念股（A股对标：金山办公/科大讯飞）；②SpaceX供应链概念（中概股中的航天/卫星供应商）；③Cursor竞争对手（GitHub Copilot/MongoDB等）的估值重估机会。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：2026陆家嘴论坛今日在上海开幕，主题\"全球治理倡议下的金融发展与合作：新愿景、新挑战和新机遇\"。70余名中外嘉宾参会，设8场全体大会+2场专项活动。核心议题包括：全球金融治理改革、科技金融全生命周期服务、沪港金融协同、可持续金融创新。同步通报上海国际金融中心建设最新进展：科创板\"1+6\"改革已纳入32家未盈利企业、跨境金融\"18条\"65项已落地、再保险平台交易保费75亿元（同比+256%）。"}, {"company": "五维分析", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 💼 工作就业：陆家嘴论坛聚焦\"科技金融\"意味着金融行业将加大对科技企业（含AI/机器人/新能源）的融资支持力度，制造业+科技企业的供应链岗位需求将随融资扩容而增加。Gofy可关注金融机构的产业研究/供应链金融岗位——懂制造又懂金融的复合型人才极度稀缺。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "2. 📈 职业发展：科创板\"1+6\"改革纳入32家未盈利企业+8家新增上市，说明科创企业上市门槛持续降低，供应链管理在科创企业中的职业天花板正在打开。跨境金融\"18条\"65项落地，意味着跨境供应链管理岗位需求将增加。Gofy的英语能力+采购背景+海外供应商经验在跨境供应链中是硬优势。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "3. 🏭 行业发展：再保险平台交易保费同比+256%、自贸离岸债、跨境资金收付超1200亿元——金融基础设施的快速完善将为制造业和供应链提供更强支撑。科创板ETF规模2400亿元、中长期资金占比近半，说明机构资金正系统性流入科技制造赛道。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "4. 🚀 创业机会：科技金融全生命周期服务体系是论坛核心议题，意味着政策层面将支持科创企业从种子期到成熟期的全周期融资。Gofy的液冷项目+3D打印项目均可申请科创金融支持。跨境金融便利化也为进口原材料（氟化液等）提供了更便捷的支付通道。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "5. 💰 投资机会：陆家嘴论坛通常伴随重大政策发布，今年重点关注：①科创板改革深化（未盈利企业上市加速）；②跨境金融新政策（互联互通扩容）；③可持续金融创新（ESG/绿色金融产品）。论坛期间可能的政策利好将直接提振金融和科技板块。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：美联储新任主席凯文·沃什将主持任内首次FOMC会议（6/16-17），决议将于北京时间6月18日凌晨公布。CME\"美联储观察\"显示6月维持利率不变概率98.5%。市场聚焦三个鹰派信号：①政策信号是否偏鹰；②沃什个人风格表态；③FOMC机制改革。沃什此前偏稳健宽松，但CPI 4.2%+非农17.2万超预期的双重压力下，7月加息概率已升至15-20%。美银拉响\"1994式\"警报，警告美股牛市可能终结。"}, {"company": "五维分析", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 💼 工作就业：美联储维持高利率=全球流动性偏紧=企业扩张意愿偏低=招聘市场短期不会大幅改善。但沃什偏稳健的立场意味着不会急转弯，为就业市场提供了\"软着陆\"的预期。Gofy应保持求职节奏，不必因宏观不确定性而观望。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "2. 📈 职业发展：高利率环境下，企业更看重\"成本控制\"能力——这恰恰是Gofy采购经理的核心竞争力。在降息预期反复推迟的背景下，\"能省钱的人\"比\"能花钱的人\"更有职场价值。供应链降本8%-15%的实绩在当前宏观环境下是硬通货。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "3. 🏭 行业发展：美联储高利率+美伊和谈=原油价格下跌（输入性通缩）+美元强势=新兴市场资本流出压力。对佛山制造业而言，原材料成本下降是利好，但出口价格竞争力可能因人民币贬值而部分对冲。整体偏中性偏利好。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "4. 🚀 创业机会：高利率环境下创业融资成本上升，Gofy应优先使用自有资金+佛山创业贷款（贴息50%/最高60万）等低成本资金。美联储不加息但偏鹰=不会进一步紧缩但也不会快速宽松，创业窗口期存在但不宽裕。液冷项目应加速验证，争取在降息周期前完成产品定型。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "5. 💰 投资机会：沃什首秀最可能结果是\"按兵不动+鹰派措辞\"组合——不加息但暗示未来可能收紧。这种组合下：①美债收益率上行利好银行/保险；②科技股估值承压但业绩驱动型个股有支撑；③黄金短期回调（降息预期推迟），中期仍有配置价值。A股受FOMC影响有限，国内流动性主要看央行。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：SpaceX上市第二交易日延续强势，股价大幅收涨近20%。承销商正式全额行使超额配售权，IPO净募资总额升至857亿美元，远超沙特阿美2019年294亿美元纪录，成为全球资本市场有史以来规模最大的首次公开募股。盘后SpaceX夜盘涨超11%，若维持涨幅市值将超越亚马逊。马斯克身家突破1.3万亿美元，相当于8.8个巴菲特。"}, {"company": "五维分析", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 💼 工作就业：SpaceX上市后持续强势+收购Cursor=大规模扩军信号。航天+AI双生态的供应链管理人才是刚需。Gofy可关注：①SpaceX中国供应链团队的采购/供应商管理岗位；②SpaceX供应商（尤其是佛山/广东地区的精密加工/铸造件供应商）的对接岗位。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "2. 📈 职业发展：SpaceX成为市值超2万亿美元的全球科技巨头，其供应链管理将需要更多\"跨文化+跨品类\"人才。Gofy的英语能力+MIM/熔模铸造采购经验+17年供应链管理背景，在SpaceX航天供应链中有直接对标价值。关键路径：先进入SpaceX的中国供应商体系，再内转。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "3. 🏭 行业发展：SpaceX连续强势打破\"史上最大IPO必破发\"的魔咒，说明市场对\"AI+航天\"叙事的高度认可。857亿美元净募资=全球资本正在系统性从传统行业流向太空+AI赛道。对中国商业航天（蓝箭/天兵/星际荣耀）和液冷产业链都是重大利好。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "4. 🚀 创业机会：SpaceX净募资857亿美元+收购Cursor=大规模资本开支信号，AI算力基础设施（含液冷散热）是最直接受益赛道。Gofy的浸没式液冷项目可定位为\"SpaceX数据中心供应链的散热方案\"——虽非直接供应商，但SpaceX带动的液冷行业标准将外溢到整个市场。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "5. 💰 投资机会：SPCX上市5日累涨约50%，短期已充分反映乐观预期，不建议追高。但SpaceX产业链值得关注：①A股液冷概念股（依米康/英维克/高澜股份）；②中国商业航天概念；③太空光伏概念（近2200亿市值铝业股已获关注）。中期逻辑：SpaceX市值超亚马逊→AI+航天成为美股最大主题→全球资金轮动至相关产业链。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：AI基础设施服务商硅基流动完成超20亿元B轮融资，华兴资本担任独家财务顾问。投资方阵容豪华：携程战投、晶科能源、金蝶股份、联通新沃、壁仞战投、蔚来资本、商汤战投、巨人网络、国泰君安创新投、国开金融、中关村科学城等。目前日均Token调用量达数万亿，服务超1000万用户和1万家企业，营收同比增超10倍。硅基流动要做\"全球最好的Token供应平台\"。"}, {"company": "五维分析", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 💼 工作就业：硅基流动营收同比增10倍+20亿融资=大规模扩招信号。AI基础设施（Token供应/算力调度/MaaS平台）岗位需求正在爆发。Gofy可关注硅基流动及其生态伙伴的供应链/采购岗位——高增长AI企业对有经验的采购经理需求迫切。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "2. 📈 职业发展：投资方覆盖能源（晶科/蔚来）、芯片（壁仞）、云服务（联通）、SaaS（金蝶/携程）、金融（国泰君安/国开金融）——说明AI基础设施已进入\"产业资本+国资\"双重验证阶段。供应链管理在\"Token工厂\"中的价值不仅是成本控制，更涉及算力调度效率、GPU供应链稳定性、能源采购优化等新维度。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "3. 🏭 行业发展：硅基流动日均Token调用量数万亿+营收增10倍=AI推理需求正在从\"开发测试\"进入\"生产部署\"阶段。\"Token工厂\"模式意味着AI算力将像电力一样标准化供应，液冷散热作为算力基础设施的底层支撑，需求将随Token用量线性增长。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "4. 🚀 创业机会：硅基流动投资方中包含晶科能源和蔚来——能源+AI的交叉领域获得产业资本认可。Gofy的浸没式液冷项目可定位为\"AI算力基础设施的散热环节\"——与硅基流动\"Token工厂\"的逻辑一致。关键洞察：未来液冷不是\"数据中心的选配\"，而是\"Token工厂的标配\"。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "5. 💰 投资机会：硅基流动20亿B轮融资创AI基础设施纪录，投资方阵容涵盖A股多家上市公司（金蝶/晶科/联通），关注相关概念股。更广泛的逻辑：AI基础设施=MaaS层+算力层+散热层+能源层，四层均有投资机会。液冷散热是\"确定性的增量市场\"。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：6月16日A股三大指数涨跌不一：上证指数-0.11%报4091.89点，深证成指+0.93%报15675.25点，创业板指+1.72%报4102.94点。两市成交3.06万亿元（较上日+335亿）。热点轮动快，逾百股涨停。领涨板块：PCB概念（十余只涨停）、PET铜箔、电子化学品、元件、小金属、半导体。领跌板块：煤炭、影视、贵金属、油气、港口、房地产。全市场超2700只个股上涨。科创指数再度走强，风格分化明显。"}, {"company": "五维分析", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 💼 工作就业：PCB/PET铜箔/电子化学品领涨=电子供应链景气度高企。佛山是PCB和电子元器件产业重镇，相关供应链岗位需求旺盛。Gofy的采购经验覆盖塑胶、钣金、五金冲压、铸造件等，可向电子供应链延伸。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "2. 📈 职业发展：创业板+1.72%但上证-0.11%=结构性行情持续，科技成长>传统价值。供应链管理在科技成长企业中的职业发展空间更大。煤炭/油气/房地产领跌=传统行业持续萎缩，Gofy\"只考虑机械/制造业对口行业\"的求职策略是正确的。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "3. 🏭 行业发展：PCB十余只涨停=AI算力硬件需求从芯片向PCB板传导，电子制造供应链景气度上升。PET铜箔是新能源电池关键材料，与11部门新能源重卡方案形成政策+市场双驱动。3.06万亿成交+热点轮动快=资金在寻找新主线，液冷散热可能是下一个轮动方向。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "4. 🚀 创业机会：PCB概念涨停潮说明AI硬件供应链已从\"预期\"进入\"业绩兑现\"阶段。Gofy的3D打印项目可关注PCB快速打样市场——3D打印在电子制造工装/夹具/外壳原型中有应用空间。液冷项目应关注PCB散热需求，AI高算力PCB对散热要求极高。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "5. 💰 投资机会：3.06万亿成交+2700只上涨=市场做多情绪尚可但非普涨。重点关注：①PCB概念（已涨停，短期追高风险大，等回调）；②PET铜箔（先导智能+15.96%领涨）；③液冷散热（尚未启动，可能是下一个轮动方向）；④回避煤炭/油气/房地产等领跌板块。本周FOMC+陆家嘴论坛+5月经济数据密集，注意控制仓位。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：摩尔线程开源MusaCoder-27B大模型，在KernelBench基准测试中以88.6%通过率获得第一，超越Claude Opus等国际模型。该模型可自动生成GPU内核，全流程基于国产GPU训练完成，验证了国产GPU在AI训练领域的可用性。这是国产AI芯片生态的里程碑事件。"}, {"company": "五维分析", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 💼 工作就业：摩尔线程MusaCoder-27B证明国产GPU可完成AI训练全流程，国产AI芯片产业链岗位需求将加速增长。Gofy可关注国产AI芯片企业的供应链岗位——摩尔线程、壁仞、燧原等均在扩产阶段，对有经验的采购经理需求迫切。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "2. 📈 职业发展：国产GPU训练完成AI大模型=国产替代从\"可用\"迈向\"好用\"的关键一步。供应链管理在国产芯片量产阶段的角色至关重要——良率提升、成本下降、产能爬坡都需要精细的供应链管理。Gofy的MIM/熔模铸造经验可迁移到半导体封装材料采购。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "3. 🏭 行业发展：摩尔线程+壁仞+燧原+昆仑芯，国产AI芯片在2026年已形成\"多强并立\"格局。国产GPU训练AI大模型成功=国产算力产业链从\"技术验证\"进入\"商业量产\"阶段。液冷散热在国产AI芯片生态中同样有需求——国产GPU功耗同样需要高效散热方案。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "4. 🚀 创业机会：国产GPU训练AI模型成功=国产算力基础设施加速替代进口，液冷散热作为算力基础设施的标配环节将随国产替代同步增长。Gofy的液冷项目可重点适配国产GPU（摩尔线程/壁仞/燧原）的散热需求，差异化定位\"国产算力散热方案\"。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "5. 💰 投资机会：摩尔线程、壁仞等均在IPO进程中，关注国产AI芯片概念股。更直接的机会：国产GPU量产=国产算力成本下降=AI应用层受益。长期逻辑：国产替代是不可逆趋势，半导体设备/材料/散热全链条均有投资价值。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：支付宝上线20年来最大改版——AI版开启邀请制内测。核心包含「资产」页面和AI助手「阿宝」，用户可通过自然语言让AI调度各类原有服务，打造Agent服务入口。支付宝成为超级App+AI Agent融合的标志性案例。"}, {"company": "五维分析", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 💼 工作就业：支付宝AI版意味着\"AI Agent\"从概念进入10亿级用户场景落地，对AI产品经理、Agent开发工程师、NLP工程师需求将爆发式增长。但对传统运营/客服岗位可能产生替代效应。Gofy应关注\"AI+金融服务\"方向的供应链/采购岗位。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "2. 📈 职业发展：支付宝AI版=Agent从技术圈进入大众圈，\"AI+行业\"人才价值将系统性上升。Gofy的供应链管理+英语+技术背景，可定位为\"AI+供应链\"方向的跨界人才。关键路径：学习Agent开发基础→结合供应链专业→打造\"供应链AI Agent\"个人品牌。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "3. 🏭 行业发展：支付宝AI版意味着中国互联网巨头全面进入Agent时代（腾讯混元+支付宝阿宝+字节豆包+百度文心）。Agent服务入口的竞争将从\"功能比拼\"转向\"生态绑定\"。对3D打印/直播/液冷项目而言，选择哪个Agent平台作为服务入口将成为关键战略决策。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "4. 🚀 创业机会：支付宝AI版=用户习惯从\"主动搜索\"变为\"对话式交互\"的范式转移。Gofy的3D打印项目可开发\"支付宝小程序+阿宝Agent\"的服务入口——用户通过自然语言描述需求→AI生成3D模型→下单打印。液冷项目也可通过Agent提供\"AI散热方案推荐\"服务。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "5. 💰 投资机会：支付宝AI版是蚂蚁集团上市前的核心叙事升级。关注：①蚂蚁集团概念股；②AI Agent概念股（A股对标：科大讯飞/汉王科技/拓尔思）；③支付宝生态服务商（小程序开发/服务商）。中期逻辑：AI Agent=下一代操作系统，平台型公司估值将系统性提升。"}, {"company": "📌 求职方向", "position": "", "salary": "", "location": "", "tag": "", "body": "🔴 重点关注：DeepSeek/硅基流动等AI基础设施企业的供应链岗位——17年采购管理+液冷技术背景是强差异化优势。🔴 重点关注：SpaceX中国供应商体系中的采购/供应商管理岗位——MIM/熔模铸造经验有直接对标。🟡 建议关注：陆家嘴论坛科技金融议题——科创企业供应链金融/跨境供应链管理是新兴岗位方向"}, {"company": "📌 创业方向", "position": "", "salary": "", "location": "", "tag": "", "body": "🔴 本周必做：液冷项目适配国产GPU（摩尔线程/壁仞）散热需求——\"国产算力散热方案\"是差异化定位。🔴 本周必做：3D打印项目评估支付宝小程序+阿宝Agent入口——用户交互范式正在改变。🟡 建议做：关注DeepSeek GW级算力布局中的液冷散热需求——500亿融资后算力基建将加速"}, {"company": "📌 学习储备", "position": "", "salary": "", "location": "", "tag": "", "body": "🔴 本周学习：AI Agent开发基础——支付宝/腾讯全面Agent化后，\"供应链AI Agent\"将是新职业方向。🟡 持续学习：国产AI芯片生态（摩尔线程/壁仞/燧原）——国产替代是不可逆趋势。🟡 持续关注：FOMC决议（6/18凌晨公布）+5月中国经济数据——宏观环境对创业/投资节奏影响大"}, {"company": "📌 投资参考", "position": "", "salary": "", "location": "", "tag": "", "body": "🟢 短期关注：PCB/液冷散热概念（A股轮动方向，但已涨停品种等回调）。🟢 中期布局：国产AI芯片/算力基础设施（DeepSeek 500亿+硅基流动20亿=产业链确定性最强）。⚠️ 风险提示：FOMC偏鹰+美银\"1994式\"警报=短期市场波动加大，控制仓位"}];
+const totalItems = 58;
+const speakTemplate = "{company}。详细内容：{body}。";
+
+// ===== 状态 =====
+let currentIndex = 0;
+let isPlaying = false;
+let speechRate = 1.0;
+let readDoneSet = new Set();
+let synth = window.speechSynthesis;
+let currentUtterance = null;
+let selectedVoice = null;
+let voicesReady = false;
+
+// ===== 浏览器检测 =====
+function isQQBrowser() {
+    let ua = navigator.userAgent || '';
+    return /MQQBrowser|QQ\//i.test(ua);
+}
+function isUCBrowser() {
+    let ua = navigator.userAgent || '';
+    return /UCBrowser|UCWEB/i.test(ua);
+}
+function isWeChat() {
+    let ua = navigator.userAgent || '';
+    return /MicroMessenger/i.test(ua);
+}
+function isUnsupportedBrowser() {
+    return isQQBrowser() || isUCBrowser() || isWeChat();
+}
+
+// ===== 初始化 =====
+function init() {
+    // 浏览器检测：不支持的直接提示换浏览器
+    if (isUnsupportedBrowser()) {
+        let browserName = isQQBrowser() ? 'QQ浏览器' : (isUCBrowser() ? 'UC浏览器' : '微信内置浏览器');
+        showBrowserWarning(browserName);
+        return;
+    }
+
+    if (!synth) {
+        showBrowserWarning('当前浏览器');
+        return;
+    }
+
+    // Chrome/Edge: voices 通过异步事件加载
+    let voices = synth.getVoices();
+    if (voices && voices.length > 0) {
+        pickVoice(voices);
+    }
+
+    // 监听语音列表加载（关键！Android Chrome 需要等事件）
+    synth.onvoiceschanged = function() {
+        voices = synth.getVoices();
+        if (voices && voices.length > 0 && !voicesReady) {
+            pickVoice(voices);
+            document.getElementById('floatText').textContent =
+                '✅ 语音引擎就绪 (' + voices.length + '个) — 点🎧开始朗读';
+            document.getElementById('progressText').textContent = '就绪 ✓';
+        }
+    };
+
+    // 超时兜底：2秒后强制尝试
+    setTimeout(function() {
+        if (!voicesReady) {
+            voices = synth.getVoices();
+            if (voices && voices.length > 0) {
+                pickVoice(voices);
+            }
+            if (selectedVoice) {
+                document.getElementById('floatText').textContent =
+                    '✅ 语音引擎: ' + selectedVoice.name;
+                document.getElementById('progressText').textContent = '就绪 ✓';
+            } else {
+                document.getElementById('floatText').textContent =
+                    '⚠️ 未找到中文语音，请用系统自带 Chrome/Edge 打开';
+                document.getElementById('progressText').textContent = '无中文语音 ⚠️';
+            }
+            voicesReady = true;
+        }
+    }, 2500);
+}
+
+function showBrowserWarning(browserName) {
+    // 隐藏控制栏播放按钮
+    document.getElementById('playBtn').style.opacity = '0.3';
+    document.getElementById('playBtn').style.pointerEvents = 'none';
+    // 底部显示换浏览器提示
+    document.getElementById('floatHint').style.background = 'rgba(211,47,47,0.95)';
+    document.getElementById('floatText').innerHTML =
+        '❌ ' + browserName + '不支持语音朗读<br><small>👉 请用 <b>Chrome</b> 或 <b>Edge</b> 浏览器打开</small>';
+    document.getElementById('progressText').textContent = '❌ 浏览器不支持';
+    // 页面顶部插入醒目提示横幅
+    let banner = document.createElement('div');
+    banner.style.cssText = 'background:#FFEBEE;border-bottom:2px solid #EF5350;padding:16px;text-align:center;';
+    banner.innerHTML =
+        '<div style="font-size:40px;margin-bottom:8px;">🚫</div>' +
+        '<div style="font-size:15px;font-weight:bold;color:#C62828;margin-bottom:6px;">' +
+        browserName + ' 不支持语音朗读</div>' +
+        '<div style="font-size:14px;color:#555;line-height:1.6;">' +
+        '请用 <b style="color:#1A73E8;">Chrome</b> 或 <b style="color:#0078D4;">Edge</b> 浏览器打开即可朗读<br>' +
+        '<span style="font-size:12px;color:#999;">（应用商店搜索"Chrome"或"Edge"下载）</span></div>';
+    let header = document.querySelector('.header');
+    if (header) {
+        header.parentNode.insertBefore(banner, header);
+    }
+    // 禁用所有岗位点击
+    document.querySelectorAll('.job-item').forEach(function(el) {
+        el.style.pointerEvents = 'none';
+        el.style.opacity = '0.5';
+    });
+}
+
+function pickVoice(voices) {
+    // 优先级：zh-CN 中文女声 > zh-CN 任意 > zh-* > 第一个
+    let preferred = ['zh-CN', 'zh-Hans', 'zh-HK', 'zh-TW', 'zh'];
+    for (let lang of preferred) {
+        for (let v of voices) {
+            if (v.lang && v.lang.startsWith(lang)) {
+                // 优先女声
+                if (v.name.toLowerCase().indexOf('female') >= 0 ||
+                    v.name.indexOf('女') >= 0) {
+                    selectedVoice = v;
+                    voicesReady = true;
+                    return;
+                }
+            }
+        }
+    }
+    // 中文任意
+    for (let lang of preferred) {
+        for (let v of voices) {
+            if (v.lang && v.lang.startsWith(lang)) {
+                selectedVoice = v;
+                voicesReady = true;
+                return;
+            }
+        }
+    }
+    // 无中文语音 → 用第一个兜底
+    if (voices.length > 0) {
+        selectedVoice = voices[0];  // 用第一个兜底
+    }
+    voicesReady = true;
+}
+
+// ===== 构建朗读文本 =====
+function buildSpeakText(item) {
+    let raw = speakTemplate
+        .replace('{company}', item.company || '')
+        .replace('{position}', item.position || '')
+        .replace('{salary}', item.salary || '面议')
+        .replace('{location}', item.location || '')
+        .replace('{body}', item.body || '');
+    return _cleanForTTS(raw);
+}
+
+// ===== TTS 文本清洗：去除所有 Markdown 残留符号 =====
+function _cleanForTTS(text) {
+    if (!text) return text;
+    let cleaned = text;
+    // 去除 Markdown 标题标记 (# ## ### #### 等)
+    cleaned = cleaned.replace(/#{1,6}\s*/g, '');
+    // 去除加粗/斜体标记 (** __ * _)
+    cleaned = cleaned.replace(/\*{1,2}|_/g, '');
+    // 去除管道符 (表格)
+    cleaned = cleaned.replace(/\|/g, ' ');
+    // 去除反引号 (代码)
+    cleaned = cleaned.replace(/`+/g, '');
+    // 去除波浪线
+    cleaned = cleaned.replace(/~+/g, '');
+    // 去除分散的 -  :  标记（但不破坏正常连字符和冒号）
+    cleaned = cleaned.replace(/：/g, ':');
+    // 压缩多余空格
+    cleaned = cleaned.replace(/\s+/g, ' ');
+    // 去除连续连字符
+    cleaned = cleaned.replace(/-{2,}/g, '');
+    return cleaned.trim();
+}
+
+// ===== 朗读单条 =====
+function speakItem(index) {
+    if (index < 0 || index >= totalItems) return;
+
+    currentIndex = index;
+
+    synth.cancel();
+    let item = items[index];
+    let text = buildSpeakText(item);
+
+    let utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'zh-CN';
+    utterance.rate = speechRate;
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+    if (selectedVoice) {
+        utterance.voice = selectedVoice;
+    }
+
+    utterance.onstart = function() {
+        updateUI(index);
+        document.getElementById('nowPlaying').classList.add('active');
+        document.getElementById('nowPlayingText').textContent =
+            (item.company || '') + ' ' + (item.position || '');
+    };
+
+    utterance.onend = function() {
+        readDoneSet.add(index);
+        updateReadDone(index);
+        let next = index + 1;
+        if (next < totalItems && isPlaying) {
+            speakItem(next);
+        } else if (next >= totalItems) {
+            stopPlayback();
+            document.getElementById('floatText').textContent = '✅ 全部朗读完成！';
+            document.getElementById('progressText').textContent = '朗读完成';
+            document.getElementById('progressBar').style.width = '100%';
+            document.getElementById('progressLabel').textContent = totalItems + '/' + totalItems;
+        }
+    };
+
+    utterance.onerror = function(e) {
+        if (e.error !== 'canceled' && e.error !== 'interrupted') {
+            let errMsg = '⚠️ 朗读出错: ' + (e.error || 'unknown');
+            document.getElementById('progressText').textContent = errMsg;
+            document.getElementById('floatText').textContent =
+                errMsg + ' — 可尝试用系统自带浏览器打开';
+            let next = index + 1;
+            if (next < totalItems && isPlaying) {
+                setTimeout(function() { speakItem(next); }, 500);
+            }
+        }
+    };
+
+    currentUtterance = utterance;
+    synth.speak(utterance);
+}
+
+// ===== 播放控制 =====
+function togglePlay() {
+    if (isPlaying) {
+        pausePlayback();
+    } else {
+        startPlayback();
+    }
+}
+
+function startPlayback() {
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    document.getElementById('progressText').textContent = '朗读中...';
+    document.getElementById('floatText').textContent =
+        selectedVoice
+            ? '🔊 朗读中 (' + selectedVoice.name + ') ...'
+            : '🔊 朗读中 (系统默认语音)...';
+    speakItem(currentIndex);
+}
+
+function pausePlayback() {
+    isPlaying = false;
+    synth.cancel();
+    document.getElementById('playIcon').textContent = '🎧';
+    document.getElementById('playBtn').classList.remove('playing');
+    document.getElementById('nowPlaying').classList.remove('active');
+    document.getElementById('floatText').textContent = '⏸️ 已暂停，点击继续';
+    document.getElementById('progressText').textContent = '已暂停';
+}
+
+function stopPlayback() {
+    isPlaying = false;
+    synth.cancel();
+    document.getElementById('playIcon').textContent = '🎧';
+    document.getElementById('playBtn').classList.remove('playing');
+    document.getElementById('nowPlaying').classList.remove('active');
+    document.getElementById('floatText').textContent = '✅ 朗读完成';
+}
+
+function skipNext() {
+    synth.cancel();
+    let next = (currentIndex + 1) % totalItems;
+    currentIndex = next;
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function skipPrev() {
+    synth.cancel();
+    let prev = currentIndex - 1;
+    if (prev < 0) prev = totalItems - 1;
+    currentIndex = prev;
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function jumpTo(index) {
+    synth.cancel();
+    currentIndex = index;
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function setSpeed(val) {
+    speechRate = parseFloat(val);
+    document.getElementById('floatText').textContent =
+        '🎵 朗读速度: ' + val + 'x';
+    setTimeout(function() {
+        if (isPlaying) {
+            document.getElementById('floatText').textContent = '🔊 朗读中...';
+        }
+    }, 1500);
+}
+
+// ===== UI更新 =====
+function updateUI(index) {
+    // 进度条
+    let pct = (index / totalItems) * 100;
+    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent = (index + 1) + '/' + totalItems;
+    document.getElementById('progressText').textContent =
+        '正在朗读第 ' + (index + 1) + ' ' + '条新闻'.replace('个岗位','').replace('条新闻','');
+
+    // 高亮当前
+    document.querySelectorAll('.job-item').forEach(function(el) {
+        el.classList.remove('reading');
+    });
+    let currentEl = document.querySelector('.job-item[data-index="' + index + '"]');
+    if (currentEl) {
+        currentEl.classList.add('reading');
+        currentEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+function updateReadDone(index) {
+    let el = document.querySelector('.job-item[data-index="' + index + '"]');
+    if (el) {
+        el.classList.add('read-done');
+    }
+}
+
+// ===== 启动 =====
+init();
+
+// ===== 移动端保持屏幕唤醒（可选） =====
+if (navigator.wakeLock) {
+    try {
+        navigator.wakeLock.request('screen');
+    } catch(e) {}
+}
+</script>
+</body>
+</html>
