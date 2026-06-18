@@ -1,0 +1,1257 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>📰 每日要闻（20260619）</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f5f5f5;
+    color: #333;
+    padding-bottom: 80px;
+}
+
+/* ===== 顶部控制栏 ===== */
+.control-bar {
+    position: sticky; top:0; z-index:100;
+    background: linear-gradient(135deg, #1A73E8 0%, #4FC3F7 100%);
+    padding: 12px 16px;
+    box-shadow: 0 2px 12px rgba(26,115,232,0.3);
+}
+.control-row {
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+}
+.control-btn {
+    width: 48px; height: 48px;
+    border: none; border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    font-size: 22px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
+.control-btn:active { transform: scale(0.9); background: rgba(255,255,255,0.35); }
+.control-btn.play-btn {
+    width: 64px; height: 64px;
+    background: #fff;
+    color: #1A73E8;
+    font-size: 28px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+.control-btn.play-btn.playing { color: #FF6B35; }
+
+.speed-select {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 14px;
+    cursor: pointer;
+    -webkit-appearance: none;
+}
+.speed-select option { color: #333; }
+
+/* ===== 进度信息 ===== */
+.progress-row {
+    display: flex; align-items: center; gap: 10px;
+    margin-top: 8px;
+    color: rgba(255,255,255,0.9);
+    font-size: 13px;
+}
+.progress-bar-outer {
+    flex: 1; height: 4px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 2px;
+    overflow: hidden;
+}
+.progress-bar-inner {
+    height: 100%;
+    background: #fff;
+    border-radius: 2px;
+    transition: width 0.3s;
+    width: 0%;
+}
+.progress-text {
+    white-space: nowrap;
+    min-width: 90px;
+    text-align: right;
+}
+
+/* ===== 当前朗读提示 ===== */
+.now-playing {
+    background: #FFF9C4;
+    padding: 8px 16px;
+    font-size: 13px;
+    color: #F57F17;
+    text-align: center;
+    display: none;
+    border-bottom: 2px solid #FFD54F;
+}
+.now-playing.active { display: block; }
+
+/* ===== 标题区 ===== */
+.header {
+    background: #fff;
+    padding: 20px 16px 12px;
+    border-bottom: 1px solid #eee;
+}
+.header h1 { font-size: 18px; color: #1A73E8; margin-bottom: 4px; }
+.header .subtitle { font-size: 13px; color: #888; }
+
+/* ===== 岗位列表 ===== */
+.job-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 14px 16px;
+    background: #fff;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
+.job-item:active { background: #f5f5f5; }
+.job-item.reading {
+    background: #E3F2FD;
+    border-left: 4px solid #1A73E8;
+    padding-left: 12px;
+}
+.job-item.read-done {
+    opacity: 0.6;
+}
+
+.job-index {
+    width: 32px; height: 32px;
+    background: #f0f0f0;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: bold;
+    color: #888;
+    flex-shrink: 0;
+}
+.job-item.reading .job-index {
+    background: #1A73E8;
+    color: #fff;
+}
+.job-item.read-done .job-index {
+    background: #4CAF50;
+    color: #fff;
+}
+
+.job-info { flex:1; min-width:0; }
+.job-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    display: flex; align-items: center; gap: 6px;
+    flex-wrap: wrap;
+}
+.job-detail {
+    font-size: 13px;
+    color: #666;
+    display: flex; flex-wrap: wrap; gap: 8px;
+}
+.position { color: #1A73E8; }
+.salary { color: #FF6B35; font-weight: bold; }
+.location { color: #888; }
+
+.tag {
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    white-space: nowrap;
+}
+.tag-new { background: #E8F5E9; color: #2E7D32; }
+.tag-repeat { background: #FFF3E0; color: #E65100; }
+.tag-update { background: #E3F2FD; color: #1565C0; }
+
+/* ===== 底部浮动条 ===== */
+.float-hint {
+    position: fixed; bottom: 0; left:0; right:0;
+    background: rgba(26,115,232,0.95);
+    color: #fff;
+    text-align: center;
+    padding: 10px 16px;
+    font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px;
+    z-index: 99;
+}
+.float-hint .icon { font-size: 20px; }
+
+/* ===== 状态标记 ===== */
+.status-badge {
+    display: inline-block;
+    background: #4CAF50;
+    color: #fff;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+    0%,100% { opacity:1; }
+    50% { opacity:0.5; }
+}
+</style>
+</head>
+<body>
+
+<!-- 控制栏 -->
+<div class="control-bar">
+    <div class="control-row">
+        <button class="control-btn" onclick="skipPrev()" title="上一条">⏮️</button>
+        <button class="control-btn play-btn" id="playBtn" onclick="togglePlay()" title="播放/暂停">
+            <span id="playIcon">🎧</span>
+        </button>
+        <button class="control-btn" onclick="skipNext()" title="下一条">⏭️</button>
+        <select class="speed-select" id="speedSelect" onchange="setSpeed(this.value)">
+            <option value="0.8">0.8x</option>
+            <option value="1.0" selected>1x</option>
+            <option value="1.2">1.2x</option>
+            <option value="1.5">1.5x</option>
+        </select>
+    </div>
+    <div class="progress-row">
+        <span id="progressLabel">0/59</span>
+        <div class="progress-bar-outer">
+            <div class="progress-bar-inner" id="progressBar"></div>
+        </div>
+        <span class="progress-text" id="progressText">准备就绪</span>
+    </div>
+</div>
+
+<!-- 当前朗读提示 -->
+<div class="now-playing" id="nowPlaying">
+    🔊 正在朗读：<span id="nowPlayingText"></span>
+</div>
+
+<!-- 标题 -->
+<div class="header">
+    <h1>📰 每日要闻（20260619）</h1>
+    <p class="subtitle">59条新闻 | 点🎧按钮浏览器自动朗读</p>
+</div>
+
+<!-- 岗位/新闻列表 -->
+<div id="jobList">
+
+        <div class="job-item" data-index="0" onclick="jumpTo(0)">
+            <div class="job-index">1</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：腾讯新闻/芯东西/百度百家号（6/18，5源交叉验证）</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="1" onclick="jumpTo(1)">
+            <div class="job-index">2</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：美国总统特朗普6月18日在Truth Social平台发文宣布："苹果已同意与英特尔合作，在美国设计和制造其芯片。"英特尔当日暴涨10.64%，创历史新高，成交额306亿美元。特朗普表示，美国长期以来拥有全球领先的芯片设计能力，但制造环节未能同步保留在国内，其政府将重建美国半导体产业链作为重点...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="2" onclick="jumpTo(2)">
+            <div class="job-index">3</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">五维分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 💼 工作就业：苹果英特尔合作标志着美国半导体制造回流加速，对全球供应链管理岗位需求格局产生深远影响。具备跨文化供应链协调能力的采购经理（如Gofy）在美资企业中的价值将进一步上升，尤其是芯片制造供应链岗位需求将显著增加。佛山制造业企业若涉及出口美国，需关注"美国制造"政策合规要求。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="3" onclick="jumpTo(3)">
+            <div class="job-index">4</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">2. 📈 职业发展：半导体供应链管理正在成为最具前景的职业方向之一。苹果从台积电向英特尔转移产能意味着新的供应商开发、质量认证、产能谈判全流程需要重建，这正是采购经理的核心能力圈。从采购工程师→采购经理→供应链总监的职业路径中，半导体赛道增速最快。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="4" onclick="jumpTo(4)">
+            <div class="job-index">5</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3. 🏭 行业发展：英特尔代工业务迎来结构性转折点——苹果作为全球最大芯片买家之一转向英特尔，将迫使台积电调整产能策略，三星代工订单也会加速增长（见第3条新闻）。全球半导体代工格局从"台积电独大"走向"三强争霸"，对机械/设备供应链意味着更多设备采购和产线建设需求。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="5" onclick="jumpTo(5)">
+            <div class="job-index">6</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">4. 🚀 创业机会：英特尔获苹果代工订单后产能扩张，新建产线散热需求猛增——数据中心液冷和芯片制造工艺冷却都是刚需。Gofy的浸没式液冷项目可关注英特尔美国工厂的散热方案需求。3D打印也可切入芯片散热器定制市场（小批量高精度散热片/冷板）。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="6" onclick="jumpTo(6)">
+            <div class="job-index">7</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5. 💰 投资机会：英特尔(INTC)涨10.64%创历史新高，市值6000亿+，但仍远低于英伟达(3万亿+)和台积电(1万亿+)，估值仍有上行空间。半导体代工板块整体受益：三星代工业务增长、国内中芯国际等也将间接受益。A股半导体产业链（光模块/HBM/存储）是下周开市最强主线。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="7" onclick="jumpTo(7)">
+            <div class="job-index">8</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：21世纪经济报道/金十数据/同花顺/Zaker（6/18，4源确认）</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="8" onclick="jumpTo(8)">
+            <div class="job-index">9</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：SpaceX(SPCX)在6月17日美联储FOMC鹰派决议后首次下跌，6月18日收跌3.56%，成交490亿美元。6月17日美联储沃什首秀偏鹰（9人预测年内加息），引发周三美股全线大跌（道指0.97%/纳指1.3%/标普1.2%），6月18日科技股分化修复但SPCX仍未止跌。SPCX首周表现：...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="9" onclick="jumpTo(9)">
+            <div class="job-index">10</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">五维分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 💼 工作就业：SpaceX首跌虽为短期波动，但"美联储偏鹰=科技股承压"的宏观环境意味着科技行业招聘节奏可能放缓。对于求职者而言，应同时关注抗周期的制造业/供应链岗位和成长性的AI/半导体岗位，两手准备。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="10" onclick="jumpTo(10)">
+            <div class="job-index">11</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">2. 📈 职业发展：美联储偏鹰信号意味着高利率环境延续，企业扩张速度受限，但AI基础设施投资（数据中心/液冷/芯片）仍处于刚性增长期。供应链经理在"成本控制"方面的能力将更受重视——高利率下每一分钱都要花在刀刃上。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="11" onclick="jumpTo(11)">
+            <div class="job-index">12</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3. 🏭 行业发展：SPCX首跌不影响SpaceX的核心业务（发射/星链/AI卫星），短期调整属于"首周狂欢后的正常回调"。液冷散热产业的中长期逻辑不变——AI算力需求持续井喷，SpaceX太空数据中心液冷方案（见第6条新闻）仍是行业最强催化。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="12" onclick="jumpTo(12)">
+            <div class="job-index">13</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">4. 🚀 创业机会：SPCX短期回调是观察窗口——如果回调幅度控制在10%以内，说明市场对SpaceX长期价值的共识稳固。对液冷创业项目而言，SPCX回调不影响底层逻辑：AI算力需求→散热刚需→液冷市场规模翻倍（见第4条新闻）。端午节假期可复盘SPCX首周走势，调整创业项目的融资节奏规划。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="13" onclick="jumpTo(13)">
+            <div class="job-index">14</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5. 💰 投资机会：SPCX首次下跌为"首周获利盘出逃+美联储鹰派冲击"双重因素，不改变长期投资逻辑。但短期需警惕：如果下周继续下跌超过10%，可能引发散户恐慌性抛售。A股端午节后开市(6/22)，需关注SPCX走势对A股科技板块的传导效应。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="14" onclick="jumpTo(14)">
+            <div class="job-index">15</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：新浪财经/日经亚洲/东方财富/IT之家（6/1718，6源交叉验证）</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="15" onclick="jumpTo(15)">
+            <div class="job-index">16</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：随着AI基础设施需求持续井喷，台积电先进制程产能基本被苹果、英伟达、AMD、博通等头部客户包揽，新增订单和小批量需求难以获得排产空间。谷歌、AMD、特斯拉、比亚迪等全球科技与汽车巨头正加速向三星电子寻求先进制程代工服务。具体合作方向：谷歌将下一代Axion处理器和部分AI用TPU交由三星代工（...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="16" onclick="jumpTo(16)">
+            <div class="job-index">17</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">五维分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 💼 工作就业：三星代工业务加速扩张意味着全球半导体供应链格局重塑——新产线建设、新供应商开发、新客户认证全部需要重新搭建。对于供应链经理而言，"双重采购"（dual sourcing）策略的管理难度显著上升，这正是采购经理的核心竞争力所在。佛山比亚迪供应链相关岗位需求可能增加。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="17" onclick="jumpTo(17)">
+            <div class="job-index">18</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">2. 📈 职业发展：台积电产能告急→三星代工崛起的格局变化，为供应链管理职业提供了新的成长方向：从"单供应商管理"升级为"双供应商战略规划"。这种能力在车企（比亚迪/特斯拉）和科技公司（谷歌/AMD）中都极为稀缺，是供应链经理晋升的关键差异化能力。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="18" onclick="jumpTo(18)">
+            <div class="job-index">19</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3. 🏭 行业发展：全球先进制程代工从"台积电独大"走向"台积电+三星+英特尔三强争霸"。特斯拉AI6芯片确定由三星得州工厂生产，标志着AI芯片制造正在从亚洲向美国扩散。对机械制造/设备行业而言，三星扩产意味着更多精密设备（光刻机/刻蚀机/检测设备）采购需求，佛山精密制造企业有机会切入供应链。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="19" onclick="jumpTo(19)">
+            <div class="job-index">20</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">4. 🚀 创业机会：三星代工扩张=新建产线=散热方案需求增加。液冷散热从数据中心扩展到芯片制造工艺冷却，市场空间进一步打开。比亚迪自动驾驶芯片（4nm/2nm）是佛山本地产业链的直接受益者——Gofy可关注比亚迪供应链中的散热方案需求。3D打印可切入芯片封装散热片定制市场。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="20" onclick="jumpTo(20)">
+            <div class="job-index">21</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5. 💰 投资机会：三星代工业务结构性转折点是投资信号——韩国三星电子(005930.KS)估值仍有上行空间。A股相关标的：半导体设备（中微公司/北方华创）、HBM存储（深科技/雅克科技）、光模块（中际旭创/天孚通信）下周开市可能继续走强。比亚迪(002594)自动驾驶芯片供应链国产化是中长期利好。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="21" onclick="jumpTo(21)">
+            <div class="job-index">22</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：赛迪顾问《20252026年中国液冷数据中心市场报告》/广发证券研报（6/18）</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="22" onclick="jumpTo(22)">
+            <div class="job-index">23</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：赛迪顾问编制的《20252026年中国液冷数据中心市场报告》显示，2025年中国液冷数据中心市场规模已达159.8亿元，同比增长45.2%。报告预测未来三年市场将进入加速放量阶段：2026年232.5亿元→2028年470.4亿元，实现翻倍以上增长。广发证券指出，全球液冷需求增长主要受两大动力...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="23" onclick="jumpTo(23)">
+            <div class="job-index">24</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">五维分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 💼 工作就业：液冷市场规模翻倍意味着产业链人才需求同步翻倍——液冷系统设计工程师、散热方案采购经理、热管理项目经理等岗位需求将从"稀缺"走向"刚需"。对于正在求职的供应链经理，液冷散热供应链是最值得切入的细分方向之一，与Gofy的机械专业+采购管理经验高度匹配。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="24" onclick="jumpTo(24)">
+            <div class="job-index">25</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">2. 📈 职业发展：液冷从"可选"走向"刚需"的产业拐点，为供应链经理提供了从"传统制造采购"向"AI基础设施采购"转型的窗口期。2026年232.5亿→2028年470.4亿的确定性增长路径，意味着3年内行业规模翻倍，职业成长空间远超传统行业。TCO模型在液冷采购决策中尤为重要——正是Gofy已有...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="25" onclick="jumpTo(25)">
+            <div class="job-index">26</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3. 🏭 行业发展：液冷交换机/液冷光模块的出现标志着散热需求从GPU扩散到网络设备，市场规模天花板进一步打开。英伟达Blackwell系列芯片的高TDP（热设计功耗）是液冷刚需的直接驱动因素——每块芯片都需要液冷散热，从数据中心到桌面级（RTX Spark）全覆盖。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="26" onclick="jumpTo(26)">
+            <div class="job-index">27</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">4. 🚀 创业机会：🎯 这条新闻是液冷创业项目最权威的市场验证！ 159.8亿→470.4亿的确定性增长路径=3年翻倍，说明Gofy的个人浸没式液冷项目切入时机完全正确。关键行动：端午节期间完成液冷创业项目的市场定位更新——从"个人液冷机箱"扩展到"小规模液冷方案提供商"，切入中小企业/工作室的AI...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="27" onclick="jumpTo(27)">
+            <div class="job-index">28</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5. 💰 投资机会：液冷产业链是2026年下半年最确定的投资主线之一。A股标的：申菱环境（液冷系统）、高澜节能（液冷温控）、英维克（精密温控）、乔锋智能（液冷板加工设备）。下周(6/22)A股开市后，液冷板块可能延续科创50强势走势。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="28" onclick="jumpTo(28)">
+            <div class="job-index">29</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：百度百家号/雪球/东方财富（6/18，4源确认）</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="29" onclick="jumpTo(29)">
+            <div class="job-index">30</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：6月18日A股三大指数涨跌不一：上证指数0.43%(4090.48)，深证成指+0.94%，创业板指+2.05%，科创50+3.84%（创历史新高）。本周：上证+1.46%，深证成指+7.13%，创业板指+11.02%，科创综指+13.24%。全市场2023只上涨vs 3395只下跌，101涨...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="30" onclick="jumpTo(30)">
+            <div class="job-index">31</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">五维分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 💼 工作就业：3400只个股下跌vs科创50创新高的极端分化，映射到就业市场就是：传统行业（金融/煤炭/食品）招聘萎缩，科技行业（半导体/AI/液冷）招聘扩张。Gofy应坚定将求职方向锁定在半导体/AI基础设施供应链，避免被传统行业岗位"套牢"。端午节后6/22开市走势将验证分化趋势是否延续。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="31" onclick="jumpTo(31)">
+            <div class="job-index">32</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">2. 📈 职业发展："不涨停涨不停"的半导体龙头走势说明市场对科技供应链的长期价值有坚定共识。创业板+11.02%/科创+13.24%的周度涨幅意味着科技板块已进入主升浪，相关职业发展前景同步看好。供应链经理在半导体/AI企业中的职级和薪资将随行业估值水涨船高。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="32" onclick="jumpTo(32)">
+            <div class="job-index">33</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3. 🏭 行业发展：A股极端分化的本质是"AI算力产业链"与传统行业的估值重构。半导体/HBM/光模块/液冷是资金明确选择的赛道，传统金融/消费正在被"抽血"。这种分化在美联储偏鹰的宏观环境下可能加剧——资金会更集中于确定性最高的AI赛道。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="33" onclick="jumpTo(33)">
+            <div class="job-index">34</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">4. 🚀 创业机会：A股资金涌入半导体/AI赛道，意味着创业项目融资环境改善——投资者对AI相关项目（液冷/3D打印AI应用）的风险偏好上升。端午节后可关注科创50走势对液冷创业项目融资估值的影响。3400只个股下跌的环境下，项目估值不宜过高，但赛道方向正确=融资成功率显著提高。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="34" onclick="jumpTo(34)">
+            <div class="job-index">35</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5. 💰 投资机会：⚠️ 极端分化意味着"追涨杀跌"风险极大。3400只下跌的个股中不乏被错杀的价值标的，但短期内资金只会涌入半导体/AI主线。端午节后(6/22)策略：半导体/液冷/光模块主线可继续持有，但不宜追高；传统板块等待分化收敛再考虑配置。本周创业板+11%的涨幅已部分透支，下周可能回调2...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="35" onclick="jumpTo(35)">
+            <div class="job-index">36</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：新浪财经/中科院计算所/Engineering期刊（6/12，持续跟踪）</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="36" onclick="jumpTo(36)">
+            <div class="job-index">37</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：SpaceX构想中的大算力AI计算平台（AI1卫星），将主动泵驱流体回路作为核心散热方案，适配百千瓦级高功率AI计算任务。太空环境为真空状态（无空气对流），卫星表面温差可达300℃以上（200℃100℃），传统地面散热方案完全无法适用。NVIDIA A100 GPU功耗300W、芯片面积约8....</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="37" onclick="jumpTo(37)">
+            <div class="job-index">38</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">五维分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 💼 工作就业：太空液冷是液冷散热技术的前沿延伸，意味着液冷人才的职业天花板进一步打开——从数据中心液冷→桌面级液冷→太空液冷，技术难度递增但薪资同步递增。中科院团队的在轨验证成果说明国内液冷技术储备深厚，相关岗位需求将持续增长。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="38" onclick="jumpTo(38)">
+            <div class="job-index">39</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">2. 📈 职业发展：太空液冷方案的复杂度（真空/大温差/无法维修/冗余设计）远超地面液冷，掌握此类技术的供应链经理将成为"液冷散热领域"的稀缺人才。Gofy的机械专业背景+液冷创业探索是切入这一方向的自然路径。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="39" onclick="jumpTo(39)">
+            <div class="job-index">40</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3. 🏭 行业发展：中科院HPAC方案早于SpaceX AI1方案，且更优（双模冗余vs单模），说明中国在太空液冷技术上处于领先地位。这对液冷产业链是重大利好——国产液冷技术不仅可用于地面数据中心，还可用于太空场景，市场天花板进一步打开。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="40" onclick="jumpTo(40)">
+            <div class="job-index">41</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">4. 🚀 创业机会：🎯 太空液冷是液冷创业项目的终极叙事升级！ SpaceX太空数据中心=液冷散热从地面到太空的全场景覆盖。中科院方案领先=国产液冷技术有差异化优势。Gofy可更新创业项目的长期愿景：从"个人液冷机箱"→"中小企业液冷方案"→"太空液冷技术储备"，形成三层产品矩阵。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="41" onclick="jumpTo(41)">
+            <div class="job-index">42</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5. 💰 投资机会：太空液冷技术验证意味着液冷板块的估值天花板进一步打开——不仅是数据中心散热，还有太空散热、桌面级散热、边缘计算散热等场景。A股液冷标的（申菱环境/高澜节能/英维克）的长期估值支撑更坚实。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="42" onclick="jumpTo(42)">
+            <div class="job-index">43</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：佛山Plus/佛山市政府网/佛山新闻网/澎湃新闻（6/619，多源确认）</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="43" onclick="jumpTo(43)">
+            <div class="job-index">44</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：2026端午龙舟季全省主会场于6月19日落地南海，实现"一锣齐鸣、全省联动"的盛况。活动除传统龙舟竞速外，还创新融合山水实景演艺、非遗水上醒狮等沉浸式民俗展演内容，配套龙舟市集。67月全省21个地级市联动超200场活动，以龙舟IP赋能文商旅体促消费。佛山南海区作为全省主会场，叠加端午节假期效应...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="44" onclick="jumpTo(44)">
+            <div class="job-index">45</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">五维分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 💼 工作就业：端午节+全省主会场落地南海=本地消费/文旅/餐饮短期用工需求猛增。但更值得关注的是"龙舟IP赋能文商旅体"的长期产业转型方向——佛山正从纯制造业城市向"制造+文旅+消费"复合型城市转型，供应链经理在此转型中的"跨行业资源整合"能力极具价值。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="45" onclick="jumpTo(45)">
+            <div class="job-index">46</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">2. 📈 职业发展：南海区正推进生产性服务业高质量发展（三产占比60%目标），端午龙舟季是文旅消费的标志性事件。供应链经理若能从"制造业采购"扩展到"文旅/消费供应链"，职业发展空间将进一步打开。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="46" onclick="jumpTo(46)">
+            <div class="job-index">47</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3. 🏭 行业发展："龙舟IP+文商旅体"模式说明佛山正在打造城市品牌IP，从"有家就有佛山造"扩展到"请到广东过端午"。这对本地直播技术/3D打印/创意产业都是机会——龙舟季的直播/短视频内容需求可由Gofy的直播设备和技术能力直接服务。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="47" onclick="jumpTo(47)">
+            <div class="job-index">48</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">4. 🚀 创业机会：端午龙舟季=直播需求高峰期。Gofy的直播设备和技术能力可直接服务龙舟赛事直播/短视频制作/沉浸式演艺技术支持。3D打印可切入龙舟纪念品定制市场（龙舟手办/纪念章/奖杯模型）。端午节假期可实地考察南海龙舟活动现场，评估直播/3D打印切入机会。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="48" onclick="jumpTo(48)">
+            <div class="job-index">49</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5. 💰 投资机会：端午龙舟季对本地消费/文旅板块短期利好，但持续性有限。更值得关注的是南海区生产性服务业转型（三产占比60%）的中长期投资逻辑——本地服务业企业估值有望随转型进程提升。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="49" onclick="jumpTo(49)">
+            <div class="job-index">50</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：上交所公告/雪球/东方财富（6/1118，多源确认）</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="50" onclick="jumpTo(50)">
+            <div class="job-index">51</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：2026年端午节A股休市安排：6月19日(星期五)至6月21日(星期日)休市，6月22日(星期一)起照常开市。港股6月19日也因端午节休市。美股6月19日因六月节(Juneteenth)国家独立日假期休市一日。沪深港通6/1921不提供港股通服务，6/22恢复。本周A股表现：上证+1.46%/...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="51" onclick="jumpTo(51)">
+            <div class="job-index">52</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">五维分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 💼 工作就业：全球休市=端午节假期，求职活动暂停但策略思考不停。Gofy应利用假期复盘本周A股走势背后的行业信号，更新求职方向优先级：半导体/AI基础设施供应链传统制造业采购。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="52" onclick="jumpTo(52)">
+            <div class="job-index">53</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">2. 📈 职业发展：本周创业板+11%/科创+13%的极端涨幅说明市场对科技供应链的共识已经形成。供应链经理在半导体/AI企业中的职业前景已从"不确定"升级为"确定性高"。假期可整理简历中的半导体/AI供应链相关经验，为6/22后新一轮投递做准备。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="53" onclick="jumpTo(53)">
+            <div class="job-index">54</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3. 🏭 行业发展：A股+美股同步休市意味着下周一(6/22)开盘将集中反映本周所有信息增量：美联储鹰派+英特尔苹果合作+三星代工扩张+液冷市场翻倍。科技板块大概率延续强势，但分化可能加剧。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="54" onclick="jumpTo(54)">
+            <div class="job-index">55</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">4. 🚀 创业机会：假期是复盘和规划的最佳窗口。Gofy应利用端午假期完成三项工作：(1)液冷创业项目市场定位更新（参考赛迪顾问数据）；(2)3D打印端午纪念品定制方案设计；(3)龙舟季直播服务商业方案初稿。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="55" onclick="jumpTo(55)">
+            <div class="job-index">56</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5. 💰 投资机会：全球休市期间无法交易，但信息消化时间充裕。下周一(6/22)A股开市策略建议：半导体/液冷主线继续持有不追高；关注SPCX周末走势对A股科技板块传导；传统板块等分化收敛再配置。本周创业板+11%已部分透支，下周大概率回调23%后恢复上行。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="56" onclick="jumpTo(56)">
+            <div class="job-index">57</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🔴 本周必做（端午节假期）</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 液冷创业项目市场定位更新：参考赛迪顾问数据（2026年232.5亿→2028年470.4亿），从"个人液冷机箱"扩展到"中小企业液冷方案提供商"。2. 复盘SPCX首周走势（首日+19%→首跌3.56%），评估液冷创业融资节奏。3. 整理半导体/AI供应链简历关键词，为6/22后新一轮投递做准...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="57" onclick="jumpTo(57)">
+            <div class="job-index">58</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🟡 建议做</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">4. 实地考察南海龙舟季活动现场，评估直播设备/3D打印切入机会。5. 关注三星代工扩张动态，比亚迪自动驾驶芯片供应链是佛山本地直接受益方向。6. 端午纪念品3D打印方案设计（龙舟手办/纪念章/奖杯模型），评估短期变现可行性</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="58" onclick="jumpTo(58)">
+            <div class="job-index">59</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📚 学习储备</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">7. 阅读赛迪顾问液冷数据中心市场报告，更新行业认知。8. 研究英特尔苹果合作背景，半导体代工"三强争霸"格局对供应链的影响。9. 追踪中科院HPAC太空液冷方案，液冷技术前沿方向</span>
+                </div>
+            </div>
+        </div>
+</div>
+
+<!-- 底部提示 -->
+<div class="float-hint" id="floatHint">
+    <span class="icon">🎧</span>
+    <span id="floatText">点击顶部播放按钮开始朗读</span>
+</div>
+
+<script>
+// ===== 数据 =====
+const items = [{"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：腾讯新闻/芯东西/百度百家号（6/18，5源交叉验证）"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：美国总统特朗普6月18日在Truth Social平台发文宣布：\"苹果已同意与英特尔合作，在美国设计和制造其芯片。\"英特尔当日暴涨10.64%，创历史新高，成交额306亿美元。特朗普表示，美国长期以来拥有全球领先的芯片设计能力，但制造环节未能同步保留在国内，其政府将重建美国半导体产业链作为重点目标。特朗普还提及\"我们决定帮助英特尔，以换取他们10%的股份\"，英特尔市值从约1000亿美元增至超过6000亿美元。苹果此前高度依赖台积电，而台积电先进制程产线正被英伟达和AMD等AI芯片制造商大量抢占，与英特尔合作有助于苹果实现制造基地多元化。"}, {"company": "五维分析", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 💼 工作就业：苹果-英特尔合作标志着美国半导体制造回流加速，对全球供应链管理岗位需求格局产生深远影响。具备跨文化供应链协调能力的采购经理（如Gofy）在美资企业中的价值将进一步上升，尤其是芯片制造供应链岗位需求将显著增加。佛山制造业企业若涉及出口美国，需关注\"美国制造\"政策合规要求。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "2. 📈 职业发展：半导体供应链管理正在成为最具前景的职业方向之一。苹果从台积电向英特尔转移产能意味着新的供应商开发、质量认证、产能谈判全流程需要重建，这正是采购经理的核心能力圈。从采购工程师→采购经理→供应链总监的职业路径中，半导体赛道增速最快。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "3. 🏭 行业发展：英特尔代工业务迎来结构性转折点——苹果作为全球最大芯片买家之一转向英特尔，将迫使台积电调整产能策略，三星代工订单也会加速增长（见第3条新闻）。全球半导体代工格局从\"台积电独大\"走向\"三强争霸\"，对机械/设备供应链意味着更多设备采购和产线建设需求。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "4. 🚀 创业机会：英特尔获苹果代工订单后产能扩张，新建产线散热需求猛增——数据中心液冷和芯片制造工艺冷却都是刚需。Gofy的浸没式液冷项目可关注英特尔美国工厂的散热方案需求。3D打印也可切入芯片散热器定制市场（小批量高精度散热片/冷板）。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "5. 💰 投资机会：英特尔(INTC)涨10.64%创历史新高，市值6000亿+，但仍远低于英伟达(3万亿+)和台积电(1万亿+)，估值仍有上行空间。半导体代工板块整体受益：三星代工业务增长、国内中芯国际等也将间接受益。A股半导体产业链（光模块/HBM/存储）是下周开市最强主线。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：21世纪经济报道/金十数据/同花顺/Zaker（6/18，4源确认）"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：SpaceX(SPCX)在6月17日美联储FOMC鹰派决议后首次下跌，6月18日收跌-3.56%，成交490亿美元。6月17日美联储沃什首秀偏鹰（9人预测年内加息），引发周三美股全线大跌（道指-0.97%/纳指-1.3%/标普-1.2%），6月18日科技股分化修复但SPCX仍未止跌。SPCX首周表现：首日+19.22%(160.95$)→第二日+25.82%(169.86$)→第三日+2.69%(174.43$)→第四日+4.77%→第五日-5%→第六日-3.56%，市值约2.5万亿美元。"}, {"company": "五维分析", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 💼 工作就业：SpaceX首跌虽为短期波动，但\"美联储偏鹰=科技股承压\"的宏观环境意味着科技行业招聘节奏可能放缓。对于求职者而言，应同时关注抗周期的制造业/供应链岗位和成长性的AI/半导体岗位，两手准备。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "2. 📈 职业发展：美联储偏鹰信号意味着高利率环境延续，企业扩张速度受限，但AI基础设施投资（数据中心/液冷/芯片）仍处于刚性增长期。供应链经理在\"成本控制\"方面的能力将更受重视——高利率下每一分钱都要花在刀刃上。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "3. 🏭 行业发展：SPCX首跌不影响SpaceX的核心业务（发射/星链/AI卫星），短期调整属于\"首周狂欢后的正常回调\"。液冷散热产业的中长期逻辑不变——AI算力需求持续井喷，SpaceX太空数据中心液冷方案（见第6条新闻）仍是行业最强催化。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "4. 🚀 创业机会：SPCX短期回调是观察窗口——如果回调幅度控制在10%以内，说明市场对SpaceX长期价值的共识稳固。对液冷创业项目而言，SPCX回调不影响底层逻辑：AI算力需求→散热刚需→液冷市场规模翻倍（见第4条新闻）。端午节假期可复盘SPCX首周走势，调整创业项目的融资节奏规划。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "5. 💰 投资机会：SPCX首次下跌为\"首周获利盘出逃+美联储鹰派冲击\"双重因素，不改变长期投资逻辑。但短期需警惕：如果下周继续下跌超过10%，可能引发散户恐慌性抛售。A股端午节后开市(6/22)，需关注SPCX走势对A股科技板块的传导效应。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：新浪财经/日经亚洲/东方财富/IT之家（6/17-18，6源交叉验证）"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：随着AI基础设施需求持续井喷，台积电先进制程产能基本被苹果、英伟达、AMD、博通等头部客户包揽，新增订单和小批量需求难以获得排产空间。谷歌、AMD、特斯拉、比亚迪等全球科技与汽车巨头正加速向三星电子寻求先进制程代工服务。具体合作方向：谷歌将下一代Axion处理器和部分AI用TPU交由三星代工（2028年推出）；AMD部分未来CPU产品自2028年起由三星生产；特斯拉AI6芯片在三星得克萨斯州泰勒工厂生产，AI5芯片由三星与台积电双供应商供货；比亚迪正在与三星洽谈4nm璇玑A3系列自动驾驶芯片及下一代2nm芯片。三星4nm良率已突破80%，一季度晶圆代工与系统LSI业务营收约6.9万亿韩元（46亿美元），同比增长15%。"}, {"company": "五维分析", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 💼 工作就业：三星代工业务加速扩张意味着全球半导体供应链格局重塑——新产线建设、新供应商开发、新客户认证全部需要重新搭建。对于供应链经理而言，\"双重采购\"（dual sourcing）策略的管理难度显著上升，这正是采购经理的核心竞争力所在。佛山比亚迪供应链相关岗位需求可能增加。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "2. 📈 职业发展：台积电产能告急→三星代工崛起的格局变化，为供应链管理职业提供了新的成长方向：从\"单供应商管理\"升级为\"双供应商战略规划\"。这种能力在车企（比亚迪/特斯拉）和科技公司（谷歌/AMD）中都极为稀缺，是供应链经理晋升的关键差异化能力。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "3. 🏭 行业发展：全球先进制程代工从\"台积电独大\"走向\"台积电+三星+英特尔三强争霸\"。特斯拉AI6芯片确定由三星得州工厂生产，标志着AI芯片制造正在从亚洲向美国扩散。对机械制造/设备行业而言，三星扩产意味着更多精密设备（光刻机/刻蚀机/检测设备）采购需求，佛山精密制造企业有机会切入供应链。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "4. 🚀 创业机会：三星代工扩张=新建产线=散热方案需求增加。液冷散热从数据中心扩展到芯片制造工艺冷却，市场空间进一步打开。比亚迪自动驾驶芯片（4nm/2nm）是佛山本地产业链的直接受益者——Gofy可关注比亚迪供应链中的散热方案需求。3D打印可切入芯片封装散热片定制市场。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "5. 💰 投资机会：三星代工业务结构性转折点是投资信号——韩国三星电子(005930.KS)估值仍有上行空间。A股相关标的：半导体设备（中微公司/北方华创）、HBM存储（深科技/雅克科技）、光模块（中际旭创/天孚通信）下周开市可能继续走强。比亚迪(002594)自动驾驶芯片供应链国产化是中长期利好。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：赛迪顾问《2025-2026年中国液冷数据中心市场报告》/广发证券研报（6/18）"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：赛迪顾问编制的《2025-2026年中国液冷数据中心市场报告》显示，2025年中国液冷数据中心市场规模已达159.8亿元，同比增长45.2%。报告预测未来三年市场将进入加速放量阶段：2026年232.5亿元→2028年470.4亿元，实现翻倍以上增长。广发证券指出，全球液冷需求增长主要受两大动力驱动：(1)北美头部CSP扩建AI算力基建，带动高TDP英伟达Blackwell系列芯片装机放量，形成刚性散热需求；(2)液冷从数据中心扩展到网络传输环节（液冷交换机/液冷光模块），新增需求持续涌现。市场份额正逐步向头部企业集中。核心A股公司：申菱环境（液冷产品服务互联网头部企业）、乔锋智能（数控机床用于水冷头/液冷板加工）。"}, {"company": "五维分析", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 💼 工作就业：液冷市场规模翻倍意味着产业链人才需求同步翻倍——液冷系统设计工程师、散热方案采购经理、热管理项目经理等岗位需求将从\"稀缺\"走向\"刚需\"。对于正在求职的供应链经理，液冷散热供应链是最值得切入的细分方向之一，与Gofy的机械专业+采购管理经验高度匹配。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "2. 📈 职业发展：液冷从\"可选\"走向\"刚需\"的产业拐点，为供应链经理提供了从\"传统制造采购\"向\"AI基础设施采购\"转型的窗口期。2026年232.5亿→2028年470.4亿的确定性增长路径，意味着3年内行业规模翻倍，职业成长空间远超传统行业。TCO模型在液冷采购决策中尤为重要——正是Gofy已有的核心能力。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "3. 🏭 行业发展：液冷交换机/液冷光模块的出现标志着散热需求从GPU扩散到网络设备，市场规模天花板进一步打开。英伟达Blackwell系列芯片的高TDP（热设计功耗）是液冷刚需的直接驱动因素——每块芯片都需要液冷散热，从数据中心到桌面级（RTX Spark）全覆盖。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "4. 🚀 创业机会：🎯 这条新闻是液冷创业项目最权威的市场验证！ 159.8亿→470.4亿的确定性增长路径=3年翻倍，说明Gofy的个人浸没式液冷项目切入时机完全正确。关键行动：端午节期间完成液冷创业项目的市场定位更新——从\"个人液冷机箱\"扩展到\"小规模液冷方案提供商\"，切入中小企业/工作室的AI算力散热需求。乔锋智能用数控机床加工水冷头/液冷板的案例值得参考。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "5. 💰 投资机会：液冷产业链是2026年下半年最确定的投资主线之一。A股标的：申菱环境（液冷系统）、高澜节能（液冷温控）、英维克（精密温控）、乔锋智能（液冷板加工设备）。下周(6/22)A股开市后，液冷板块可能延续科创50强势走势。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：百度百家号/雪球/东方财富（6/18，4源确认）"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：6月18日A股三大指数涨跌不一：上证指数-0.43%(4090.48)，深证成指+0.94%，创业板指+2.05%，科创50+3.84%（创历史新高）。本周：上证+1.46%，深证成指+7.13%，创业板指+11.02%，科创综指+13.24%。全市场2023只上涨vs 3395只下跌，101涨停vs 34跌停。成交额3.31万亿元（较前日+2183亿）。半导体产业链主导科技股行情持续火爆：寒武纪+14%、源杰科技/中际旭创再创新高。金融/煤炭/食品饮料等传统板块低迷，贵州茅台持续下跌。"}, {"company": "五维分析", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 💼 工作就业：3400只个股下跌vs科创50创新高的极端分化，映射到就业市场就是：传统行业（金融/煤炭/食品）招聘萎缩，科技行业（半导体/AI/液冷）招聘扩张。Gofy应坚定将求职方向锁定在半导体/AI基础设施供应链，避免被传统行业岗位\"套牢\"。端午节后6/22开市走势将验证分化趋势是否延续。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "2. 📈 职业发展：\"不涨停涨不停\"的半导体龙头走势说明市场对科技供应链的长期价值有坚定共识。创业板+11.02%/科创+13.24%的周度涨幅意味着科技板块已进入主升浪，相关职业发展前景同步看好。供应链经理在半导体/AI企业中的职级和薪资将随行业估值水涨船高。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "3. 🏭 行业发展：A股极端分化的本质是\"AI算力产业链\"与传统行业的估值重构。半导体/HBM/光模块/液冷是资金明确选择的赛道，传统金融/消费正在被\"抽血\"。这种分化在美联储偏鹰的宏观环境下可能加剧——资金会更集中于确定性最高的AI赛道。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "4. 🚀 创业机会：A股资金涌入半导体/AI赛道，意味着创业项目融资环境改善——投资者对AI相关项目（液冷/3D打印AI应用）的风险偏好上升。端午节后可关注科创50走势对液冷创业项目融资估值的影响。3400只个股下跌的环境下，项目估值不宜过高，但赛道方向正确=融资成功率显著提高。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "5. 💰 投资机会：⚠️ 极端分化意味着\"追涨杀跌\"风险极大。3400只下跌的个股中不乏被错杀的价值标的，但短期内资金只会涌入半导体/AI主线。端午节后(6/22)策略：半导体/液冷/光模块主线可继续持有，但不宜追高；传统板块等待分化收敛再考虑配置。本周创业板+11%的涨幅已部分透支，下周可能回调2-3%。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：新浪财经/中科院计算所/Engineering期刊（6/12，持续跟踪）"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：SpaceX构想中的大算力AI计算平台（AI1卫星），将主动泵驱流体回路作为核心散热方案，适配百千瓦级高功率AI计算任务。太空环境为真空状态（无空气对流），卫星表面温差可达300℃以上（-200℃~100℃），传统地面散热方案完全无法适用。NVIDIA A100 GPU功耗300W、芯片面积约8.26cm²，热流密度达36.3W/cm²，已超出固体导热承载上限（20W/cm²），必须依赖主动液冷技术。中科院计算所联合中科天算、智源研究院团队提出的HPAC（主被动混合冷却架构）方案更早且更优：2022年极光1000上星验证→2024年极光1000-慧眼在轨验证→2025年正式提出HPAC方案，均早于SpaceX AI1方案公开时间。HPAC核心优势：主动回路+被动散热备份双模冗余，降低单点失效风险。"}, {"company": "五维分析", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 💼 工作就业：太空液冷是液冷散热技术的前沿延伸，意味着液冷人才的职业天花板进一步打开——从数据中心液冷→桌面级液冷→太空液冷，技术难度递增但薪资同步递增。中科院团队的在轨验证成果说明国内液冷技术储备深厚，相关岗位需求将持续增长。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "2. 📈 职业发展：太空液冷方案的复杂度（真空/大温差/无法维修/冗余设计）远超地面液冷，掌握此类技术的供应链经理将成为\"液冷散热领域\"的稀缺人才。Gofy的机械专业背景+液冷创业探索是切入这一方向的自然路径。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "3. 🏭 行业发展：中科院HPAC方案早于SpaceX AI1方案，且更优（双模冗余vs单模），说明中国在太空液冷技术上处于领先地位。这对液冷产业链是重大利好——国产液冷技术不仅可用于地面数据中心，还可用于太空场景，市场天花板进一步打开。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "4. 🚀 创业机会：🎯 太空液冷是液冷创业项目的终极叙事升级！ SpaceX太空数据中心=液冷散热从地面到太空的全场景覆盖。中科院方案领先=国产液冷技术有差异化优势。Gofy可更新创业项目的长期愿景：从\"个人液冷机箱\"→\"中小企业液冷方案\"→\"太空液冷技术储备\"，形成三层产品矩阵。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "5. 💰 投资机会：太空液冷技术验证意味着液冷板块的估值天花板进一步打开——不仅是数据中心散热，还有太空散热、桌面级散热、边缘计算散热等场景。A股液冷标的（申菱环境/高澜节能/英维克）的长期估值支撑更坚实。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：佛山Plus/佛山市政府网/佛山新闻网/澎湃新闻（6/6-19，多源确认）"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：2026端午龙舟季全省主会场于6月19日落地南海，实现\"一锣齐鸣、全省联动\"的盛况。活动除传统龙舟竞速外，还创新融合山水实景演艺、非遗水上醒狮等沉浸式民俗展演内容，配套龙舟市集。6-7月全省21个地级市联动超200场活动，以龙舟IP赋能文商旅体促消费。佛山南海区作为全省主会场，叠加端午节假期效应，预计带动本地消费大幅增长。"}, {"company": "五维分析", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 💼 工作就业：端午节+全省主会场落地南海=本地消费/文旅/餐饮短期用工需求猛增。但更值得关注的是\"龙舟IP赋能文商旅体\"的长期产业转型方向——佛山正从纯制造业城市向\"制造+文旅+消费\"复合型城市转型，供应链经理在此转型中的\"跨行业资源整合\"能力极具价值。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "2. 📈 职业发展：南海区正推进生产性服务业高质量发展（三产占比60%目标），端午龙舟季是文旅消费的标志性事件。供应链经理若能从\"制造业采购\"扩展到\"文旅/消费供应链\"，职业发展空间将进一步打开。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "3. 🏭 行业发展：\"龙舟IP+文商旅体\"模式说明佛山正在打造城市品牌IP，从\"有家就有佛山造\"扩展到\"请到广东过端午\"。这对本地直播技术/3D打印/创意产业都是机会——龙舟季的直播/短视频内容需求可由Gofy的直播设备和技术能力直接服务。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "4. 🚀 创业机会：端午龙舟季=直播需求高峰期。Gofy的直播设备和技术能力可直接服务龙舟赛事直播/短视频制作/沉浸式演艺技术支持。3D打印可切入龙舟纪念品定制市场（龙舟手办/纪念章/奖杯模型）。端午节假期可实地考察南海龙舟活动现场，评估直播/3D打印切入机会。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "5. 💰 投资机会：端午龙舟季对本地消费/文旅板块短期利好，但持续性有限。更值得关注的是南海区生产性服务业转型（三产占比60%）的中长期投资逻辑——本地服务业企业估值有望随转型进程提升。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：上交所公告/雪球/东方财富（6/11-18，多源确认）"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：2026年端午节A股休市安排：6月19日(星期五)至6月21日(星期日)休市，6月22日(星期一)起照常开市。港股6月19日也因端午节休市。美股6月19日因六月节(Juneteenth)国家独立日假期休市一日。沪深港通6/19-21不提供港股通服务，6/22恢复。本周A股表现：上证+1.46%/深证成指+7.13%/创业板+11.02%/科创综指+13.24%，科技成长板块周度涨幅创年内新高。"}, {"company": "五维分析", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 💼 工作就业：全球休市=端午节假期，求职活动暂停但策略思考不停。Gofy应利用假期复盘本周A股走势背后的行业信号，更新求职方向优先级：半导体/AI基础设施供应链>传统制造业采购。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "2. 📈 职业发展：本周创业板+11%/科创+13%的极端涨幅说明市场对科技供应链的共识已经形成。供应链经理在半导体/AI企业中的职业前景已从\"不确定\"升级为\"确定性高\"。假期可整理简历中的半导体/AI供应链相关经验，为6/22后新一轮投递做准备。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "3. 🏭 行业发展：A股+美股同步休市意味着下周一(6/22)开盘将集中反映本周所有信息增量：美联储鹰派+英特尔苹果合作+三星代工扩张+液冷市场翻倍。科技板块大概率延续强势，但分化可能加剧。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "4. 🚀 创业机会：假期是复盘和规划的最佳窗口。Gofy应利用端午假期完成三项工作：(1)液冷创业项目市场定位更新（参考赛迪顾问数据）；(2)3D打印端午纪念品定制方案设计；(3)龙舟季直播服务商业方案初稿。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "5. 💰 投资机会：全球休市期间无法交易，但信息消化时间充裕。下周一(6/22)A股开市策略建议：半导体/液冷主线继续持有不追高；关注SPCX周末走势对A股科技板块传导；传统板块等分化收敛再配置。本周创业板+11%已部分透支，下周大概率回调2-3%后恢复上行。"}, {"company": "🔴 本周必做（端午节假期）", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 液冷创业项目市场定位更新：参考赛迪顾问数据（2026年232.5亿→2028年470.4亿），从\"个人液冷机箱\"扩展到\"中小企业液冷方案提供商\"。2. 复盘SPCX首周走势（首日+19%→首跌-3.56%），评估液冷创业融资节奏。3. 整理半导体/AI供应链简历关键词，为6/22后新一轮投递做准备"}, {"company": "🟡 建议做", "position": "", "salary": "", "location": "", "tag": "", "body": "4. 实地考察南海龙舟季活动现场，评估直播设备/3D打印切入机会。5. 关注三星代工扩张动态，比亚迪自动驾驶芯片供应链是佛山本地直接受益方向。6. 端午纪念品3D打印方案设计（龙舟手办/纪念章/奖杯模型），评估短期变现可行性"}, {"company": "📚 学习储备", "position": "", "salary": "", "location": "", "tag": "", "body": "7. 阅读赛迪顾问液冷数据中心市场报告，更新行业认知。8. 研究英特尔苹果合作背景，半导体代工\"三强争霸\"格局对供应链的影响。9. 追踪中科院HPAC太空液冷方案，液冷技术前沿方向"}];
+const totalItems = 59;
+const speakTemplate = "{company}。详细内容：{body}。";
+
+// ===== 状态 =====
+let currentIndex = 0;
+let isPlaying = false;
+let speechRate = 1.0;
+let readDoneSet = new Set();
+let synth = window.speechSynthesis;
+let currentUtterance = null;
+let selectedVoice = null;
+let voicesReady = false;
+
+// ===== 浏览器检测 =====
+function isQQBrowser() {
+    let ua = navigator.userAgent || '';
+    return /MQQBrowser|QQ\//i.test(ua);
+}
+function isUCBrowser() {
+    let ua = navigator.userAgent || '';
+    return /UCBrowser|UCWEB/i.test(ua);
+}
+function isWeChat() {
+    let ua = navigator.userAgent || '';
+    return /MicroMessenger/i.test(ua);
+}
+function isUnsupportedBrowser() {
+    return isQQBrowser() || isUCBrowser() || isWeChat();
+}
+
+// ===== 初始化 =====
+function init() {
+    // 浏览器检测：不支持的直接提示换浏览器
+    if (isUnsupportedBrowser()) {
+        let browserName = isQQBrowser() ? 'QQ浏览器' : (isUCBrowser() ? 'UC浏览器' : '微信内置浏览器');
+        showBrowserWarning(browserName);
+        return;
+    }
+
+    if (!synth) {
+        showBrowserWarning('当前浏览器');
+        return;
+    }
+
+    // Chrome/Edge: voices 通过异步事件加载
+    let voices = synth.getVoices();
+    if (voices && voices.length > 0) {
+        pickVoice(voices);
+    }
+
+    // 监听语音列表加载（关键！Android Chrome 需要等事件）
+    synth.onvoiceschanged = function() {
+        voices = synth.getVoices();
+        if (voices && voices.length > 0 && !voicesReady) {
+            pickVoice(voices);
+            document.getElementById('floatText').textContent =
+                '✅ 语音引擎就绪 (' + voices.length + '个) — 点🎧开始朗读';
+            document.getElementById('progressText').textContent = '就绪 ✓';
+        }
+    };
+
+    // 超时兜底：2秒后强制尝试
+    setTimeout(function() {
+        if (!voicesReady) {
+            voices = synth.getVoices();
+            if (voices && voices.length > 0) {
+                pickVoice(voices);
+            }
+            if (selectedVoice) {
+                document.getElementById('floatText').textContent =
+                    '✅ 语音引擎: ' + selectedVoice.name;
+                document.getElementById('progressText').textContent = '就绪 ✓';
+            } else {
+                document.getElementById('floatText').textContent =
+                    '⚠️ 未找到中文语音，请用系统自带 Chrome/Edge 打开';
+                document.getElementById('progressText').textContent = '无中文语音 ⚠️';
+            }
+            voicesReady = true;
+        }
+    }, 2500);
+}
+
+function showBrowserWarning(browserName) {
+    // 隐藏控制栏播放按钮
+    document.getElementById('playBtn').style.opacity = '0.3';
+    document.getElementById('playBtn').style.pointerEvents = 'none';
+    // 底部显示换浏览器提示
+    document.getElementById('floatHint').style.background = 'rgba(211,47,47,0.95)';
+    document.getElementById('floatText').innerHTML =
+        '❌ ' + browserName + '不支持语音朗读<br><small>👉 请用 <b>Chrome</b> 或 <b>Edge</b> 浏览器打开</small>';
+    document.getElementById('progressText').textContent = '❌ 浏览器不支持';
+    // 页面顶部插入醒目提示横幅
+    let banner = document.createElement('div');
+    banner.style.cssText = 'background:#FFEBEE;border-bottom:2px solid #EF5350;padding:16px;text-align:center;';
+    banner.innerHTML =
+        '<div style="font-size:40px;margin-bottom:8px;">🚫</div>' +
+        '<div style="font-size:15px;font-weight:bold;color:#C62828;margin-bottom:6px;">' +
+        browserName + ' 不支持语音朗读</div>' +
+        '<div style="font-size:14px;color:#555;line-height:1.6;">' +
+        '请用 <b style="color:#1A73E8;">Chrome</b> 或 <b style="color:#0078D4;">Edge</b> 浏览器打开即可朗读<br>' +
+        '<span style="font-size:12px;color:#999;">（应用商店搜索"Chrome"或"Edge"下载）</span></div>';
+    let header = document.querySelector('.header');
+    if (header) {
+        header.parentNode.insertBefore(banner, header);
+    }
+    // 禁用所有岗位点击
+    document.querySelectorAll('.job-item').forEach(function(el) {
+        el.style.pointerEvents = 'none';
+        el.style.opacity = '0.5';
+    });
+}
+
+function pickVoice(voices) {
+    // 优先级：zh-CN 中文女声 > zh-CN 任意 > zh-* > 第一个
+    let preferred = ['zh-CN', 'zh-Hans', 'zh-HK', 'zh-TW', 'zh'];
+    for (let lang of preferred) {
+        for (let v of voices) {
+            if (v.lang && v.lang.startsWith(lang)) {
+                // 优先女声
+                if (v.name.toLowerCase().indexOf('female') >= 0 ||
+                    v.name.indexOf('女') >= 0) {
+                    selectedVoice = v;
+                    voicesReady = true;
+                    return;
+                }
+            }
+        }
+    }
+    // 中文任意
+    for (let lang of preferred) {
+        for (let v of voices) {
+            if (v.lang && v.lang.startsWith(lang)) {
+                selectedVoice = v;
+                voicesReady = true;
+                return;
+            }
+        }
+    }
+    // 无中文语音 → 用第一个兜底
+    if (voices.length > 0) {
+        selectedVoice = voices[0];  // 用第一个兜底
+    }
+    voicesReady = true;
+}
+
+// ===== 构建朗读文本 =====
+function buildSpeakText(item) {
+    let raw = speakTemplate
+        .replace('{company}', item.company || '')
+        .replace('{position}', item.position || '')
+        .replace('{salary}', item.salary || '面议')
+        .replace('{location}', item.location || '')
+        .replace('{body}', item.body || '');
+    return _cleanForTTS(raw);
+}
+
+// ===== TTS 文本清洗：去除所有 Markdown 残留符号 =====
+function _cleanForTTS(text) {
+    if (!text) return text;
+    let cleaned = text;
+    // 去除 Markdown 标题标记 (# ## ### #### 等)
+    cleaned = cleaned.replace(/#{1,6}\s*/g, '');
+    // 去除加粗/斜体标记 (** __ * _)
+    cleaned = cleaned.replace(/\*{1,2}|_/g, '');
+    // 去除管道符 (表格)
+    cleaned = cleaned.replace(/\|/g, ' ');
+    // 去除反引号 (代码)
+    cleaned = cleaned.replace(/`+/g, '');
+    // 去除波浪线
+    cleaned = cleaned.replace(/~+/g, '');
+    // 去除分散的 -  :  标记（但不破坏正常连字符和冒号）
+    cleaned = cleaned.replace(/：/g, ':');
+    // 压缩多余空格
+    cleaned = cleaned.replace(/\s+/g, ' ');
+    // 去除连续连字符
+    cleaned = cleaned.replace(/-{2,}/g, '');
+    return cleaned.trim();
+}
+
+// ===== 朗读单条 =====
+function speakItem(index) {
+    if (index < 0 || index >= totalItems) return;
+
+    currentIndex = index;
+
+    synth.cancel();
+    let item = items[index];
+    let text = buildSpeakText(item);
+
+    let utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'zh-CN';
+    utterance.rate = speechRate;
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+    if (selectedVoice) {
+        utterance.voice = selectedVoice;
+    }
+
+    utterance.onstart = function() {
+        updateUI(index);
+        document.getElementById('nowPlaying').classList.add('active');
+        document.getElementById('nowPlayingText').textContent =
+            (item.company || '') + ' ' + (item.position || '');
+    };
+
+    utterance.onend = function() {
+        readDoneSet.add(index);
+        updateReadDone(index);
+        let next = index + 1;
+        if (next < totalItems && isPlaying) {
+            speakItem(next);
+        } else if (next >= totalItems) {
+            stopPlayback();
+            document.getElementById('floatText').textContent = '✅ 全部朗读完成！';
+            document.getElementById('progressText').textContent = '朗读完成';
+            document.getElementById('progressBar').style.width = '100%';
+            document.getElementById('progressLabel').textContent = totalItems + '/' + totalItems;
+        }
+    };
+
+    utterance.onerror = function(e) {
+        if (e.error !== 'canceled' && e.error !== 'interrupted') {
+            let errMsg = '⚠️ 朗读出错: ' + (e.error || 'unknown');
+            document.getElementById('progressText').textContent = errMsg;
+            document.getElementById('floatText').textContent =
+                errMsg + ' — 可尝试用系统自带浏览器打开';
+            let next = index + 1;
+            if (next < totalItems && isPlaying) {
+                setTimeout(function() { speakItem(next); }, 500);
+            }
+        }
+    };
+
+    currentUtterance = utterance;
+    synth.speak(utterance);
+}
+
+// ===== 播放控制 =====
+function togglePlay() {
+    if (isPlaying) {
+        pausePlayback();
+    } else {
+        startPlayback();
+    }
+}
+
+function startPlayback() {
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    document.getElementById('progressText').textContent = '朗读中...';
+    document.getElementById('floatText').textContent =
+        selectedVoice
+            ? '🔊 朗读中 (' + selectedVoice.name + ') ...'
+            : '🔊 朗读中 (系统默认语音)...';
+    speakItem(currentIndex);
+}
+
+function pausePlayback() {
+    isPlaying = false;
+    synth.cancel();
+    document.getElementById('playIcon').textContent = '🎧';
+    document.getElementById('playBtn').classList.remove('playing');
+    document.getElementById('nowPlaying').classList.remove('active');
+    document.getElementById('floatText').textContent = '⏸️ 已暂停，点击继续';
+    document.getElementById('progressText').textContent = '已暂停';
+}
+
+function stopPlayback() {
+    isPlaying = false;
+    synth.cancel();
+    document.getElementById('playIcon').textContent = '🎧';
+    document.getElementById('playBtn').classList.remove('playing');
+    document.getElementById('nowPlaying').classList.remove('active');
+    document.getElementById('floatText').textContent = '✅ 朗读完成';
+}
+
+function skipNext() {
+    synth.cancel();
+    let next = (currentIndex + 1) % totalItems;
+    currentIndex = next;
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function skipPrev() {
+    synth.cancel();
+    let prev = currentIndex - 1;
+    if (prev < 0) prev = totalItems - 1;
+    currentIndex = prev;
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function jumpTo(index) {
+    synth.cancel();
+    currentIndex = index;
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function setSpeed(val) {
+    speechRate = parseFloat(val);
+    document.getElementById('floatText').textContent =
+        '🎵 朗读速度: ' + val + 'x';
+    setTimeout(function() {
+        if (isPlaying) {
+            document.getElementById('floatText').textContent = '🔊 朗读中...';
+        }
+    }, 1500);
+}
+
+// ===== UI更新 =====
+function updateUI(index) {
+    // 进度条
+    let pct = (index / totalItems) * 100;
+    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent = (index + 1) + '/' + totalItems;
+    document.getElementById('progressText').textContent =
+        '正在朗读第 ' + (index + 1) + ' ' + '条新闻'.replace('个岗位','').replace('条新闻','');
+
+    // 高亮当前
+    document.querySelectorAll('.job-item').forEach(function(el) {
+        el.classList.remove('reading');
+    });
+    let currentEl = document.querySelector('.job-item[data-index="' + index + '"]');
+    if (currentEl) {
+        currentEl.classList.add('reading');
+        currentEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+function updateReadDone(index) {
+    let el = document.querySelector('.job-item[data-index="' + index + '"]');
+    if (el) {
+        el.classList.add('read-done');
+    }
+}
+
+// ===== 启动 =====
+init();
+
+// ===== 移动端保持屏幕唤醒（可选） =====
+if (navigator.wakeLock) {
+    try {
+        navigator.wakeLock.request('screen');
+    } catch(e) {}
+}
+</script>
+</body>
+</html>
