@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>📰 每日要闻（20260622）</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f5f5f5;
+    color: #333;
+    padding-bottom: 80px;
+}
+
+/* ===== 顶部控制栏 ===== */
+.control-bar {
+    position: sticky; top:0; z-index:100;
+    background: linear-gradient(135deg, #1A73E8 0%, #4FC3F7 100%);
+    padding: 12px 16px;
+    box-shadow: 0 2px 12px rgba(26,115,232,0.3);
+}
+.control-row {
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+}
+.control-btn {
+    width: 48px; height: 48px;
+    border: none; border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    font-size: 22px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
+.control-btn:active { transform: scale(0.9); background: rgba(255,255,255,0.35); }
+.control-btn.play-btn {
+    width: 64px; height: 64px;
+    background: #fff;
+    color: #1A73E8;
+    font-size: 28px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+.control-btn.play-btn.playing { color: #FF6B35; }
+
+.speed-select {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 14px;
+    cursor: pointer;
+    -webkit-appearance: none;
+}
+.speed-select option { color: #333; }
+
+/* ===== 进度信息 ===== */
+.progress-row {
+    display: flex; align-items: center; gap: 10px;
+    margin-top: 8px;
+    color: rgba(255,255,255,0.9);
+    font-size: 13px;
+}
+.progress-bar-outer {
+    flex: 1; height: 4px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 2px;
+    overflow: hidden;
+}
+.progress-bar-inner {
+    height: 100%;
+    background: #fff;
+    border-radius: 2px;
+    transition: width 0.3s;
+    width: 0%;
+}
+.progress-text {
+    white-space: nowrap;
+    min-width: 90px;
+    text-align: right;
+}
+
+/* ===== 当前朗读提示 ===== */
+.now-playing {
+    background: #FFF9C4;
+    padding: 8px 16px;
+    font-size: 13px;
+    color: #F57F17;
+    text-align: center;
+    display: none;
+    border-bottom: 2px solid #FFD54F;
+}
+.now-playing.active { display: block; }
+
+/* ===== 标题区 ===== */
+.header {
+    background: #fff;
+    padding: 20px 16px 12px;
+    border-bottom: 1px solid #eee;
+}
+.header h1 { font-size: 18px; color: #1A73E8; margin-bottom: 4px; }
+.header .subtitle { font-size: 13px; color: #888; }
+
+/* ===== 岗位列表 ===== */
+.job-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 14px 16px;
+    background: #fff;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
+.job-item:active { background: #f5f5f5; }
+.job-item.reading {
+    background: #E3F2FD;
+    border-left: 4px solid #1A73E8;
+    padding-left: 12px;
+}
+.job-item.read-done {
+    opacity: 0.6;
+}
+
+.job-index {
+    width: 32px; height: 32px;
+    background: #f0f0f0;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: bold;
+    color: #888;
+    flex-shrink: 0;
+}
+.job-item.reading .job-index {
+    background: #1A73E8;
+    color: #fff;
+}
+.job-item.read-done .job-index {
+    background: #4CAF50;
+    color: #fff;
+}
+
+.job-info { flex:1; min-width:0; }
+.job-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    display: flex; align-items: center; gap: 6px;
+    flex-wrap: wrap;
+}
+.job-detail {
+    font-size: 13px;
+    color: #666;
+    display: flex; flex-wrap: wrap; gap: 8px;
+}
+.position { color: #1A73E8; }
+.salary { color: #FF6B35; font-weight: bold; }
+.location { color: #888; }
+
+.tag {
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    white-space: nowrap;
+}
+.tag-new { background: #E8F5E9; color: #2E7D32; }
+.tag-repeat { background: #FFF3E0; color: #E65100; }
+.tag-update { background: #E3F2FD; color: #1565C0; }
+
+/* ===== 底部浮动条 ===== */
+.float-hint {
+    position: fixed; bottom: 0; left:0; right:0;
+    background: rgba(26,115,232,0.95);
+    color: #fff;
+    text-align: center;
+    padding: 10px 16px;
+    font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px;
+    z-index: 99;
+}
+.float-hint .icon { font-size: 20px; }
+
+/* ===== 状态标记 ===== */
+.status-badge {
+    display: inline-block;
+    background: #4CAF50;
+    color: #fff;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+    0%,100% { opacity:1; }
+    50% { opacity:0.5; }
+}
+</style>
+</head>
+<body>
+
+<!-- 控制栏 -->
+<div class="control-bar">
+    <div class="control-row">
+        <button class="control-btn" onclick="skipPrev()" title="上一条">⏮️</button>
+        <button class="control-btn play-btn" id="playBtn" onclick="togglePlay()" title="播放/暂停">
+            <span id="playIcon">🎧</span>
+        </button>
+        <button class="control-btn" onclick="skipNext()" title="下一条">⏭️</button>
+        <select class="speed-select" id="speedSelect" onchange="setSpeed(this.value)">
+            <option value="0.8">0.8x</option>
+            <option value="1.0" selected>1x</option>
+            <option value="1.2">1.2x</option>
+            <option value="1.5">1.5x</option>
+        </select>
+    </div>
+    <div class="progress-row">
+        <span id="progressLabel">0/53</span>
+        <div class="progress-bar-outer">
+            <div class="progress-bar-inner" id="progressBar"></div>
+        </div>
+        <span class="progress-text" id="progressText">准备就绪</span>
+    </div>
+</div>
+
+<!-- 当前朗读提示 -->
+<div class="now-playing" id="nowPlaying">
+    🔊 正在朗读：<span id="nowPlayingText"></span>
+</div>
+
+<!-- 标题 -->
+<div class="header">
+    <h1>📰 每日要闻（20260622）</h1>
+    <p class="subtitle">53条新闻 | 点🎧按钮浏览器自动朗读</p>
+</div>
+
+<!-- 岗位/新闻列表 -->
+<div id="jobList">
+
+        <div class="job-item" data-index="0" onclick="jumpTo(0)">
+            <div class="job-index">1</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：第四届中国国际供应链促进博览会（链博会）今日正式开幕，持续至6月26日。本届链博会以全产业链视角为核心，设置数字科技链、先进制造链、绿色农业链、健康生活链、智能汽车链、清洁能源链等六大链条和一个供应链服务展区，覆盖当今世界最受关注、对全球经济发展最具影响力的重点领域。自2023年起已成功举办三...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="1" onclick="jumpTo(1)">
+            <div class="job-index">2</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📊 五维度分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💼 工作就业。链博会是供应链领域的国家级顶级展会，参展企业涵盖制造业全链条。对于正在求职供应链/采购经理岗位的你来说，这是了解行业最新动态、头部企业需求的最佳窗口。建议关注参展企业名单，其中不乏潜在目标雇主（机械设备、汽车零部件、智能硬件等），可作为精准投递简历的参考依据。链博会期间发布的行业白皮书...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="2" onclick="jumpTo(2)">
+            <div class="job-index">3</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">📈 职业发展。本届链博会特别强调"先进制造链"和"智能汽车链"，与你的机械制造+汽车零部件职业背景高度契合。展会展示的数字化供应链、AI赋能采购、绿色供应链等前沿实践，正是供应链管理者未来35年必须掌握的核心能力。建议远程关注展会直播和报告，补充知识储备，在面试中展现对新趋势的敏感度和学习能力。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="3" onclick="jumpTo(3)">
+            <div class="job-index">4</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🏭 行业发展。链博会设置"供应链服务展区"，聚焦物流、金融、数字化平台等现代供应链服务，标志着中国供应链正从传统采购执行向全链条价值创造转型。先进制造链的展示将推动机械/设备制造行业的供应链协同升级，对佛山这样的制造业重镇具有直接带动效应。数字科技链涉及的AI、区块链、物联网技术与供应链的融合，正在...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="4" onclick="jumpTo(4)">
+            <div class="job-index">5</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🚀 创业机会。液冷项目属于先进制造链/数字科技链的交叉领域，链博会是展示液冷技术方案、寻找产业合作伙伴的潜在平台（即使今年来不及参展，明年可提前规划）。3D打印缩微人像业务可关注数字科技链中的3D制造/增材制造展区，了解最新技术设备和商业模式。直播副业方面，供应链服务展区的数字化营销和跨境直播展示也...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="5" onclick="jumpTo(5)">
+            <div class="job-index">6</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💰 投资机会。链博会主题涵盖清洁能源链和智能汽车链，相关赛道（新能源设备、智能汽车零部件、工业自动化）是当前A股政策重点支持方向。供应链数字化服务商（如ERP/SaaS平台企业）在产业升级浪潮中具备长期增长逻辑。建议关注链博会期间发布的行业报告和签约项目，捕捉政策导向和资本流向。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="6" onclick="jumpTo(6)">
+            <div class="job-index">7</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：据科技媒体爆料，OpenAI计划下周正式推出GPT5.6系列，覆盖mini、标准版、Pro版三档。6月21日已有Pro订阅用户反馈可访问GPT5.6 Pro，输出质量较前代明显提升，复杂项目完成时间从小时级压缩到2040分钟，前端和Web开发任务的认知深度显著增强。此次升级是GPT5.5之后的...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="7" onclick="jumpTo(7)">
+            <div class="job-index">8</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📊 五维度分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💼 工作就业。AI能力持续跃升对求职市场产生双向影响：一方面，掌握AI工具（如GPT系列辅助简历优化、面试准备、行业研究）的求职者获得显著效率优势；另一方面，基础文案、初级数据分析等岗位面临被AI替代的压力。建议在简历中突出"AI工具应用能力"作为差异化亮点，并在面试中展示用AI辅助解决供应链实际问...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="8" onclick="jumpTo(8)">
+            <div class="job-index">9</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">📈 职业发展。GPT5.6在复杂项目处理上的能力跃升（从小时级到分钟级），意味着供应链管理者可以用AI完成供应商评估报告、成本分析、合同审查等原本耗时的工作，将精力集中于战略决策和关系管理。供应链领域的AI应用正从"辅助工具"升级为"核心生产力"，掌握AI将是下一阶段供应链管理者的必备技能，而非加分...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="9" onclick="jumpTo(9)">
+            <div class="job-index">10</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🏭 行业发展。OpenAI的快速迭代（从GPT5.5到5.6仅数月）表明AI大模型已进入"军备竞赛"阶段，算力需求持续暴增。这将直接带动数据中心建设、芯片采购、散热解决方案的需求——液冷散热的行业窗口正在快速扩大。同时，制造业的AI应用（智能排产、质量检测、预测性维护）将因模型能力提升而加速落地。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="10" onclick="jumpTo(10)">
+            <div class="job-index">11</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🚀 创业机会。GPT5.6的性能提升对液冷项目是重大利好——更强的AI意味着更多GPU、更多数据中心、更大的散热需求。氟化液浸没式液冷方案的市场叙事逻辑进一步加强："AI越强，芯片越热，液冷越刚需"。3D打印业务可以借助GPT5.6优化模型处理流程（如AI自动修复3D扫描缺陷）。直播副业可探索AI辅...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="11" onclick="jumpTo(11)">
+            <div class="job-index">12</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💰 投资机会。OpenAI IPO预期升温，AI算力产业链（芯片→服务器→数据中心→散热→电力）持续受益。美股AI相关标的仍有上行空间，但短期估值偏高。国内对标企业（如DeepSeek产业链）值得关注。液冷散热赛道（尤其是浸没式液冷）作为AI基础设施的"卖水人"，具备独立于模型竞争的投资逻辑。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="12" onclick="jumpTo(12)">
+            <div class="job-index">13</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：微信正在灰度测试AI助手「小微」，部分用户可在微信搜索框、聊天界面触发AI功能。作为月活超13亿的超级App，微信将AI嵌入社交核心场景，标志着中国AI应用从独立App向平台内嵌模式转变。「小微」可完成对话问答、内容生成、服务推荐等任务，与公众号、小程序、视频号生态联动，是腾讯AI ToC赛道...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="13" onclick="jumpTo(13)">
+            <div class="job-index">14</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📊 五维度分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💼 工作就业。微信AI助手的上线，意味着职场沟通、信息获取、文档处理等日常工作流程将发生根本性变化。对于供应链管理者而言，微信作为商务沟通的核心工具，嵌入AI后将大幅提升信息处理效率（如自动总结群聊要点、生成会议纪要、智能搜索行业资讯）。建议尽早熟悉「小微」功能，在求职和职场中建立"AI增强型"工作...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="14" onclick="jumpTo(14)">
+            <div class="job-index">15</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">📈 职业发展。腾讯生态（微信+企业微信+腾讯文档+腾讯会议）引入AI后，将重塑企业协作和供应链协同的工作范式。对于供应链管理岗位，能熟练运用腾讯AI生态工具优化采购流程、供应商管理、数据分析，将成为核心竞争力的重要组成部分。建议关注企业微信侧的AI功能演进，这直接影响未来供应链团队的工作方式。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="15" onclick="jumpTo(15)">
+            <div class="job-index">16</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🏭 行业发展。微信AI助手的上线标志着"平台型AI分发"时代的正式到来——AI不再需要用户主动下载App，而是嵌入日常使用的超级平台中，使用门槛降至零。这种模式对佛山制造业的数字化转型具有示范意义：制造业企业可以借助微信生态的AI能力，低成本实现智能客服、订单管理、供应链协同等场景的AI化。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="16" onclick="jumpTo(16)">
+            <div class="job-index">17</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🚀 创业机会。直播副业直接受益——微信AI助手与视频号生态联动，可以辅助直播脚本生成、商品话术优化、粉丝互动管理，降低直播运营门槛。3D打印业务可以借助微信小程序+AI的组合，打造更智能的在线下单和客户服务体验（如AI自动分析客户上传的照片质量、推荐最佳打印方案）。液冷项目的品牌营销也可以通过微信A...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="17" onclick="jumpTo(17)">
+            <div class="job-index">18</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💰 投资机会。腾讯作为微信AI助手的运营方，AI战略落地将提升其长期估值逻辑。微信AI生态的开发者工具和商业接口开放后，将催生大量AI应用创业机会，AI+企业服务赛道值得关注。短视频/直播生态的AI化（内容创作、智能推荐、数据分析）也是确定性较高的投资方向。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="18" onclick="jumpTo(18)">
+            <div class="job-index">19</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：AI投资热潮已从下游应用向上游半导体设备全面扩散。美股总市值超百亿美元的9家半导体设备公司今年以来股价涨幅均超75%，应用材料、拉姆研究、科磊、泰瑞达等多家龙头年内股价翻倍。AI投资逻辑正从"拼模型能力"向"拼算力基础设施"迁移。与此同时，国内DeepSeek最新一轮融资超500亿元，估值超1...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="19" onclick="jumpTo(19)">
+            <div class="job-index">20</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📊 五维度分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💼 工作就业。半导体产业链的爆发式增长直接带动相关制造业的招聘需求。半导体设备制造涉及大量精密机械加工、供应链管理、采购等岗位，与你的机械制造+供应链背景高度匹配。建议将半导体设备制造企业（如北方华创、中微公司、盛美上海等）纳入求职目标范围，尤其是采购和供应链管理相关岗位。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="20" onclick="jumpTo(20)">
+            <div class="job-index">21</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">📈 职业发展。半导体行业的供应链管理复杂度极高（高精度、多品种、小批量、长交期），能在这个领域积累经验，职业含金量将大幅提升。AI算力产业链（芯片→封装→散热→服务器）的供应链需求将持续增长，建议系统性学习半导体供应链的特点和最佳实践，拓展职业发展空间。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="21" onclick="jumpTo(21)">
+            <div class="job-index">22</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🏭 行业发展。AI投资向上游扩散是产业成熟的标志性信号——从概念炒作进入"订单驱动、收入验证"阶段。半导体设备、光通信、芯片制造等硬件环节有真实订单和收入支撑，确定性远高于AI应用层。中国半导体设备国产化率仍不足20%，国产替代空间巨大，未来510年将持续拉动精密制造、特种材料、供应链管理等配套产业...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="22" onclick="jumpTo(22)">
+            <div class="job-index">23</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🚀 创业机会。液冷项目正处于AI算力产业链的核心环节——GPU越强、部署越多，散热需求越大。浸没式液冷作为下一代数据中心散热方案，直接受益于AI算力基础设施的持续投入。建议加快氟化液方案的验证进度，抓住AI算力基建的时间窗口。3D打印业务可关注半导体设备精密零部件的制造需求（如特种夹具、检测治具等）...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="23" onclick="jumpTo(23)">
+            <div class="job-index">24</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💰 投资机会。美股半导体设备股已大幅上涨，短期追高风险较大，但中长期逻辑坚实。A股半导体设备板块（北方华创、中微公司等）估值相对合理，国产替代+AI需求双轮驱动。液冷散热相关标的（曙光数创、高澜股份等）作为AI基础设施细分赛道，值得关注。DeepSeek产业链的供应商（服务器/芯片/数据中心）也有投...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="24" onclick="jumpTo(24)">
+            <div class="job-index">25</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：佛山（高明）"泛家居国际尾货直播基地"项目正式签约，落户鸿创数字科技产业园。项目将盘活闲置土地，打造集尾货供应链、国内及跨境直播、品牌孵化于一体的电商园区，为"有家就有佛山造"产业名片拓展新销路。这是佛山制造+直播电商融合的最新实践，也是高明区推动产业数字化转型的重要举措。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="25" onclick="jumpTo(25)">
+            <div class="job-index">26</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📊 五维度分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💼 工作就业。佛山本地直播电商产业的快速发展，为供应链管理人才提供了新的就业方向——直播供应链管理（选品、库存、物流、品控）正成为热门岗位。你拥有17年供应链管理经验+直播间搭建技术+直播设备资源，是"直播+供应链"跨界人才的理想画像，可在佛山本地寻找直播电商企业的供应链负责人/顾问岗位。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="26" onclick="jumpTo(26)">
+            <div class="job-index">27</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">📈 职业发展。"供应链管理+直播电商"是一个新兴的职业交叉领域。传统制造业的供应链管理经验（供应商管理、成本控制、品质保证）在直播电商的选品和供应链搭建中具有高价值可迁移性。建议关注佛山本地直播基地的招聘需求，同时学习直播电商供应链的特殊逻辑（快反供应链、柔性生产、爆品管理），构建差异化职业竞争力。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="27" onclick="jumpTo(27)">
+            <div class="job-index">28</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🏭 行业发展。佛山作为中国制造业重镇，"有家就有佛山造"正在从制造IP向品牌IP升级。泛家居尾货直播基地的落地，是佛山制造+数字经济融合的典型案例，将带动本地家居、建材、家电等产业集群的线上化转型。尾货供应链+跨境直播的模式，也为佛山制造开拓海外市场提供了新渠道。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="28" onclick="jumpTo(28)">
+            <div class="job-index">29</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🚀 创业机会。直播副业直接受益——佛山本地直播基地的建设意味着更多本地货源、更低物流成本、更丰富的合作机会。你可以利用自有直播设备+技术优势，与直播基地合作开展泛家居产品的直播带货。3D打印业务也可考虑与直播基地的品牌孵化功能结合，打造"3D打印+直播展示+定制下单"的创新模式。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="29" onclick="jumpTo(29)">
+            <div class="job-index">30</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💰 投资机会。佛山本地直播电商产业的兴起，利好本地商业地产、物流仓储、MCN机构等相关产业。直播电商SaaS服务商（数据分析、智能选品、供应链管理平台）在产业数字化转型中具备投资价值。佛山本地制造业龙头企业的品牌化转型（线上渠道建设、直播营销）也是值得关注的趋势。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="30" onclick="jumpTo(30)">
+            <div class="job-index">31</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：佛山地铁3号线实现全线贯通运营，告别分段运行状态。至此，广佛所有运营地铁线路实现全面融合，形成"一张网、一张票"格局。3号线进一步连接广湛高铁佛山站、佛山西站及佛山机场等交通枢纽，大幅提升佛山城市交通便利度和广佛同城化水平。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="31" onclick="jumpTo(31)">
+            <div class="job-index">32</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📊 五维度分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💼 工作就业。广佛地铁全面贯通后，佛山到广州核心城区的通勤时间将显著缩短，直接扩大了你的求职地理范围——广州的供应链/采购经理岗位（薪资普遍高于佛山）现在变得更加可达。"住在佛山、工作在广州"的通勤模式成本大幅降低，建议将广州的制造业、汽车零部件企业也纳入求职搜索范围。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="32" onclick="jumpTo(32)">
+            <div class="job-index">33</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">📈 职业发展。交通便利度的提升意味着职业选择空间的扩大。广州作为华南制造业和供应链中心，拥有更多高质量供应链管理岗位（外资制造企业区域总部、跨国采购中心等），这些机会此前可能因通勤距离被排除，现在重新进入可选范围。广佛同城化也意味着两地的行业交流、人脉拓展、培训学习更加便捷。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="33" onclick="jumpTo(33)">
+            <div class="job-index">34</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🏭 行业发展。广佛同城交通一体化将加速两地的产业协同和人才流动。佛山制造业+广州商贸/金融/科技的互补格局将进一步强化，对供应链行业而言，信息流、物流、资金流的融合效率将明显提升。佛山制造企业更容易获取广州的高端人才和专业服务，利好本地制造业的转型升级。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="34" onclick="jumpTo(34)">
+            <div class="job-index">35</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🚀 创业机会。交通便利化对三个创业方向都有正面影响：液冷项目更容易对接广州的电子市场、高校实验室和技术人才；3D打印业务可以拓展广州客户、对接婚庆影楼等合作渠道；直播副业可以更方便参加广州的行业展会、选品会、培训活动。广佛同城进一步降低了创业的资源获取成本。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="35" onclick="jumpTo(35)">
+            <div class="job-index">36</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💰 投资机会。广佛同城交通一体化将带动沿线站点周边的商业地产、住宅和产业园区价值提升。佛山地铁3号线沿线（尤其是连接高铁站和机场的站点）的商业机会值得关注。广佛交界区域（南海、顺德）的产业园区和商业配套也可能受益。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="36" onclick="jumpTo(36)">
+            <div class="job-index">37</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：6月19日国常会定调资本市场改革方向，6月20日证监会发布活跃市场十六条措施并首次提出平准基金常态化运作，同日央行在货币政策执行报告中明确流动性将向科技金融与绿色金融定向倾斜，6月21日人民日报接力发声进行舆论总动员。72小时内，从最高层决策到部委落实再到舆论定调，三层信号体系完成了对资本市场...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="37" onclick="jumpTo(37)">
+            <div class="job-index">38</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📊 五维度分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💼 工作就业。资本市场活跃度直接影响企业融资环境和扩张意愿。政策组合拳旨在稳定市场预期、提振投资者信心，如果效果显现，企业招聘（尤其是制造业、科技企业）可能随之回暖。对于求职者而言，资本市场回暖意味着更多企业有资金和信心进行团队扩张。建议关注政策落地后企业端的实际招聘动态变化。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="38" onclick="jumpTo(38)">
+            <div class="job-index">39</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">📈 职业发展。平准基金常态化运作和科技金融定向宽松，意味着科技制造类企业的融资环境将持续改善。这对于供应链管理岗位的影响是间接但重要的：企业资金充裕→采购预算增加→供应链团队扩张/升级需求→更多高质量供应链管理岗位。科技金融定向倾斜也意味着你求职目标中的半导体、新能源、智能硬件等科技制造企业将持续受...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="39" onclick="jumpTo(39)">
+            <div class="job-index">40</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🏭 行业发展。政策组合拳明确向科技金融和绿色金融倾斜，制造业中的高端装备、新能源、半导体、绿色制造等细分领域将获得更多资金支持。这与你的行业偏好（机械/设备制造、汽车及零部件、新能源制造端、智能硬件制造）高度一致，政策方向有利于这些行业的持续发展。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="40" onclick="jumpTo(40)">
+            <div class="job-index">41</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🚀 创业机会。资本市场的政策暖风，有利于创业企业的融资环境。液冷项目处于AI+绿色科技的交叉赛道，符合科技金融和绿色金融的政策导向，未来在融资（股权融资、科技贷款、政府补贴）方面可能获得更多支持。A股活跃度提升也有利于未来的IPO退出路径。3D打印和直播副业虽然与资本市场关联度较低，但整体经济预期的...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="41" onclick="jumpTo(41)">
+            <div class="job-index">42</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💰 投资机会。政策组合拳是明确的"政策底"信号，A股短期有望企稳反弹。科技金融+绿色金融双主线是明确的投资方向：半导体设备、AI算力、新能源、高端制造等赛道政策确定性最高。但需注意A股短期情绪修复仍需时间，建议以定投或分批建仓的方式参与，避免追高。LPR连续不变意味着房贷利率稳定，房地产板块仍以观望...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="42" onclick="jumpTo(42)">
+            <div class="job-index">43</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：中国物流与采购联合会大宗商品流通分会发布《中国大宗商品发展报告（2026）》，指出中国从大宗商品贸易大国迈向强国，需实现六个关键转向：从规模大国转向配置强国，从短期保供转向系统安全，从低价采购转向韧性采购，从传统流通转向可信数字贸易，从现货交易转向期现联动，从国内循环转向双循环枢纽。"韧性采购...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="43" onclick="jumpTo(43)">
+            <div class="job-index">44</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📊 五维度分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💼 工作就业。"从低价采购转向韧性采购"是供应链管理理念的重大转向，直接影响采购经理岗位的核心能力要求。过去以"最低价中标"为导向的采购模式正在被淘汰，取而代之的是综合评估供应商韧性（交付可靠性、抗风险能力、多元化供应）。你在简历中提到的TCO模型、QCDS评估体系、供应商ABCD分级管理，正好对应...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="44" onclick="jumpTo(44)">
+            <div class="job-index">45</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">📈 职业发展。"韧性采购"理念的官方定调，意味着供应链管理者的核心价值从"省钱"升级为"保供+风控"，这是职业价值的重大提升。未来采购经理的核心能力将从谈判砍价转向供应链风险识别、供应商多元化布局、数字化采购工具运用。建议深入学习供应链风险管理的系统方法论（如SCRM、供应链地图），并将相关概念融入...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="45" onclick="jumpTo(45)">
+            <div class="job-index">46</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🏭 行业发展。六大转向涵盖了制造业供应链的全面升级路径：数字化（可信数字贸易）、金融化（期现联动）、全球化（双循环枢纽）、安全化（系统安全）。这对机械制造行业意味着：原材料采购策略需要从单一低价转向多元化供应；供应链管理需要引入数字化工具（如区块链溯源、AI预测）；企业需要建立供应链风险应急预案。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="46" onclick="jumpTo(46)">
+            <div class="job-index">47</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🚀 创业机会。"韧性采购"理念下，企业将增加对供应链管理软件、数字化采购平台、供应商风险管理工具的需求——这是一个B2B创业机会。液冷项目的核心物料（氟化液、密封件、泵等）采购也需要应用"韧性采购"理念，确保关键物料供应安全。3D打印的材料采购（光敏树脂、FDM耗材）同样受益于多元化供应商策略。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="47" onclick="jumpTo(47)">
+            <div class="job-index">48</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💰 投资机会。"韧性采购"将推动供应链数字化赛道的发展：供应链管理SaaS、采购平台、物流科技等企业将获得政策和市场双重驱动。大宗商品供应链服务商（如建发股份、物产中大、象屿股份等）在"期现联动"和"双循环枢纽"方向具备增长潜力。供应链金融科技也是值得关注的细分赛道。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="48" onclick="jumpTo(48)">
+            <div class="job-index">49</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🎯 核心主题词</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">供应链升级 + AI加速 + 本地机遇 + 政策托底</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="49" onclick="jumpTo(49)">
+            <div class="job-index">50</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🚀 今日行动建议</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 求职行动：。关注链博会参展企业名单，筛选目标雇主。将半导体设备制造企业纳入求职搜索范围。利用"韧性采购"理念更新面试话术</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="50" onclick="jumpTo(50)">
+            <div class="job-index">51</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">2. 创业行动：。加快液冷氟化液方案验证，把握AI算力基建窗口。研究佛山泛家居直播基地的入驻政策和合作机会</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="51" onclick="jumpTo(51)">
+            <div class="job-index">52</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3. 学习行动：。阅读链博会相关行业报告，补充供应链前沿知识。学习微信AI助手「小微」的使用方法，建立AI增强工作流</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="52" onclick="jumpTo(52)">
+            <div class="job-index">53</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">4. 投资参考：。关注A股半导体设备、液冷散热板块。政策组合拳后市场企稳可考虑分批建仓</span>
+                </div>
+            </div>
+        </div>
+</div>
+
+<!-- 底部提示 -->
+<div class="float-hint" id="floatHint">
+    <span class="icon">🎧</span>
+    <span id="floatText">点击顶部播放按钮开始朗读</span>
+</div>
+
+<script>
+// ===== 数据 =====
+const items = [{"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：第四届中国国际供应链促进博览会（链博会）今日正式开幕，持续至6月26日。本届链博会以全产业链视角为核心，设置数字科技链、先进制造链、绿色农业链、健康生活链、智能汽车链、清洁能源链等六大链条和一个供应链服务展区，覆盖当今世界最受关注、对全球经济发展最具影响力的重点领域。自2023年起已成功举办三届，本届规模与参与企业数量再创新高。"}, {"company": "📊 五维度分析", "position": "", "salary": "", "location": "", "tag": "", "body": "💼 工作就业。链博会是供应链领域的国家级顶级展会，参展企业涵盖制造业全链条。对于正在求职供应链/采购经理岗位的你来说，这是了解行业最新动态、头部企业需求的最佳窗口。建议关注参展企业名单，其中不乏潜在目标雇主（机械设备、汽车零部件、智能硬件等），可作为精准投递简历的参考依据。链博会期间发布的行业白皮书和趋势报告，也可以作为面试中的行业洞察谈资。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "📈 职业发展。本届链博会特别强调\"先进制造链\"和\"智能汽车链\"，与你的机械制造+汽车零部件职业背景高度契合。展会展示的数字化供应链、AI赋能采购、绿色供应链等前沿实践，正是供应链管理者未来3-5年必须掌握的核心能力。建议远程关注展会直播和报告，补充知识储备，在面试中展现对新趋势的敏感度和学习能力。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🏭 行业发展。链博会设置\"供应链服务展区\"，聚焦物流、金融、数字化平台等现代供应链服务，标志着中国供应链正从传统采购执行向全链条价值创造转型。先进制造链的展示将推动机械/设备制造行业的供应链协同升级，对佛山这样的制造业重镇具有直接带动效应。数字科技链涉及的AI、区块链、物联网技术与供应链的融合，正在重塑采购管理范式。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🚀 创业机会。液冷项目属于先进制造链/数字科技链的交叉领域，链博会是展示液冷技术方案、寻找产业合作伙伴的潜在平台（即使今年来不及参展，明年可提前规划）。3D打印缩微人像业务可关注数字科技链中的3D制造/增材制造展区，了解最新技术设备和商业模式。直播副业方面，供应链服务展区的数字化营销和跨境直播展示也有参考价值。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💰 投资机会。链博会主题涵盖清洁能源链和智能汽车链，相关赛道（新能源设备、智能汽车零部件、工业自动化）是当前A股政策重点支持方向。供应链数字化服务商（如ERP/SaaS平台企业）在产业升级浪潮中具备长期增长逻辑。建议关注链博会期间发布的行业报告和签约项目，捕捉政策导向和资本流向。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：据科技媒体爆料，OpenAI计划下周正式推出GPT-5.6系列，覆盖mini、标准版、Pro版三档。6月21日已有Pro订阅用户反馈可访问GPT-5.6 Pro，输出质量较前代明显提升，复杂项目完成时间从小时级压缩到20-40分钟，前端和Web开发任务的认知深度显著增强。此次升级是GPT-5.5之后的大版本迭代，也是OpenAI为后续IPO铺路的关键产品节点。"}, {"company": "📊 五维度分析", "position": "", "salary": "", "location": "", "tag": "", "body": "💼 工作就业。AI能力持续跃升对求职市场产生双向影响：一方面，掌握AI工具（如GPT系列辅助简历优化、面试准备、行业研究）的求职者获得显著效率优势；另一方面，基础文案、初级数据分析等岗位面临被AI替代的压力。建议在简历中突出\"AI工具应用能力\"作为差异化亮点，并在面试中展示用AI辅助解决供应链实际问题的案例。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "📈 职业发展。GPT-5.6在复杂项目处理上的能力跃升（从小时级到分钟级），意味着供应链管理者可以用AI完成供应商评估报告、成本分析、合同审查等原本耗时的工作，将精力集中于战略决策和关系管理。供应链领域的AI应用正从\"辅助工具\"升级为\"核心生产力\"，掌握AI将是下一阶段供应链管理者的必备技能，而非加分项。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🏭 行业发展。OpenAI的快速迭代（从GPT-5.5到5.6仅数月）表明AI大模型已进入\"军备竞赛\"阶段，算力需求持续暴增。这将直接带动数据中心建设、芯片采购、散热解决方案的需求——液冷散热的行业窗口正在快速扩大。同时，制造业的AI应用（智能排产、质量检测、预测性维护）将因模型能力提升而加速落地。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🚀 创业机会。GPT-5.6的性能提升对液冷项目是重大利好——更强的AI意味着更多GPU、更多数据中心、更大的散热需求。氟化液浸没式液冷方案的市场叙事逻辑进一步加强：\"AI越强，芯片越热，液冷越刚需\"。3D打印业务可以借助GPT-5.6优化模型处理流程（如AI自动修复3D扫描缺陷）。直播副业可探索AI辅助内容创作和运营分析。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💰 投资机会。OpenAI IPO预期升温，AI算力产业链（芯片→服务器→数据中心→散热→电力）持续受益。美股AI相关标的仍有上行空间，但短期估值偏高。国内对标企业（如DeepSeek产业链）值得关注。液冷散热赛道（尤其是浸没式液冷）作为AI基础设施的\"卖水人\"，具备独立于模型竞争的投资逻辑。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：微信正在灰度测试AI助手「小微」，部分用户可在微信搜索框、聊天界面触发AI功能。作为月活超13亿的超级App，微信将AI嵌入社交核心场景，标志着中国AI应用从独立App向平台内嵌模式转变。「小微」可完成对话问答、内容生成、服务推荐等任务，与公众号、小程序、视频号生态联动，是腾讯AI ToC赛道的关键布局，直接对标字节、百度的AI助手产品。"}, {"company": "📊 五维度分析", "position": "", "salary": "", "location": "", "tag": "", "body": "💼 工作就业。微信AI助手的上线，意味着职场沟通、信息获取、文档处理等日常工作流程将发生根本性变化。对于供应链管理者而言，微信作为商务沟通的核心工具，嵌入AI后将大幅提升信息处理效率（如自动总结群聊要点、生成会议纪要、智能搜索行业资讯）。建议尽早熟悉「小微」功能，在求职和职场中建立\"AI增强型\"工作方式。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "📈 职业发展。腾讯生态（微信+企业微信+腾讯文档+腾讯会议）引入AI后，将重塑企业协作和供应链协同的工作范式。对于供应链管理岗位，能熟练运用腾讯AI生态工具优化采购流程、供应商管理、数据分析，将成为核心竞争力的重要组成部分。建议关注企业微信侧的AI功能演进，这直接影响未来供应链团队的工作方式。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🏭 行业发展。微信AI助手的上线标志着\"平台型AI分发\"时代的正式到来——AI不再需要用户主动下载App，而是嵌入日常使用的超级平台中，使用门槛降至零。这种模式对佛山制造业的数字化转型具有示范意义：制造业企业可以借助微信生态的AI能力，低成本实现智能客服、订单管理、供应链协同等场景的AI化。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🚀 创业机会。直播副业直接受益——微信AI助手与视频号生态联动，可以辅助直播脚本生成、商品话术优化、粉丝互动管理，降低直播运营门槛。3D打印业务可以借助微信小程序+AI的组合，打造更智能的在线下单和客户服务体验（如AI自动分析客户上传的照片质量、推荐最佳打印方案）。液冷项目的品牌营销也可以通过微信AI生态更精准地触达目标用户。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💰 投资机会。腾讯作为微信AI助手的运营方，AI战略落地将提升其长期估值逻辑。微信AI生态的开发者工具和商业接口开放后，将催生大量AI应用创业机会，AI+企业服务赛道值得关注。短视频/直播生态的AI化（内容创作、智能推荐、数据分析）也是确定性较高的投资方向。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：AI投资热潮已从下游应用向上游半导体设备全面扩散。美股总市值超百亿美元的9家半导体设备公司今年以来股价涨幅均超75%，应用材料、拉姆研究、科磊、泰瑞达等多家龙头年内股价翻倍。AI投资逻辑正从\"拼模型能力\"向\"拼算力基础设施\"迁移。与此同时，国内DeepSeek最新一轮融资超500亿元，估值超1500亿人民币，创中国AI最大单轮融资纪录。"}, {"company": "📊 五维度分析", "position": "", "salary": "", "location": "", "tag": "", "body": "💼 工作就业。半导体产业链的爆发式增长直接带动相关制造业的招聘需求。半导体设备制造涉及大量精密机械加工、供应链管理、采购等岗位，与你的机械制造+供应链背景高度匹配。建议将半导体设备制造企业（如北方华创、中微公司、盛美上海等）纳入求职目标范围，尤其是采购和供应链管理相关岗位。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "📈 职业发展。半导体行业的供应链管理复杂度极高（高精度、多品种、小批量、长交期），能在这个领域积累经验，职业含金量将大幅提升。AI算力产业链（芯片→封装→散热→服务器）的供应链需求将持续增长，建议系统性学习半导体供应链的特点和最佳实践，拓展职业发展空间。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🏭 行业发展。AI投资向上游扩散是产业成熟的标志性信号——从概念炒作进入\"订单驱动、收入验证\"阶段。半导体设备、光通信、芯片制造等硬件环节有真实订单和收入支撑，确定性远高于AI应用层。中国半导体设备国产化率仍不足20%，国产替代空间巨大，未来5-10年将持续拉动精密制造、特种材料、供应链管理等配套产业。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🚀 创业机会。液冷项目正处于AI算力产业链的核心环节——GPU越强、部署越多，散热需求越大。浸没式液冷作为下一代数据中心散热方案，直接受益于AI算力基础设施的持续投入。建议加快氟化液方案的验证进度，抓住AI算力基建的时间窗口。3D打印业务可关注半导体设备精密零部件的制造需求（如特种夹具、检测治具等），这是一个高附加值的细分市场。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💰 投资机会。美股半导体设备股已大幅上涨，短期追高风险较大，但中长期逻辑坚实。A股半导体设备板块（北方华创、中微公司等）估值相对合理，国产替代+AI需求双轮驱动。液冷散热相关标的（曙光数创、高澜股份等）作为AI基础设施细分赛道，值得关注。DeepSeek产业链的供应商（服务器/芯片/数据中心）也有投资价值。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：佛山（高明）\"泛家居国际尾货直播基地\"项目正式签约，落户鸿创数字科技产业园。项目将盘活闲置土地，打造集尾货供应链、国内及跨境直播、品牌孵化于一体的电商园区，为\"有家就有佛山造\"产业名片拓展新销路。这是佛山制造+直播电商融合的最新实践，也是高明区推动产业数字化转型的重要举措。"}, {"company": "📊 五维度分析", "position": "", "salary": "", "location": "", "tag": "", "body": "💼 工作就业。佛山本地直播电商产业的快速发展，为供应链管理人才提供了新的就业方向——直播供应链管理（选品、库存、物流、品控）正成为热门岗位。你拥有17年供应链管理经验+直播间搭建技术+直播设备资源，是\"直播+供应链\"跨界人才的理想画像，可在佛山本地寻找直播电商企业的供应链负责人/顾问岗位。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "📈 职业发展。\"供应链管理+直播电商\"是一个新兴的职业交叉领域。传统制造业的供应链管理经验（供应商管理、成本控制、品质保证）在直播电商的选品和供应链搭建中具有高价值可迁移性。建议关注佛山本地直播基地的招聘需求，同时学习直播电商供应链的特殊逻辑（快反供应链、柔性生产、爆品管理），构建差异化职业竞争力。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🏭 行业发展。佛山作为中国制造业重镇，\"有家就有佛山造\"正在从制造IP向品牌IP升级。泛家居尾货直播基地的落地，是佛山制造+数字经济融合的典型案例，将带动本地家居、建材、家电等产业集群的线上化转型。尾货供应链+跨境直播的模式，也为佛山制造开拓海外市场提供了新渠道。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🚀 创业机会。直播副业直接受益——佛山本地直播基地的建设意味着更多本地货源、更低物流成本、更丰富的合作机会。你可以利用自有直播设备+技术优势，与直播基地合作开展泛家居产品的直播带货。3D打印业务也可考虑与直播基地的品牌孵化功能结合，打造\"3D打印+直播展示+定制下单\"的创新模式。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💰 投资机会。佛山本地直播电商产业的兴起，利好本地商业地产、物流仓储、MCN机构等相关产业。直播电商SaaS服务商（数据分析、智能选品、供应链管理平台）在产业数字化转型中具备投资价值。佛山本地制造业龙头企业的品牌化转型（线上渠道建设、直播营销）也是值得关注的趋势。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：佛山地铁3号线实现全线贯通运营，告别分段运行状态。至此，广佛所有运营地铁线路实现全面融合，形成\"一张网、一张票\"格局。3号线进一步连接广湛高铁佛山站、佛山西站及佛山机场等交通枢纽，大幅提升佛山城市交通便利度和广佛同城化水平。"}, {"company": "📊 五维度分析", "position": "", "salary": "", "location": "", "tag": "", "body": "💼 工作就业。广佛地铁全面贯通后，佛山到广州核心城区的通勤时间将显著缩短，直接扩大了你的求职地理范围——广州的供应链/采购经理岗位（薪资普遍高于佛山）现在变得更加可达。\"住在佛山、工作在广州\"的通勤模式成本大幅降低，建议将广州的制造业、汽车零部件企业也纳入求职搜索范围。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "📈 职业发展。交通便利度的提升意味着职业选择空间的扩大。广州作为华南制造业和供应链中心，拥有更多高质量供应链管理岗位（外资制造企业区域总部、跨国采购中心等），这些机会此前可能因通勤距离被排除，现在重新进入可选范围。广佛同城化也意味着两地的行业交流、人脉拓展、培训学习更加便捷。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🏭 行业发展。广佛同城交通一体化将加速两地的产业协同和人才流动。佛山制造业+广州商贸/金融/科技的互补格局将进一步强化，对供应链行业而言，信息流、物流、资金流的融合效率将明显提升。佛山制造企业更容易获取广州的高端人才和专业服务，利好本地制造业的转型升级。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🚀 创业机会。交通便利化对三个创业方向都有正面影响：液冷项目更容易对接广州的电子市场、高校实验室和技术人才；3D打印业务可以拓展广州客户、对接婚庆影楼等合作渠道；直播副业可以更方便参加广州的行业展会、选品会、培训活动。广佛同城进一步降低了创业的资源获取成本。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💰 投资机会。广佛同城交通一体化将带动沿线站点周边的商业地产、住宅和产业园区价值提升。佛山地铁3号线沿线（尤其是连接高铁站和机场的站点）的商业机会值得关注。广佛交界区域（南海、顺德）的产业园区和商业配套也可能受益。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：6月19日国常会定调资本市场改革方向，6月20日证监会发布活跃市场十六条措施并首次提出平准基金常态化运作，同日央行在货币政策执行报告中明确流动性将向科技金融与绿色金融定向倾斜，6月21日人民日报接力发声进行舆论总动员。72小时内，从最高层决策到部委落实再到舆论定调，三层信号体系完成了对资本市场的一次全方位预期重塑。同时，6月LPR今日公布，市场预期维持不变（1年期3.0%，5年期3.5%），连续多月按兵不动。"}, {"company": "📊 五维度分析", "position": "", "salary": "", "location": "", "tag": "", "body": "💼 工作就业。资本市场活跃度直接影响企业融资环境和扩张意愿。政策组合拳旨在稳定市场预期、提振投资者信心，如果效果显现，企业招聘（尤其是制造业、科技企业）可能随之回暖。对于求职者而言，资本市场回暖意味着更多企业有资金和信心进行团队扩张。建议关注政策落地后企业端的实际招聘动态变化。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "📈 职业发展。平准基金常态化运作和科技金融定向宽松，意味着科技制造类企业的融资环境将持续改善。这对于供应链管理岗位的影响是间接但重要的：企业资金充裕→采购预算增加→供应链团队扩张/升级需求→更多高质量供应链管理岗位。科技金融定向倾斜也意味着你求职目标中的半导体、新能源、智能硬件等科技制造企业将持续受益。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🏭 行业发展。政策组合拳明确向科技金融和绿色金融倾斜，制造业中的高端装备、新能源、半导体、绿色制造等细分领域将获得更多资金支持。这与你的行业偏好（机械/设备制造、汽车及零部件、新能源制造端、智能硬件制造）高度一致，政策方向有利于这些行业的持续发展。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🚀 创业机会。资本市场的政策暖风，有利于创业企业的融资环境。液冷项目处于AI+绿色科技的交叉赛道，符合科技金融和绿色金融的政策导向，未来在融资（股权融资、科技贷款、政府补贴）方面可能获得更多支持。A股活跃度提升也有利于未来的IPO退出路径。3D打印和直播副业虽然与资本市场关联度较低，但整体经济预期的改善也会带动消费意愿。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💰 投资机会。政策组合拳是明确的\"政策底\"信号，A股短期有望企稳反弹。科技金融+绿色金融双主线是明确的投资方向：半导体设备、AI算力、新能源、高端制造等赛道政策确定性最高。但需注意A股短期情绪修复仍需时间，建议以定投或分批建仓的方式参与，避免追高。LPR连续不变意味着房贷利率稳定，房地产板块仍以观望为主。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：中国物流与采购联合会大宗商品流通分会发布《中国大宗商品发展报告（2026）》，指出中国从大宗商品贸易大国迈向强国，需实现六个关键转向：从规模大国转向配置强国，从短期保供转向系统安全，从低价采购转向韧性采购，从传统流通转向可信数字贸易，从现货交易转向期现联动，从国内循环转向双循环枢纽。\"韧性采购\"概念的正式提出，标志着中国供应链管理理念的根本性转变。"}, {"company": "📊 五维度分析", "position": "", "salary": "", "location": "", "tag": "", "body": "💼 工作就业。\"从低价采购转向韧性采购\"是供应链管理理念的重大转向，直接影响采购经理岗位的核心能力要求。过去以\"最低价中标\"为导向的采购模式正在被淘汰，取而代之的是综合评估供应商韧性（交付可靠性、抗风险能力、多元化供应）。你在简历中提到的TCO模型、QCDS评估体系、供应商ABCD分级管理，正好对应\"韧性采购\"的核心理念，这将成为面试中的关键差异化亮点。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "📈 职业发展。\"韧性采购\"理念的官方定调，意味着供应链管理者的核心价值从\"省钱\"升级为\"保供+风控\"，这是职业价值的重大提升。未来采购经理的核心能力将从谈判砍价转向供应链风险识别、供应商多元化布局、数字化采购工具运用。建议深入学习供应链风险管理的系统方法论（如SCRM、供应链地图），并将相关概念融入简历和面试话术中。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🏭 行业发展。六大转向涵盖了制造业供应链的全面升级路径：数字化（可信数字贸易）、金融化（期现联动）、全球化（双循环枢纽）、安全化（系统安全）。这对机械制造行业意味着：原材料采购策略需要从单一低价转向多元化供应；供应链管理需要引入数字化工具（如区块链溯源、AI预测）；企业需要建立供应链风险应急预案。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🚀 创业机会。\"韧性采购\"理念下，企业将增加对供应链管理软件、数字化采购平台、供应商风险管理工具的需求——这是一个B2B创业机会。液冷项目的核心物料（氟化液、密封件、泵等）采购也需要应用\"韧性采购\"理念，确保关键物料供应安全。3D打印的材料采购（光敏树脂、FDM耗材）同样受益于多元化供应商策略。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💰 投资机会。\"韧性采购\"将推动供应链数字化赛道的发展：供应链管理SaaS、采购平台、物流科技等企业将获得政策和市场双重驱动。大宗商品供应链服务商（如建发股份、物产中大、象屿股份等）在\"期现联动\"和\"双循环枢纽\"方向具备增长潜力。供应链金融科技也是值得关注的细分赛道。"}, {"company": "🎯 核心主题词", "position": "", "salary": "", "location": "", "tag": "", "body": "供应链升级 + AI加速 + 本地机遇 + 政策托底"}, {"company": "🚀 今日行动建议", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 求职行动：。关注链博会参展企业名单，筛选目标雇主。将半导体设备制造企业纳入求职搜索范围。利用\"韧性采购\"理念更新面试话术"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "2. 创业行动：。加快液冷氟化液方案验证，把握AI算力基建窗口。研究佛山泛家居直播基地的入驻政策和合作机会"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "3. 学习行动：。阅读链博会相关行业报告，补充供应链前沿知识。学习微信AI助手「小微」的使用方法，建立AI增强工作流"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "4. 投资参考：。关注A股半导体设备、液冷散热板块。政策组合拳后市场企稳可考虑分批建仓"}];
+const totalItems = 53;
+const speakTemplate = "{company}。详细内容：{body}。";
+
+// ===== 状态 =====
+let currentIndex = 0;
+let isPlaying = false;
+let speechRate = 1.0;
+let readDoneSet = new Set();
+let synth = window.speechSynthesis;
+let currentUtterance = null;
+let selectedVoice = null;
+let voicesReady = false;
+
+// ===== 浏览器检测 =====
+function isQQBrowser() {
+    let ua = navigator.userAgent || '';
+    return /MQQBrowser|QQ\//i.test(ua);
+}
+function isUCBrowser() {
+    let ua = navigator.userAgent || '';
+    return /UCBrowser|UCWEB/i.test(ua);
+}
+function isWeChat() {
+    let ua = navigator.userAgent || '';
+    return /MicroMessenger/i.test(ua);
+}
+function isUnsupportedBrowser() {
+    return isQQBrowser() || isUCBrowser() || isWeChat();
+}
+
+// ===== 初始化 =====
+function init() {
+    // 浏览器检测：不支持的直接提示换浏览器
+    if (isUnsupportedBrowser()) {
+        let browserName = isQQBrowser() ? 'QQ浏览器' : (isUCBrowser() ? 'UC浏览器' : '微信内置浏览器');
+        showBrowserWarning(browserName);
+        return;
+    }
+
+    if (!synth) {
+        showBrowserWarning('当前浏览器');
+        return;
+    }
+
+    // Chrome/Edge: voices 通过异步事件加载
+    let voices = synth.getVoices();
+    if (voices && voices.length > 0) {
+        pickVoice(voices);
+    }
+
+    // 监听语音列表加载（关键！Android Chrome 需要等事件）
+    synth.onvoiceschanged = function() {
+        voices = synth.getVoices();
+        if (voices && voices.length > 0 && !voicesReady) {
+            pickVoice(voices);
+            document.getElementById('floatText').textContent =
+                '✅ 语音引擎就绪 (' + voices.length + '个) — 点🎧开始朗读';
+            document.getElementById('progressText').textContent = '就绪 ✓';
+        }
+    };
+
+    // 超时兜底：2秒后强制尝试
+    setTimeout(function() {
+        if (!voicesReady) {
+            voices = synth.getVoices();
+            if (voices && voices.length > 0) {
+                pickVoice(voices);
+            }
+            if (selectedVoice) {
+                document.getElementById('floatText').textContent =
+                    '✅ 语音引擎: ' + selectedVoice.name;
+                document.getElementById('progressText').textContent = '就绪 ✓';
+            } else {
+                document.getElementById('floatText').textContent =
+                    '⚠️ 未找到中文语音，请用系统自带 Chrome/Edge 打开';
+                document.getElementById('progressText').textContent = '无中文语音 ⚠️';
+            }
+            voicesReady = true;
+        }
+    }, 2500);
+}
+
+function showBrowserWarning(browserName) {
+    // 隐藏控制栏播放按钮
+    document.getElementById('playBtn').style.opacity = '0.3';
+    document.getElementById('playBtn').style.pointerEvents = 'none';
+    // 底部显示换浏览器提示
+    document.getElementById('floatHint').style.background = 'rgba(211,47,47,0.95)';
+    document.getElementById('floatText').innerHTML =
+        '❌ ' + browserName + '不支持语音朗读<br><small>👉 请用 <b>Chrome</b> 或 <b>Edge</b> 浏览器打开</small>';
+    document.getElementById('progressText').textContent = '❌ 浏览器不支持';
+    // 页面顶部插入醒目提示横幅
+    let banner = document.createElement('div');
+    banner.style.cssText = 'background:#FFEBEE;border-bottom:2px solid #EF5350;padding:16px;text-align:center;';
+    banner.innerHTML =
+        '<div style="font-size:40px;margin-bottom:8px;">🚫</div>' +
+        '<div style="font-size:15px;font-weight:bold;color:#C62828;margin-bottom:6px;">' +
+        browserName + ' 不支持语音朗读</div>' +
+        '<div style="font-size:14px;color:#555;line-height:1.6;">' +
+        '请用 <b style="color:#1A73E8;">Chrome</b> 或 <b style="color:#0078D4;">Edge</b> 浏览器打开即可朗读<br>' +
+        '<span style="font-size:12px;color:#999;">（应用商店搜索"Chrome"或"Edge"下载）</span></div>';
+    let header = document.querySelector('.header');
+    if (header) {
+        header.parentNode.insertBefore(banner, header);
+    }
+    // 禁用所有岗位点击
+    document.querySelectorAll('.job-item').forEach(function(el) {
+        el.style.pointerEvents = 'none';
+        el.style.opacity = '0.5';
+    });
+}
+
+function pickVoice(voices) {
+    // 优先级：zh-CN 中文女声 > zh-CN 任意 > zh-* > 第一个
+    let preferred = ['zh-CN', 'zh-Hans', 'zh-HK', 'zh-TW', 'zh'];
+    for (let lang of preferred) {
+        for (let v of voices) {
+            if (v.lang && v.lang.startsWith(lang)) {
+                // 优先女声
+                if (v.name.toLowerCase().indexOf('female') >= 0 ||
+                    v.name.indexOf('女') >= 0) {
+                    selectedVoice = v;
+                    voicesReady = true;
+                    return;
+                }
+            }
+        }
+    }
+    // 中文任意
+    for (let lang of preferred) {
+        for (let v of voices) {
+            if (v.lang && v.lang.startsWith(lang)) {
+                selectedVoice = v;
+                voicesReady = true;
+                return;
+            }
+        }
+    }
+    // 无中文语音 → 用第一个兜底
+    if (voices.length > 0) {
+        selectedVoice = voices[0];  // 用第一个兜底
+    }
+    voicesReady = true;
+}
+
+// ===== 构建朗读文本 =====
+function buildSpeakText(item) {
+    let raw = speakTemplate
+        .replace('{company}', item.company || '')
+        .replace('{position}', item.position || '')
+        .replace('{salary}', item.salary || '面议')
+        .replace('{location}', item.location || '')
+        .replace('{body}', item.body || '');
+    return _cleanForTTS(raw);
+}
+
+// ===== TTS 文本清洗：去除所有 Markdown 残留符号 =====
+function _cleanForTTS(text) {
+    if (!text) return text;
+    let cleaned = text;
+    // 去除 Markdown 标题标记 (# ## ### #### 等)
+    cleaned = cleaned.replace(/#{1,6}\s*/g, '');
+    // 去除加粗/斜体标记 (** __ * _)
+    cleaned = cleaned.replace(/\*{1,2}|_/g, '');
+    // 去除管道符 (表格)
+    cleaned = cleaned.replace(/\|/g, ' ');
+    // 去除反引号 (代码)
+    cleaned = cleaned.replace(/`+/g, '');
+    // 去除波浪线
+    cleaned = cleaned.replace(/~+/g, '');
+    // 去除分散的 -  :  标记（但不破坏正常连字符和冒号）
+    cleaned = cleaned.replace(/：/g, ':');
+    // 压缩多余空格
+    cleaned = cleaned.replace(/\s+/g, ' ');
+    // 去除连续连字符
+    cleaned = cleaned.replace(/-{2,}/g, '');
+    return cleaned.trim();
+}
+
+// ===== 朗读单条 =====
+function speakItem(index) {
+    if (index < 0 || index >= totalItems) return;
+
+    currentIndex = index;
+
+    synth.cancel();
+    let item = items[index];
+    let text = buildSpeakText(item);
+
+    let utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'zh-CN';
+    utterance.rate = speechRate;
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+    if (selectedVoice) {
+        utterance.voice = selectedVoice;
+    }
+
+    utterance.onstart = function() {
+        updateUI(index);
+        document.getElementById('nowPlaying').classList.add('active');
+        document.getElementById('nowPlayingText').textContent =
+            (item.company || '') + ' ' + (item.position || '');
+    };
+
+    utterance.onend = function() {
+        readDoneSet.add(index);
+        updateReadDone(index);
+        let next = index + 1;
+        if (next < totalItems && isPlaying) {
+            speakItem(next);
+        } else if (next >= totalItems) {
+            stopPlayback();
+            document.getElementById('floatText').textContent = '✅ 全部朗读完成！';
+            document.getElementById('progressText').textContent = '朗读完成';
+            document.getElementById('progressBar').style.width = '100%';
+            document.getElementById('progressLabel').textContent = totalItems + '/' + totalItems;
+        }
+    };
+
+    utterance.onerror = function(e) {
+        if (e.error !== 'canceled' && e.error !== 'interrupted') {
+            let errMsg = '⚠️ 朗读出错: ' + (e.error || 'unknown');
+            document.getElementById('progressText').textContent = errMsg;
+            document.getElementById('floatText').textContent =
+                errMsg + ' — 可尝试用系统自带浏览器打开';
+            let next = index + 1;
+            if (next < totalItems && isPlaying) {
+                setTimeout(function() { speakItem(next); }, 500);
+            }
+        }
+    };
+
+    currentUtterance = utterance;
+    synth.speak(utterance);
+}
+
+// ===== 播放控制 =====
+function togglePlay() {
+    if (isPlaying) {
+        pausePlayback();
+    } else {
+        startPlayback();
+    }
+}
+
+function startPlayback() {
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    document.getElementById('progressText').textContent = '朗读中...';
+    document.getElementById('floatText').textContent =
+        selectedVoice
+            ? '🔊 朗读中 (' + selectedVoice.name + ') ...'
+            : '🔊 朗读中 (系统默认语音)...';
+    speakItem(currentIndex);
+}
+
+function pausePlayback() {
+    isPlaying = false;
+    synth.cancel();
+    document.getElementById('playIcon').textContent = '🎧';
+    document.getElementById('playBtn').classList.remove('playing');
+    document.getElementById('nowPlaying').classList.remove('active');
+    document.getElementById('floatText').textContent = '⏸️ 已暂停，点击继续';
+    document.getElementById('progressText').textContent = '已暂停';
+}
+
+function stopPlayback() {
+    isPlaying = false;
+    synth.cancel();
+    document.getElementById('playIcon').textContent = '🎧';
+    document.getElementById('playBtn').classList.remove('playing');
+    document.getElementById('nowPlaying').classList.remove('active');
+    document.getElementById('floatText').textContent = '✅ 朗读完成';
+}
+
+function skipNext() {
+    synth.cancel();
+    let next = (currentIndex + 1) % totalItems;
+    currentIndex = next;
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function skipPrev() {
+    synth.cancel();
+    let prev = currentIndex - 1;
+    if (prev < 0) prev = totalItems - 1;
+    currentIndex = prev;
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function jumpTo(index) {
+    synth.cancel();
+    currentIndex = index;
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function setSpeed(val) {
+    speechRate = parseFloat(val);
+    document.getElementById('floatText').textContent =
+        '🎵 朗读速度: ' + val + 'x';
+    setTimeout(function() {
+        if (isPlaying) {
+            document.getElementById('floatText').textContent = '🔊 朗读中...';
+        }
+    }, 1500);
+}
+
+// ===== UI更新 =====
+function updateUI(index) {
+    // 进度条
+    let pct = (index / totalItems) * 100;
+    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent = (index + 1) + '/' + totalItems;
+    document.getElementById('progressText').textContent =
+        '正在朗读第 ' + (index + 1) + ' ' + '条新闻'.replace('个岗位','').replace('条新闻','');
+
+    // 高亮当前
+    document.querySelectorAll('.job-item').forEach(function(el) {
+        el.classList.remove('reading');
+    });
+    let currentEl = document.querySelector('.job-item[data-index="' + index + '"]');
+    if (currentEl) {
+        currentEl.classList.add('reading');
+        currentEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+function updateReadDone(index) {
+    let el = document.querySelector('.job-item[data-index="' + index + '"]');
+    if (el) {
+        el.classList.add('read-done');
+    }
+}
+
+// ===== 启动 =====
+init();
+
+// ===== 移动端保持屏幕唤醒（可选） =====
+if (navigator.wakeLock) {
+    try {
+        navigator.wakeLock.request('screen');
+    } catch(e) {}
+}
+</script>
+</body>
+</html>
