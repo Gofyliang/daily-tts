@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>📰 每日要闻（20260711）</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f5f5f5;
+    color: #333;
+    padding-bottom: 80px;
+}
+
+/* ===== 顶部控制栏 ===== */
+.control-bar {
+    position: sticky; top:0; z-index:100;
+    background: linear-gradient(135deg, #1A73E8 0%, #4FC3F7 100%);
+    padding: 12px 16px;
+    box-shadow: 0 2px 12px rgba(26,115,232,0.3);
+}
+.control-row {
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+}
+.control-btn {
+    width: 48px; height: 48px;
+    border: none; border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    font-size: 22px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
+.control-btn:active { transform: scale(0.9); background: rgba(255,255,255,0.35); }
+.control-btn.play-btn {
+    width: 64px; height: 64px;
+    background: #fff;
+    color: #1A73E8;
+    font-size: 28px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+.control-btn.play-btn.playing { color: #FF6B35; }
+
+.speed-select {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 14px;
+    cursor: pointer;
+    -webkit-appearance: none;
+}
+.speed-select option { color: #333; }
+
+/* ===== 进度信息 ===== */
+.progress-row {
+    display: flex; align-items: center; gap: 10px;
+    margin-top: 8px;
+    color: rgba(255,255,255,0.9);
+    font-size: 13px;
+}
+.progress-bar-outer {
+    flex: 1; height: 4px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 2px;
+    overflow: hidden;
+}
+.progress-bar-inner {
+    height: 100%;
+    background: #fff;
+    border-radius: 2px;
+    transition: width 0.3s;
+    width: 0%;
+}
+.progress-text {
+    white-space: nowrap;
+    min-width: 90px;
+    text-align: right;
+}
+
+/* ===== 当前朗读提示 ===== */
+.now-playing {
+    background: #FFF9C4;
+    padding: 8px 16px;
+    font-size: 13px;
+    color: #F57F17;
+    text-align: center;
+    display: none;
+    border-bottom: 2px solid #FFD54F;
+}
+.now-playing.active { display: block; }
+
+/* ===== 标题区 ===== */
+.header {
+    background: #fff;
+    padding: 20px 16px 12px;
+    border-bottom: 1px solid #eee;
+}
+.header h1 { font-size: 18px; color: #1A73E8; margin-bottom: 4px; }
+.header .subtitle { font-size: 13px; color: #888; }
+
+/* ===== 岗位列表 ===== */
+.job-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 14px 16px;
+    background: #fff;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
+.job-item:active { background: #f5f5f5; }
+.job-item.reading {
+    background: #E3F2FD;
+    border-left: 4px solid #1A73E8;
+    padding-left: 12px;
+}
+.job-item.read-done {
+    opacity: 0.6;
+}
+
+.job-index {
+    width: 32px; height: 32px;
+    background: #f0f0f0;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: bold;
+    color: #888;
+    flex-shrink: 0;
+}
+.job-item.reading .job-index {
+    background: #1A73E8;
+    color: #fff;
+}
+.job-item.read-done .job-index {
+    background: #4CAF50;
+    color: #fff;
+}
+
+.job-info { flex:1; min-width:0; }
+.job-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    display: flex; align-items: center; gap: 6px;
+    flex-wrap: wrap;
+}
+.job-detail {
+    font-size: 13px;
+    color: #666;
+    display: flex; flex-wrap: wrap; gap: 8px;
+}
+.position { color: #1A73E8; }
+.salary { color: #FF6B35; font-weight: bold; }
+.location { color: #888; }
+
+.tag {
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    white-space: nowrap;
+}
+.tag-new { background: #E8F5E9; color: #2E7D32; }
+.tag-repeat { background: #FFF3E0; color: #E65100; }
+.tag-update { background: #E3F2FD; color: #1565C0; }
+
+/* ===== 底部浮动条 ===== */
+.float-hint {
+    position: fixed; bottom: 0; left:0; right:0;
+    background: rgba(26,115,232,0.95);
+    color: #fff;
+    text-align: center;
+    padding: 10px 16px;
+    font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px;
+    z-index: 99;
+}
+.float-hint .icon { font-size: 20px; }
+
+/* ===== 状态标记 ===== */
+.status-badge {
+    display: inline-block;
+    background: #4CAF50;
+    color: #fff;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+    0%,100% { opacity:1; }
+    50% { opacity:0.5; }
+}
+</style>
+</head>
+<body>
+
+<!-- 控制栏 -->
+<div class="control-bar">
+    <div class="control-row">
+        <button class="control-btn" onclick="skipPrev()" title="上一条">⏮️</button>
+        <button class="control-btn play-btn" id="playBtn" onclick="togglePlay()" title="播放/暂停">
+            <span id="playIcon">🎧</span>
+        </button>
+        <button class="control-btn" onclick="skipNext()" title="下一条">⏭️</button>
+        <select class="speed-select" id="speedSelect" onchange="setSpeed(this.value)">
+            <option value="0.8">0.8x</option>
+            <option value="1.0" selected>1x</option>
+            <option value="1.2">1.2x</option>
+            <option value="1.5">1.5x</option>
+        </select>
+    </div>
+    <div class="progress-row">
+        <span id="progressLabel">0/49</span>
+        <div class="progress-bar-outer">
+            <div class="progress-bar-inner" id="progressBar"></div>
+        </div>
+        <span class="progress-text" id="progressText">准备就绪</span>
+    </div>
+</div>
+
+<!-- 当前朗读提示 -->
+<div class="now-playing" id="nowPlaying">
+    🔊 正在朗读：<span id="nowPlayingText"></span>
+</div>
+
+<!-- 标题 -->
+<div class="header">
+    <h1>📰 每日要闻（20260711）</h1>
+    <p class="subtitle">49条新闻 | 点🎧按钮浏览器自动朗读</p>
+</div>
+
+<!-- 岗位/新闻列表 -->
+<div id="jobList">
+
+        <div class="job-item" data-index="0" onclick="jumpTo(0)">
+            <div class="job-index">1</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：英伟达6月21日宣布新一代Rubin平台100%全液冷，冷却液45℃进55℃出，系统内无任何风扇。7月9日OCP峰会上，字节跳动公开AIRack3.0兆瓦级算力系统，双柜总功率突破1MW，配套100%整机柜全液冷+800V HVDC供电架构。中信证券研报指出液冷产业正从"主题预期"进入"订单与...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="1" onclick="jumpTo(1)">
+            <div class="job-index">2</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💼 工作就业</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">液冷从"选配"变"标配"，意味着所有数据中心设备厂商必须具备液冷方案能力。采购经理如果懂液冷供应链（冷板、CDU、管路、氟化液），面试时是极强的差异化亮点。目前业内液冷采购人才稀缺，懂散热材料寻源的采购人更是凤毛麟角。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="2" onclick="jumpTo(2)">
+            <div class="job-index">3</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📈 职业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">数据中心基础设施正在从"买服务器"变成"建AI Factory"，采购职能从硬件采购扩展到液冷系统、供电系统、冷却液等全新品类。供应链经理如果能掌握液冷品类的TCO模型和供应商评估体系，职业天花板将大幅打开。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="3" onclick="jumpTo(3)">
+            <div class="job-index">4</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🏭 行业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">风冷→液冷是数据中心散热架构的根本性切换，类似于燃油车→电动车的范式转换。液冷产业链（冷板制造、CDU、管路、氟化液/冷却油）将形成一个千亿级新市场。施耐德电气已在上海揭牌热管理创新实验室，单机架功率密度已达120kW以上。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="4" onclick="jumpTo(4)">
+            <div class="job-index">5</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🚀 创业机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">Gofy氟化液浸没式液冷方案获得最强行业背书！ 英伟达和字节跳动同时确认100%液冷路线，你的创业方向踩在行业拐点上。关键行动：①加速氟化液验证进度，尽快出白皮书；②关注800V HVDC供电架构（液冷+供电是配套组合）；③字节AIRack3.0的54V液冷Busbar方案值得深入研究。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="5" onclick="jumpTo(5)">
+            <div class="job-index">6</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💰 投资机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">中信证券建议沿三条主线：①代工链业绩弹性（GB200/GB300量产→台系产能紧张→大陆企业承接外溢订单）；②自主品牌认证突破（CSP、ODM、国产GPU生态的液冷供应商）；③横向新品类（配电系统、光模块液冷）。关注申万宏源7月4日研报指出的液冷基建加速规模化方向。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="6" onclick="jumpTo(6)">
+            <div class="job-index">7</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：苹果在加州北区联邦法院起诉OpenAI及其首席硬件官Tang Tan（前苹果产品设计副总裁），指控OpenAI组织有计划的商业秘密窃取行动，鼓励苹果员工分享未发布产品信息、零部件、图纸等。目前已有400+前苹果员工入职OpenAI。OpenAI正在开发自有硬件设备，聘请前苹果设计大师Jony ...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="7" onclick="jumpTo(7)">
+            <div class="job-index">8</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💼 工作就业</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">这起诉讼揭示了一个重要趋势：AI公司正在大规模吸纳硬件人才，从"软件公司"向"硬件+软件公司"转型。对于有17年机械/硬件采购经验的Gofy来说，OpenAI等AI公司的硬件采购岗位是新赛道——AI硬件供应链与传统电子供应链完全不同，需要全新的供应商开发和成本控制能力。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="8" onclick="jumpTo(8)">
+            <div class="job-index">9</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📈 职业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">苹果→OpenAI的人才流动说明，顶尖硬件人才正在从传统消费电子向AI硬件迁移。供应链经理如果能理解AI硬件的特殊需求（高功耗散热、定制芯片、液冷系统），就能在新赛道中占据先发优势。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="9" onclick="jumpTo(9)">
+            <div class="job-index">10</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🏭 行业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">这起诉讼将加速AI硬件领域的"围墙花园"建设——各家AI公司会更严格保护供应链信息，供应商认证门槛会更高。但对有资质的供应商来说，认证壁垒反而是护城河，已进入苹果/英伟达供应链的厂商将更受青睐。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="10" onclick="jumpTo(10)">
+            <div class="job-index">11</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🚀 创业机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">OpenAI开发自有硬件设备，意味着AI硬件将成为一个全新产品类别。液冷散热方案可能成为OpenAI硬件的标准需求——Gofy的浸没式液冷方案如果能在消费级AI硬件上验证成功，可能直接对接OpenAI的硬件供应链。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="11" onclick="jumpTo(11)">
+            <div class="job-index">12</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💰 投资机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">苹果诉讼可能导致OpenAI硬件项目延迟，短期内利好苹果硬件供应链稳定性。但长期看，AI硬件赛道不可逆转，关注OpenAI IPO进展及相关供应链标的。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="12" onclick="jumpTo(12)">
+            <div class="job-index">13</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：SK海力士ADR在纳斯达克上市首日大涨21%，募资265亿美元，刷新外国公司赴美IPO纪录，总市值1.27万亿美元（超出美光近2000亿美元）。SK集团会长崔泰源表示不排除进一步增发美股，正探索"内存即服务"新模式。同时，美光科技宣布将美国投资总额提升至2500亿美元以上（延续至2035年，较...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="13" onclick="jumpTo(13)">
+            <div class="job-index">14</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💼 工作就业</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">存储芯片超级扩张意味着芯片制造设备、封装材料、测试设备的采购需求将大幅增长。采购经理如果能理解存储芯片供应链的特殊性（HBM堆叠、先进封装、清洁室级别要求），可以在芯片设备/材料公司的采购岗位中脱颖而出。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="14" onclick="jumpTo(14)">
+            <div class="job-index">15</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📈 聨业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">SK海力士"内存即服务"模式是供应链创新的典型案例——从卖产品到卖服务，这要求供应链经理理解订阅制商业模式下的库存管理、交付节奏和成本模型。这种模式未来可能扩展到更多硬件品类。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="15" onclick="jumpTo(15)">
+            <div class="job-index">16</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🏭 行业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">存储芯片短缺预计持续到2030年后，这意味着全球半导体供应链将进入持续紧张期。中国大陆的存储芯片自主化（长鑫科技科创板IPO）也在加速，国产替代的采购供应链正在成型。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="16" onclick="jumpTo(16)">
+            <div class="job-index">17</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🚀 创业机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">"内存即服务"概念启发Gofy：液冷方案是否也可以从卖硬件变为卖服务（液冷即服务/LCaaS）？按月收取散热服务费，而不是一次性卖机箱。这种模式可以降低客户入门门槛，同时创造稳定现金流。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="17" onclick="jumpTo(17)">
+            <div class="job-index">18</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💰 投资机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">SK海力士市值超美光2000亿美元，说明市场对HBM（高带宽内存）的定价已极度乐观。关注：①长鑫科技7月16日科创板申购（2026年A股最大IPO之一）；②存储芯片上游设备/材料供应商；③"内存即服务"模式下的数据中心运营商。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="18" onclick="jumpTo(18)">
+            <div class="job-index">19</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：7月10日国务院常务会议，李强主持。议题包括：①防汛抗洪救灾部署；②听取数字中国建设情况汇报；③听取现代流通体系建设进展汇报；④研究新兴支柱产业培育有关工作；⑤审议通过《全民健身计划(20262030年)》。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="19" onclick="jumpTo(19)">
+            <div class="job-index">20</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💼 工作就业</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">"现代流通体系建设"直接对应供应链管理领域，国家层级的重视意味着供应链相关岗位的政策支持力度会持续加大。制造业+流通业的融合人才（懂制造又懂流通）将更受青睐。"新兴支柱产业培育"意味着AI、新能源、商业航天等新行业将获得更多政策倾斜和招聘需求。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="20" onclick="jumpTo(20)">
+            <div class="job-index">21</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📈 职业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">"数字中国建设"意味着数字化转型不再是可选项，而是国家级任务。供应链经理如果具备数字化采购系统（ERP/SRM）、数据驱动决策、供应链可视化平台的能力，将直接受益于政策推动的行业升级。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="21" onclick="jumpTo(21)">
+            <div class="job-index">22</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🏭 行业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">"现代流通体系"是国家供应链战略的顶层设计——从物流、仓储、配送到采购、信息流，整个流通链条的效率提升被列为国家重点。这将推动制造业企业加速供应链数字化转型，催生大量供应链管理咨询和系统实施的需求。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="22" onclick="jumpTo(22)">
+            <div class="job-index">23</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🚀 创业机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">"数字中国建设"利好Gofy的直播副业——数字化转型需要大量培训内容，供应链数字化培训课程的市场需求正在扩大。"新兴支柱产业"培育意味着液冷、3D打印等新行业可能获得地方政策扶持（税收减免、创业补贴等）。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="23" onclick="jumpTo(23)">
+            <div class="job-index">24</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💰 投资机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">关注政策落地后的相关板块：①数字中国→云计算/数据要素/电子政务；②现代流通体系→物流科技/供应链SaaS；③新兴支柱产业→AI基础设施/商业航天/新能源制造端。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="24" onclick="jumpTo(24)">
+            <div class="job-index">25</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：7月9日国务院国资委启动"场景万象"专项行动，发布首批十大标志性场景（涉及AI、算电碳协同等），开放100个场景清单，形成"央企出场景、民企出方案"的协同模式。同日，立讯精密等7家民企在港交所同日完成IPO，合计净募资超380亿港元（立讯精密单家242.66亿港元，刷新2026年港股IPO纪录...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="25" onclick="jumpTo(25)">
+            <div class="job-index">26</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💼 工作就业</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">"央企出场景、民企出方案"模式意味着，进入央企供应链不再只是"供货"，而是"共创解决方案"。采购经理如果具备方案型思维（不是卖零部件而是卖整体解决方案），在央企采购项目中将更有竞争力。立讯精密港股IPO说明精密制造龙头融资能力强劲，其供应链岗位招聘量可能增长。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="26" onclick="jumpTo(26)">
+            <div class="job-index">27</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📈 职业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">"场景万象"行动说明央企正在主动开放创新入口，供应链经理如果能帮助民企对接央企场景需求，可以成为"桥梁型"人才——既理解央企的合规要求，又理解民企的创新速度。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="27" onclick="jumpTo(27)">
+            <div class="job-index">28</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🏭 行业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">7家民企同日港股上市、募资380亿港元，说明中国制造业民企的资本化路径正在加速。立讯精密作为精密制造龙头，其港股二次上市将扩大国际投资者对中国制造供应链的认知。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="28" onclick="jumpTo(28)">
+            <div class="job-index">29</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🚀 创业机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">"央企出场景"模式对Gofy的液冷项目是直接利好——央企数据中心/算力基础设施的场景需求正是液冷方案的应用场景。如果能进入央企场景清单，意味着获得国家级渠道背书。新奥聚变106亿估值说明，前沿技术创业只要方向对、验证到位，融资并不难。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="29" onclick="jumpTo(29)">
+            <div class="job-index">30</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💰 投资机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">关注：①立讯精密港股上市后的供应链整合效应；②央企场景清单中的AI/算力相关标的；③聚变能源概念股（新奥聚变估值106亿→整个聚变赛道升温）。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="30" onclick="jumpTo(30)">
+            <div class="job-index">31</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：深圳南山—龙华—龙岗轴线形成中国第一个"3D打印谷"，汇聚拓竹科技、创想三维、纵维立方、智能派四大龙头，贡献全球超90%消费级3D打印机产能。拓竹科技1.4亿拿地建新总部，创想三维也在筹备拿地。嘉立创3D打印超级工厂1500+台设备全线投产，实现"最快5小时极速3D打样"。长三角浙江金华浦江也...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="31" onclick="jumpTo(31)">
+            <div class="job-index">32</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💼 工作就业</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3D打印产业化意味着相关供应链岗位正在大量产生——设备零部件采购（电机、主控板卡、喷头模组、精密导轨、传感器、钣金结构件）、耗材采购（高分子材料、金属粉末）、代加工服务质量管理。Gofy的机械专业背景+采购管理经验，在3D打印供应链岗位中极具竞争力。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="32" onclick="jumpTo(32)">
+            <div class="job-index">33</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📈 业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3D打印正在从"桌面玩具"变成"工业基础设施"，嘉立创5小时极速打样说明3D打印服务已具备工业级交付标准。供应链经理如果能理解3D打印供应链的特殊性（小批量多品种、快速迭代、材料多样性），可以切入一个快速增长的新品类。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="33" onclick="jumpTo(33)">
+            <div class="job-index">34</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🏭 行业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">深圳"3D打印谷"的形成标志着中国消费级3D打印产业链已高度成熟——方圆30公里能找齐95%零部件供应商。这种产业集群效应将大幅降低成本、加速创新，继续巩固中国在全球3D打印市场的领先地位。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="34" onclick="jumpTo(34)">
+            <div class="job-index">35</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🚀 创业机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">Gofy的缩微人像3D打印项目踩在产业拐点上！ ①深圳3D打印谷的供应链成熟度意味着零部件采购成本极低、供应速度极快；②嘉立创5小时打样服务可以作为Gofy人像打印的外包后端；③金华浦江的代加工生态提供了另一个低成本生产选项。关键是：不要自己做生产，而是利用成熟的代加工服务，自己专注在前端获客和后端...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="35" onclick="jumpTo(35)">
+            <div class="job-index">36</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💰 投资机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">关注：①拓竹科技（拿地扩产→产能提升→估值增长）；②创想三维（筹备拿地→即将扩产）；③嘉立创（1500台投产→服务能力飞跃）；④3D打印耗材上游供应商（高分子材料、金属粉末）。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="36" onclick="jumpTo(36)">
+            <div class="job-index">37</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：广东省"百日千万招聘专项行动"7月1日10月10日全面启动，聚焦先进制造业等领域。7月13日佛山高明区将举办"驿站·通航"人才夜市招聘会（25家企业现场直招）。人社部等四部门联合通知：失业保险稳岗返还、扩岗补助、技能提升补贴三项政策延续至2026年底。中小微企业返还60%、大企业30%；招16...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="37" onclick="jumpTo(37)">
+            <div class="job-index">38</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💼 工作就业</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">这是Gofy本周最应该行动的新闻！ 广东百日招聘正在运行中，高明区7月13日还有线下夜市招聘会。失业保险稳岗扩岗政策延续意味着企业招聘意愿更强（政府帮分担成本）。Gofy应该：①在"粤就业"小程序注册并投递简历；②关注佛山制造业相关岗位的专场招聘；③利用"技能提升补贴"政策考取相关证书增加竞争力。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="38" onclick="jumpTo(38)">
+            <div class="job-index">39</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📈 职业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">"先进制造业"是招聘行动的重点领域，Gofy的机械专业+17年采购管理经验正好对口。佛山制造业额外区级招工奖补说明佛山本地企业正在积极扩招——本地求职成功率可能比跨城更高。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="39" onclick="jumpTo(39)">
+            <div class="job-index">40</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🏭 行业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">三项政策延续至年底说明国家判断就业压力将持续，制造业是稳就业的核心抓手。这对佛山制造业企业是双重利好——政府补贴降低用工成本+招聘平台扩大人才供给。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="40" onclick="jumpTo(40)">
+            <div class="job-index">41</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🚀 创业机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">小微企业创业担保贷款最高400万贴息，新招录重点群体占职工10%即可申请。如果Gofy创业公司招录12名重点群体员工，就可以申请400万贴息贷款——这对液冷项目或3D打印项目的启动资金是重要补充。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="41" onclick="jumpTo(41)">
+            <div class="job-index">42</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💰 投资机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">稳岗扩岗政策延续利好制造业用工成本降低，关注佛山本地制造业上市公司的业绩改善预期。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="42" onclick="jumpTo(42)">
+            <div class="job-index">43</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：商务部、海关总署7月11日起对氦气实施临时禁止出口管理，保障国内供应安全（涉及半导体、医疗、科研等领域）。长征十号乙运载火箭首飞告捷，实现全球首次网系回收，商业航天板块午后爆发（钧达股份飙升30%+）。全国用电负荷创15.18亿千瓦历史新高，美国最大电网PJM峰值负荷168158兆瓦也创历史新...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="43" onclick="jumpTo(43)">
+            <div class="job-index">44</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💼 工作就业</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">氦气出口禁止说明战略物资管控正在加强，采购经理需要关注"战略物资出口管制"对供应链的影响。如果目标企业涉及氦气使用（半导体、医疗设备、焊接保护气），需要评估替代方案和库存策略——这正是采购经理的核心能力。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="44" onclick="jumpTo(44)">
+            <div class="job-index">45</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📈 业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">氦气出口管制是供应链风险管理的一个经典案例——面试时可以引用这个案例展示对"供应安全"的理解深度。全国用电负荷创历史新高也说明，能源管理正在成为制造业采购的新品类（电力采购、峰谷电策略、绿电采购）。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="45" onclick="jumpTo(45)">
+            <div class="job-index">46</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🏭 行业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">氦气管制直接影响半导体制造和医疗设备行业，短期内氦气价格上涨、供应紧张。商业航天板块爆发说明中国航天产业化进入加速期，火箭量产需要大量精密制造供应链支撑。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="46" onclick="jumpTo(46)">
+            <div class="job-index">47</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🚀 创业机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">全国用电负荷创新高→液冷散热方案的应用场景不只是数据中心，还包括高功耗家用设备（AI工作站、高性能PC）。Gofy的浸没式液冷方案如果定位在"省电+散热"双重价值，市场吸引力更大。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="47" onclick="jumpTo(47)">
+            <div class="job-index">48</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💰 投资机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">关注：①氦气替代技术相关标的（半导体工艺气体替代方案）；②商业航天供应链（钧达股份、长征系列配套）；③电力设备/储能（用电负荷创新高→电网扩容需求→储能爆发）。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="48" onclick="jumpTo(48)">
+            <div class="job-index">49</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🎯 本周行动建议（按优先级）</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 🚨 最高优先：在"粤就业"小程序注册投递简历，关注佛山制造业专场招聘。2. 🚨 最高优先：加速氟化液验证——英伟达Rubin全液冷方案细节值得逐条研究，更新白皮书。3. ⭐ 高优先：研究"液冷即服务"商业模式（受SK海力士"内存即服务"启发）。4. ⭐ 高优先：关注央企"场景万象"场景清单，评...</span>
+                </div>
+            </div>
+        </div>
+</div>
+
+<!-- 底部提示 -->
+<div class="float-hint" id="floatHint">
+    <span class="icon">🎧</span>
+    <span id="floatText">点击顶部播放按钮开始朗读</span>
+</div>
+
+<script>
+// ===== 数据 =====
+const items = [{"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：英伟达6月21日宣布新一代Rubin平台100%全液冷，冷却液45℃进55℃出，系统内无任何风扇。7月9日OCP峰会上，字节跳动公开AIRack3.0兆瓦级算力系统，双柜总功率突破1MW，配套100%整机柜全液冷+800V HVDC供电架构。中信证券研报指出液冷产业正从\"主题预期\"进入\"订单与业绩兑现阶段\"，预计2027年全球AIDC服务器液冷市场达218亿美元。工信部要求新建数据中心PUE≤1.1（2026-2028行动计划），传统风冷PUE>1.4已无法合规。"}, {"company": "💼 工作就业", "position": "", "salary": "", "location": "", "tag": "", "body": "液冷从\"选配\"变\"标配\"，意味着所有数据中心设备厂商必须具备液冷方案能力。采购经理如果懂液冷供应链（冷板、CDU、管路、氟化液），面试时是极强的差异化亮点。目前业内液冷采购人才稀缺，懂散热材料寻源的采购人更是凤毛麟角。"}, {"company": "📈 职业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "数据中心基础设施正在从\"买服务器\"变成\"建AI Factory\"，采购职能从硬件采购扩展到液冷系统、供电系统、冷却液等全新品类。供应链经理如果能掌握液冷品类的TCO模型和供应商评估体系，职业天花板将大幅打开。"}, {"company": "🏭 行业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "风冷→液冷是数据中心散热架构的根本性切换，类似于燃油车→电动车的范式转换。液冷产业链（冷板制造、CDU、管路、氟化液/冷却油）将形成一个千亿级新市场。施耐德电气已在上海揭牌热管理创新实验室，单机架功率密度已达120kW以上。"}, {"company": "🚀 创业机会", "position": "", "salary": "", "location": "", "tag": "", "body": "Gofy氟化液浸没式液冷方案获得最强行业背书！ 英伟达和字节跳动同时确认100%液冷路线，你的创业方向踩在行业拐点上。关键行动：①加速氟化液验证进度，尽快出白皮书；②关注800V HVDC供电架构（液冷+供电是配套组合）；③字节AIRack3.0的54V液冷Busbar方案值得深入研究。"}, {"company": "💰 投资机会", "position": "", "salary": "", "location": "", "tag": "", "body": "中信证券建议沿三条主线：①代工链业绩弹性（GB200/GB300量产→台系产能紧张→大陆企业承接外溢订单）；②自主品牌认证突破（CSP、ODM、国产GPU生态的液冷供应商）；③横向新品类（配电系统、光模块液冷）。关注申万宏源7月4日研报指出的液冷基建加速规模化方向。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：苹果在加州北区联邦法院起诉OpenAI及其首席硬件官Tang Tan（前苹果产品设计副总裁），指控OpenAI组织有计划的商业秘密窃取行动，鼓励苹果员工分享未发布产品信息、零部件、图纸等。目前已有400+前苹果员工入职OpenAI。OpenAI正在开发自有硬件设备，聘请前苹果设计大师Jony Ive参与，未来数月准备IPO。"}, {"company": "💼 工作就业", "position": "", "salary": "", "location": "", "tag": "", "body": "这起诉讼揭示了一个重要趋势：AI公司正在大规模吸纳硬件人才，从\"软件公司\"向\"硬件+软件公司\"转型。对于有17年机械/硬件采购经验的Gofy来说，OpenAI等AI公司的硬件采购岗位是新赛道——AI硬件供应链与传统电子供应链完全不同，需要全新的供应商开发和成本控制能力。"}, {"company": "📈 职业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "苹果→OpenAI的人才流动说明，顶尖硬件人才正在从传统消费电子向AI硬件迁移。供应链经理如果能理解AI硬件的特殊需求（高功耗散热、定制芯片、液冷系统），就能在新赛道中占据先发优势。"}, {"company": "🏭 行业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "这起诉讼将加速AI硬件领域的\"围墙花园\"建设——各家AI公司会更严格保护供应链信息，供应商认证门槛会更高。但对有资质的供应商来说，认证壁垒反而是护城河，已进入苹果/英伟达供应链的厂商将更受青睐。"}, {"company": "🚀 创业机会", "position": "", "salary": "", "location": "", "tag": "", "body": "OpenAI开发自有硬件设备，意味着AI硬件将成为一个全新产品类别。液冷散热方案可能成为OpenAI硬件的标准需求——Gofy的浸没式液冷方案如果能在消费级AI硬件上验证成功，可能直接对接OpenAI的硬件供应链。"}, {"company": "💰 投资机会", "position": "", "salary": "", "location": "", "tag": "", "body": "苹果诉讼可能导致OpenAI硬件项目延迟，短期内利好苹果硬件供应链稳定性。但长期看，AI硬件赛道不可逆转，关注OpenAI IPO进展及相关供应链标的。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：SK海力士ADR在纳斯达克上市首日大涨21%，募资265亿美元，刷新外国公司赴美IPO纪录，总市值1.27万亿美元（超出美光近2000亿美元）。SK集团会长崔泰源表示不排除进一步增发美股，正探索\"内存即服务\"新模式。同时，美光科技宣布将美国投资总额提升至2500亿美元以上（延续至2035年，较此前承诺增加约500亿美元）。英伟达市值重回5万亿美元。"}, {"company": "💼 工作就业", "position": "", "salary": "", "location": "", "tag": "", "body": "存储芯片超级扩张意味着芯片制造设备、封装材料、测试设备的采购需求将大幅增长。采购经理如果能理解存储芯片供应链的特殊性（HBM堆叠、先进封装、清洁室级别要求），可以在芯片设备/材料公司的采购岗位中脱颖而出。"}, {"company": "📈 聨业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "SK海力士\"内存即服务\"模式是供应链创新的典型案例——从卖产品到卖服务，这要求供应链经理理解订阅制商业模式下的库存管理、交付节奏和成本模型。这种模式未来可能扩展到更多硬件品类。"}, {"company": "🏭 行业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "存储芯片短缺预计持续到2030年后，这意味着全球半导体供应链将进入持续紧张期。中国大陆的存储芯片自主化（长鑫科技科创板IPO）也在加速，国产替代的采购供应链正在成型。"}, {"company": "🚀 创业机会", "position": "", "salary": "", "location": "", "tag": "", "body": "\"内存即服务\"概念启发Gofy：液冷方案是否也可以从卖硬件变为卖服务（液冷即服务/LCaaS）？按月收取散热服务费，而不是一次性卖机箱。这种模式可以降低客户入门门槛，同时创造稳定现金流。"}, {"company": "💰 投资机会", "position": "", "salary": "", "location": "", "tag": "", "body": "SK海力士市值超美光2000亿美元，说明市场对HBM（高带宽内存）的定价已极度乐观。关注：①长鑫科技7月16日科创板申购（2026年A股最大IPO之一）；②存储芯片上游设备/材料供应商；③\"内存即服务\"模式下的数据中心运营商。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：7月10日国务院常务会议，李强主持。议题包括：①防汛抗洪救灾部署；②听取数字中国建设情况汇报；③听取现代流通体系建设进展汇报；④研究新兴支柱产业培育有关工作；⑤审议通过《全民健身计划(2026-2030年)》。"}, {"company": "💼 工作就业", "position": "", "salary": "", "location": "", "tag": "", "body": "\"现代流通体系建设\"直接对应供应链管理领域，国家层级的重视意味着供应链相关岗位的政策支持力度会持续加大。制造业+流通业的融合人才（懂制造又懂流通）将更受青睐。\"新兴支柱产业培育\"意味着AI、新能源、商业航天等新行业将获得更多政策倾斜和招聘需求。"}, {"company": "📈 职业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "\"数字中国建设\"意味着数字化转型不再是可选项，而是国家级任务。供应链经理如果具备数字化采购系统（ERP/SRM）、数据驱动决策、供应链可视化平台的能力，将直接受益于政策推动的行业升级。"}, {"company": "🏭 行业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "\"现代流通体系\"是国家供应链战略的顶层设计——从物流、仓储、配送到采购、信息流，整个流通链条的效率提升被列为国家重点。这将推动制造业企业加速供应链数字化转型，催生大量供应链管理咨询和系统实施的需求。"}, {"company": "🚀 创业机会", "position": "", "salary": "", "location": "", "tag": "", "body": "\"数字中国建设\"利好Gofy的直播副业——数字化转型需要大量培训内容，供应链数字化培训课程的市场需求正在扩大。\"新兴支柱产业\"培育意味着液冷、3D打印等新行业可能获得地方政策扶持（税收减免、创业补贴等）。"}, {"company": "💰 投资机会", "position": "", "salary": "", "location": "", "tag": "", "body": "关注政策落地后的相关板块：①数字中国→云计算/数据要素/电子政务；②现代流通体系→物流科技/供应链SaaS；③新兴支柱产业→AI基础设施/商业航天/新能源制造端。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：7月9日国务院国资委启动\"场景万象\"专项行动，发布首批十大标志性场景（涉及AI、算电碳协同等），开放100个场景清单，形成\"央企出场景、民企出方案\"的协同模式。同日，立讯精密等7家民企在港交所同日完成IPO，合计净募资超380亿港元（立讯精密单家242.66亿港元，刷新2026年港股IPO纪录）。新奥聚变完成首轮融资估值106亿（国内聚变领域最高估值民营企业）。"}, {"company": "💼 工作就业", "position": "", "salary": "", "location": "", "tag": "", "body": "\"央企出场景、民企出方案\"模式意味着，进入央企供应链不再只是\"供货\"，而是\"共创解决方案\"。采购经理如果具备方案型思维（不是卖零部件而是卖整体解决方案），在央企采购项目中将更有竞争力。立讯精密港股IPO说明精密制造龙头融资能力强劲，其供应链岗位招聘量可能增长。"}, {"company": "📈 职业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "\"场景万象\"行动说明央企正在主动开放创新入口，供应链经理如果能帮助民企对接央企场景需求，可以成为\"桥梁型\"人才——既理解央企的合规要求，又理解民企的创新速度。"}, {"company": "🏭 行业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "7家民企同日港股上市、募资380亿港元，说明中国制造业民企的资本化路径正在加速。立讯精密作为精密制造龙头，其港股二次上市将扩大国际投资者对中国制造供应链的认知。"}, {"company": "🚀 创业机会", "position": "", "salary": "", "location": "", "tag": "", "body": "\"央企出场景\"模式对Gofy的液冷项目是直接利好——央企数据中心/算力基础设施的场景需求正是液冷方案的应用场景。如果能进入央企场景清单，意味着获得国家级渠道背书。新奥聚变106亿估值说明，前沿技术创业只要方向对、验证到位，融资并不难。"}, {"company": "💰 投资机会", "position": "", "salary": "", "location": "", "tag": "", "body": "关注：①立讯精密港股上市后的供应链整合效应；②央企场景清单中的AI/算力相关标的；③聚变能源概念股（新奥聚变估值106亿→整个聚变赛道升温）。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：深圳南山—龙华—龙岗轴线形成中国第一个\"3D打印谷\"，汇聚拓竹科技、创想三维、纵维立方、智能派四大龙头，贡献全球超90%消费级3D打印机产能。拓竹科技1.4亿拿地建新总部，创想三维也在筹备拿地。嘉立创3D打印超级工厂1500+台设备全线投产，实现\"最快5小时极速3D打样\"。长三角浙江金华浦江也形成3D打印代加工产业集聚地，支持24-48小时发货。"}, {"company": "💼 工作就业", "position": "", "salary": "", "location": "", "tag": "", "body": "3D打印产业化意味着相关供应链岗位正在大量产生——设备零部件采购（电机、主控板卡、喷头模组、精密导轨、传感器、钣金结构件）、耗材采购（高分子材料、金属粉末）、代加工服务质量管理。Gofy的机械专业背景+采购管理经验，在3D打印供应链岗位中极具竞争力。"}, {"company": "📈 业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "3D打印正在从\"桌面玩具\"变成\"工业基础设施\"，嘉立创5小时极速打样说明3D打印服务已具备工业级交付标准。供应链经理如果能理解3D打印供应链的特殊性（小批量多品种、快速迭代、材料多样性），可以切入一个快速增长的新品类。"}, {"company": "🏭 行业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "深圳\"3D打印谷\"的形成标志着中国消费级3D打印产业链已高度成熟——方圆30公里能找齐95%零部件供应商。这种产业集群效应将大幅降低成本、加速创新，继续巩固中国在全球3D打印市场的领先地位。"}, {"company": "🚀 创业机会", "position": "", "salary": "", "location": "", "tag": "", "body": "Gofy的缩微人像3D打印项目踩在产业拐点上！ ①深圳3D打印谷的供应链成熟度意味着零部件采购成本极低、供应速度极快；②嘉立创5小时打样服务可以作为Gofy人像打印的外包后端；③金华浦江的代加工生态提供了另一个低成本生产选项。关键是：不要自己做生产，而是利用成熟的代加工服务，自己专注在前端获客和后端上色交付。"}, {"company": "💰 投资机会", "position": "", "salary": "", "location": "", "tag": "", "body": "关注：①拓竹科技（拿地扩产→产能提升→估值增长）；②创想三维（筹备拿地→即将扩产）；③嘉立创（1500台投产→服务能力飞跃）；④3D打印耗材上游供应商（高分子材料、金属粉末）。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：广东省\"百日千万招聘专项行动\"7月1日-10月10日全面启动，聚焦先进制造业等领域。7月13日佛山高明区将举办\"驿站·通航\"人才夜市招聘会（25家企业现场直招）。人社部等四部门联合通知：失业保险稳岗返还、扩岗补助、技能提升补贴三项政策延续至2026年底。中小微企业返还60%、大企业30%；招16-24岁青年1500元/人一次性补助。佛山制造业额外有区级招工奖补。"}, {"company": "💼 工作就业", "position": "", "salary": "", "location": "", "tag": "", "body": "这是Gofy本周最应该行动的新闻！ 广东百日招聘正在运行中，高明区7月13日还有线下夜市招聘会。失业保险稳岗扩岗政策延续意味着企业招聘意愿更强（政府帮分担成本）。Gofy应该：①在\"粤就业\"小程序注册并投递简历；②关注佛山制造业相关岗位的专场招聘；③利用\"技能提升补贴\"政策考取相关证书增加竞争力。"}, {"company": "📈 职业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "\"先进制造业\"是招聘行动的重点领域，Gofy的机械专业+17年采购管理经验正好对口。佛山制造业额外区级招工奖补说明佛山本地企业正在积极扩招——本地求职成功率可能比跨城更高。"}, {"company": "🏭 行业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "三项政策延续至年底说明国家判断就业压力将持续，制造业是稳就业的核心抓手。这对佛山制造业企业是双重利好——政府补贴降低用工成本+招聘平台扩大人才供给。"}, {"company": "🚀 创业机会", "position": "", "salary": "", "location": "", "tag": "", "body": "小微企业创业担保贷款最高400万贴息，新招录重点群体占职工10%即可申请。如果Gofy创业公司招录1-2名重点群体员工，就可以申请400万贴息贷款——这对液冷项目或3D打印项目的启动资金是重要补充。"}, {"company": "💰 投资机会", "position": "", "salary": "", "location": "", "tag": "", "body": "稳岗扩岗政策延续利好制造业用工成本降低，关注佛山本地制造业上市公司的业绩改善预期。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：商务部、海关总署7月11日起对氦气实施临时禁止出口管理，保障国内供应安全（涉及半导体、医疗、科研等领域）。长征十号乙运载火箭首飞告捷，实现全球首次网系回收，商业航天板块午后爆发（钧达股份飙升30%+）。全国用电负荷创15.18亿千瓦历史新高，美国最大电网PJM峰值负荷168158兆瓦也创历史新高。"}, {"company": "💼 工作就业", "position": "", "salary": "", "location": "", "tag": "", "body": "氦气出口禁止说明战略物资管控正在加强，采购经理需要关注\"战略物资出口管制\"对供应链的影响。如果目标企业涉及氦气使用（半导体、医疗设备、焊接保护气），需要评估替代方案和库存策略——这正是采购经理的核心能力。"}, {"company": "📈 业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "氦气出口管制是供应链风险管理的一个经典案例——面试时可以引用这个案例展示对\"供应安全\"的理解深度。全国用电负荷创历史新高也说明，能源管理正在成为制造业采购的新品类（电力采购、峰谷电策略、绿电采购）。"}, {"company": "🏭 行业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "氦气管制直接影响半导体制造和医疗设备行业，短期内氦气价格上涨、供应紧张。商业航天板块爆发说明中国航天产业化进入加速期，火箭量产需要大量精密制造供应链支撑。"}, {"company": "🚀 创业机会", "position": "", "salary": "", "location": "", "tag": "", "body": "全国用电负荷创新高→液冷散热方案的应用场景不只是数据中心，还包括高功耗家用设备（AI工作站、高性能PC）。Gofy的浸没式液冷方案如果定位在\"省电+散热\"双重价值，市场吸引力更大。"}, {"company": "💰 投资机会", "position": "", "salary": "", "location": "", "tag": "", "body": "关注：①氦气替代技术相关标的（半导体工艺气体替代方案）；②商业航天供应链（钧达股份、长征系列配套）；③电力设备/储能（用电负荷创新高→电网扩容需求→储能爆发）。"}, {"company": "🎯 本周行动建议（按优先级）", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 🚨 最高优先：在\"粤就业\"小程序注册投递简历，关注佛山制造业专场招聘。2. 🚨 最高优先：加速氟化液验证——英伟达Rubin全液冷方案细节值得逐条研究，更新白皮书。3. ⭐ 高优先：研究\"液冷即服务\"商业模式（受SK海力士\"内存即服务\"启发）。4. ⭐ 高优先：关注央企\"场景万象\"场景清单，评估液冷方案能否对接央企AI算力场景。5. 📌 常规：利用嘉立创5小时打样服务，测试人像3D打印的外包生产流程。6. 📌 常规：评估小微企业创业担保贷款400万贴息的申请条件"}];
+const totalItems = 49;
+const speakTemplate = "{company}。详细内容：{body}。";
+
+// ===== 状态 =====
+let currentIndex = 0;
+let isPlaying = false;
+let speechRate = 1.0;
+let readDoneSet = new Set();
+let synth = window.speechSynthesis;
+let currentUtterance = null;
+let selectedVoice = null;
+let voicesReady = false;
+
+// ===== 浏览器检测 =====
+function isQQBrowser() {
+    let ua = navigator.userAgent || '';
+    return /MQQBrowser|QQ\//i.test(ua);
+}
+function isUCBrowser() {
+    let ua = navigator.userAgent || '';
+    return /UCBrowser|UCWEB/i.test(ua);
+}
+function isWeChat() {
+    let ua = navigator.userAgent || '';
+    return /MicroMessenger/i.test(ua);
+}
+function isUnsupportedBrowser() {
+    return isQQBrowser() || isUCBrowser() || isWeChat();
+}
+
+// ===== 初始化 =====
+function init() {
+    // 浏览器检测：不支持的直接提示换浏览器
+    if (isUnsupportedBrowser()) {
+        let browserName = isQQBrowser() ? 'QQ浏览器' : (isUCBrowser() ? 'UC浏览器' : '微信内置浏览器');
+        showBrowserWarning(browserName);
+        return;
+    }
+
+    if (!synth) {
+        showBrowserWarning('当前浏览器');
+        return;
+    }
+
+    // Chrome/Edge: voices 通过异步事件加载
+    let voices = synth.getVoices();
+    if (voices && voices.length > 0) {
+        pickVoice(voices);
+    }
+
+    // 监听语音列表加载（关键！Android Chrome 需要等事件）
+    synth.onvoiceschanged = function() {
+        voices = synth.getVoices();
+        if (voices && voices.length > 0 && !voicesReady) {
+            pickVoice(voices);
+            document.getElementById('floatText').textContent =
+                '✅ 语音引擎就绪 (' + voices.length + '个) — 点🎧开始朗读';
+            document.getElementById('progressText').textContent = '就绪 ✓';
+        }
+    };
+
+    // 超时兜底：2秒后强制尝试
+    setTimeout(function() {
+        if (!voicesReady) {
+            voices = synth.getVoices();
+            if (voices && voices.length > 0) {
+                pickVoice(voices);
+            }
+            if (selectedVoice) {
+                document.getElementById('floatText').textContent =
+                    '✅ 语音引擎: ' + selectedVoice.name;
+                document.getElementById('progressText').textContent = '就绪 ✓';
+            } else {
+                document.getElementById('floatText').textContent =
+                    '⚠️ 未找到中文语音，请用系统自带 Chrome/Edge 打开';
+                document.getElementById('progressText').textContent = '无中文语音 ⚠️';
+            }
+            voicesReady = true;
+        }
+    }, 2500);
+}
+
+function showBrowserWarning(browserName) {
+    // 隐藏控制栏播放按钮
+    document.getElementById('playBtn').style.opacity = '0.3';
+    document.getElementById('playBtn').style.pointerEvents = 'none';
+    // 底部显示换浏览器提示
+    document.getElementById('floatHint').style.background = 'rgba(211,47,47,0.95)';
+    document.getElementById('floatText').innerHTML =
+        '❌ ' + browserName + '不支持语音朗读<br><small>👉 请用 <b>Chrome</b> 或 <b>Edge</b> 浏览器打开</small>';
+    document.getElementById('progressText').textContent = '❌ 浏览器不支持';
+    // 页面顶部插入醒目提示横幅
+    let banner = document.createElement('div');
+    banner.style.cssText = 'background:#FFEBEE;border-bottom:2px solid #EF5350;padding:16px;text-align:center;';
+    banner.innerHTML =
+        '<div style="font-size:40px;margin-bottom:8px;">🚫</div>' +
+        '<div style="font-size:15px;font-weight:bold;color:#C62828;margin-bottom:6px;">' +
+        browserName + ' 不支持语音朗读</div>' +
+        '<div style="font-size:14px;color:#555;line-height:1.6;">' +
+        '请用 <b style="color:#1A73E8;">Chrome</b> 或 <b style="color:#0078D4;">Edge</b> 浏览器打开即可朗读<br>' +
+        '<span style="font-size:12px;color:#999;">（应用商店搜索"Chrome"或"Edge"下载）</span></div>';
+    let header = document.querySelector('.header');
+    if (header) {
+        header.parentNode.insertBefore(banner, header);
+    }
+    // 禁用所有岗位点击
+    document.querySelectorAll('.job-item').forEach(function(el) {
+        el.style.pointerEvents = 'none';
+        el.style.opacity = '0.5';
+    });
+}
+
+function pickVoice(voices) {
+    // 优先级：zh-CN 中文女声 > zh-CN 任意 > zh-* > 第一个
+    let preferred = ['zh-CN', 'zh-Hans', 'zh-HK', 'zh-TW', 'zh'];
+    for (let lang of preferred) {
+        for (let v of voices) {
+            if (v.lang && v.lang.startsWith(lang)) {
+                // 优先女声
+                if (v.name.toLowerCase().indexOf('female') >= 0 ||
+                    v.name.indexOf('女') >= 0) {
+                    selectedVoice = v;
+                    voicesReady = true;
+                    return;
+                }
+            }
+        }
+    }
+    // 中文任意
+    for (let lang of preferred) {
+        for (let v of voices) {
+            if (v.lang && v.lang.startsWith(lang)) {
+                selectedVoice = v;
+                voicesReady = true;
+                return;
+            }
+        }
+    }
+    // 无中文语音 → 用第一个兜底
+    if (voices.length > 0) {
+        selectedVoice = voices[0];  // 用第一个兜底
+    }
+    voicesReady = true;
+}
+
+// ===== 构建朗读文本 =====
+function buildSpeakText(item) {
+    let raw = speakTemplate
+        .replace('{company}', item.company || '')
+        .replace('{position}', item.position || '')
+        .replace('{salary}', item.salary || '面议')
+        .replace('{location}', item.location || '')
+        .replace('{body}', item.body || '');
+    return _cleanForTTS(raw);
+}
+
+// ===== TTS 文本清洗：去除所有 Markdown 残留符号 =====
+function _cleanForTTS(text) {
+    if (!text) return text;
+    let cleaned = text;
+    // 去除 Markdown 标题标记 (# ## ### #### 等)
+    cleaned = cleaned.replace(/#{1,6}\s*/g, '');
+    // 去除加粗/斜体标记 (** __ * _)
+    cleaned = cleaned.replace(/\*{1,2}|_/g, '');
+    // 去除管道符 (表格)
+    cleaned = cleaned.replace(/\|/g, ' ');
+    // 去除反引号 (代码)
+    cleaned = cleaned.replace(/`+/g, '');
+    // 去除波浪线
+    cleaned = cleaned.replace(/~+/g, '');
+    // 去除分散的 -  :  标记（但不破坏正常连字符和冒号）
+    cleaned = cleaned.replace(/：/g, ':');
+    // 压缩多余空格
+    cleaned = cleaned.replace(/\s+/g, ' ');
+    // 去除连续连字符
+    cleaned = cleaned.replace(/-{2,}/g, '');
+    return cleaned.trim();
+}
+
+// ===== 朗读单条 =====
+function speakItem(index) {
+    if (index < 0 || index >= totalItems) return;
+
+    currentIndex = index;
+
+    synth.cancel();
+    let item = items[index];
+    let text = buildSpeakText(item);
+
+    let utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'zh-CN';
+    utterance.rate = speechRate;
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+    if (selectedVoice) {
+        utterance.voice = selectedVoice;
+    }
+
+    utterance.onstart = function() {
+        updateUI(index);
+        document.getElementById('nowPlaying').classList.add('active');
+        document.getElementById('nowPlayingText').textContent =
+            (item.company || '') + ' ' + (item.position || '');
+    };
+
+    utterance.onend = function() {
+        readDoneSet.add(index);
+        updateReadDone(index);
+        let next = index + 1;
+        if (next < totalItems && isPlaying) {
+            speakItem(next);
+        } else if (next >= totalItems) {
+            stopPlayback();
+            document.getElementById('floatText').textContent = '✅ 全部朗读完成！';
+            document.getElementById('progressText').textContent = '朗读完成';
+            document.getElementById('progressBar').style.width = '100%';
+            document.getElementById('progressLabel').textContent = totalItems + '/' + totalItems;
+        }
+    };
+
+    utterance.onerror = function(e) {
+        if (e.error !== 'canceled' && e.error !== 'interrupted') {
+            let errMsg = '⚠️ 朗读出错: ' + (e.error || 'unknown');
+            document.getElementById('progressText').textContent = errMsg;
+            document.getElementById('floatText').textContent =
+                errMsg + ' — 可尝试用系统自带浏览器打开';
+            let next = index + 1;
+            if (next < totalItems && isPlaying) {
+                setTimeout(function() { speakItem(next); }, 500);
+            }
+        }
+    };
+
+    currentUtterance = utterance;
+    synth.speak(utterance);
+}
+
+// ===== 播放控制 =====
+function togglePlay() {
+    if (isPlaying) {
+        pausePlayback();
+    } else {
+        startPlayback();
+    }
+}
+
+function startPlayback() {
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    document.getElementById('progressText').textContent = '朗读中...';
+    document.getElementById('floatText').textContent =
+        selectedVoice
+            ? '🔊 朗读中 (' + selectedVoice.name + ') ...'
+            : '🔊 朗读中 (系统默认语音)...';
+    speakItem(currentIndex);
+}
+
+function pausePlayback() {
+    isPlaying = false;
+    synth.cancel();
+    document.getElementById('playIcon').textContent = '🎧';
+    document.getElementById('playBtn').classList.remove('playing');
+    document.getElementById('nowPlaying').classList.remove('active');
+    document.getElementById('floatText').textContent = '⏸️ 已暂停，点击继续';
+    document.getElementById('progressText').textContent = '已暂停';
+}
+
+function stopPlayback() {
+    isPlaying = false;
+    synth.cancel();
+    document.getElementById('playIcon').textContent = '🎧';
+    document.getElementById('playBtn').classList.remove('playing');
+    document.getElementById('nowPlaying').classList.remove('active');
+    document.getElementById('floatText').textContent = '✅ 朗读完成';
+}
+
+function skipNext() {
+    synth.cancel();
+    let next = (currentIndex + 1) % totalItems;
+    currentIndex = next;
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function skipPrev() {
+    synth.cancel();
+    let prev = currentIndex - 1;
+    if (prev < 0) prev = totalItems - 1;
+    currentIndex = prev;
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function jumpTo(index) {
+    synth.cancel();
+    currentIndex = index;
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function setSpeed(val) {
+    speechRate = parseFloat(val);
+    document.getElementById('floatText').textContent =
+        '🎵 朗读速度: ' + val + 'x';
+    setTimeout(function() {
+        if (isPlaying) {
+            document.getElementById('floatText').textContent = '🔊 朗读中...';
+        }
+    }, 1500);
+}
+
+// ===== UI更新 =====
+function updateUI(index) {
+    // 进度条
+    let pct = (index / totalItems) * 100;
+    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent = (index + 1) + '/' + totalItems;
+    document.getElementById('progressText').textContent =
+        '正在朗读第 ' + (index + 1) + ' ' + '条新闻'.replace('个岗位','').replace('条新闻','');
+
+    // 高亮当前
+    document.querySelectorAll('.job-item').forEach(function(el) {
+        el.classList.remove('reading');
+    });
+    let currentEl = document.querySelector('.job-item[data-index="' + index + '"]');
+    if (currentEl) {
+        currentEl.classList.add('reading');
+        currentEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+function updateReadDone(index) {
+    let el = document.querySelector('.job-item[data-index="' + index + '"]');
+    if (el) {
+        el.classList.add('read-done');
+    }
+}
+
+// ===== 启动 =====
+init();
+
+// ===== 移动端保持屏幕唤醒（可选） =====
+if (navigator.wakeLock) {
+    try {
+        navigator.wakeLock.request('screen');
+    } catch(e) {}
+}
+</script>
+</body>
+</html>
