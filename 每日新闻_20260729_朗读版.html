@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>📰 每日要闻（20260729）</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f5f5f5;
+    color: #333;
+    padding-bottom: 80px;
+}
+
+/* ===== 顶部控制栏 ===== */
+.control-bar {
+    position: sticky; top:0; z-index:100;
+    background: linear-gradient(135deg, #1A73E8 0%, #4FC3F7 100%);
+    padding: 12px 16px;
+    box-shadow: 0 2px 12px rgba(26,115,232,0.3);
+}
+.control-row {
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+}
+.control-btn {
+    width: 48px; height: 48px;
+    border: none; border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    font-size: 22px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
+.control-btn:active { transform: scale(0.9); background: rgba(255,255,255,0.35); }
+.control-btn.play-btn {
+    width: 64px; height: 64px;
+    background: #fff;
+    color: #1A73E8;
+    font-size: 28px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+.control-btn.play-btn.playing { color: #FF6B35; }
+
+.speed-select {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 14px;
+    cursor: pointer;
+    -webkit-appearance: none;
+}
+.speed-select option { color: #333; }
+
+/* ===== 进度信息 ===== */
+.progress-row {
+    display: flex; align-items: center; gap: 10px;
+    margin-top: 8px;
+    color: rgba(255,255,255,0.9);
+    font-size: 13px;
+}
+.progress-bar-outer {
+    flex: 1; height: 4px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 2px;
+    overflow: hidden;
+}
+.progress-bar-inner {
+    height: 100%;
+    background: #fff;
+    border-radius: 2px;
+    transition: width 0.3s;
+    width: 0%;
+}
+.progress-text {
+    white-space: nowrap;
+    min-width: 90px;
+    text-align: right;
+}
+
+/* ===== 当前朗读提示 ===== */
+.now-playing {
+    background: #FFF9C4;
+    padding: 8px 16px;
+    font-size: 13px;
+    color: #F57F17;
+    text-align: center;
+    display: none;
+    border-bottom: 2px solid #FFD54F;
+}
+.now-playing.active { display: block; }
+
+/* ===== 标题区 ===== */
+.header {
+    background: #fff;
+    padding: 20px 16px 12px;
+    border-bottom: 1px solid #eee;
+}
+.header h1 { font-size: 18px; color: #1A73E8; margin-bottom: 4px; }
+.header .subtitle { font-size: 13px; color: #888; }
+
+/* ===== 岗位列表 ===== */
+.job-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 14px 16px;
+    background: #fff;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
+.job-item:active { background: #f5f5f5; }
+.job-item.reading {
+    background: #E3F2FD;
+    border-left: 4px solid #1A73E8;
+    padding-left: 12px;
+}
+.job-item.read-done {
+    opacity: 0.6;
+}
+
+.job-index {
+    width: 32px; height: 32px;
+    background: #f0f0f0;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: bold;
+    color: #888;
+    flex-shrink: 0;
+}
+.job-item.reading .job-index {
+    background: #1A73E8;
+    color: #fff;
+}
+.job-item.read-done .job-index {
+    background: #4CAF50;
+    color: #fff;
+}
+
+.job-info { flex:1; min-width:0; }
+.job-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    display: flex; align-items: center; gap: 6px;
+    flex-wrap: wrap;
+}
+.job-detail {
+    font-size: 13px;
+    color: #666;
+    display: flex; flex-wrap: wrap; gap: 8px;
+}
+.position { color: #1A73E8; }
+.salary { color: #FF6B35; font-weight: bold; }
+.location { color: #888; }
+
+.tag {
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    white-space: nowrap;
+}
+.tag-new { background: #E8F5E9; color: #2E7D32; }
+.tag-repeat { background: #FFF3E0; color: #E65100; }
+.tag-update { background: #E3F2FD; color: #1565C0; }
+
+/* ===== 底部浮动条 ===== */
+.float-hint {
+    position: fixed; bottom: 0; left:0; right:0;
+    background: rgba(26,115,232,0.95);
+    color: #fff;
+    text-align: center;
+    padding: 10px 16px;
+    font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px;
+    z-index: 99;
+}
+.float-hint .icon { font-size: 20px; }
+
+/* ===== 状态标记 ===== */
+.status-badge {
+    display: inline-block;
+    background: #4CAF50;
+    color: #fff;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+    0%,100% { opacity:1; }
+    50% { opacity:0.5; }
+}
+</style>
+</head>
+<body>
+
+<!-- 控制栏 -->
+<div class="control-bar">
+    <div class="control-row">
+        <button class="control-btn" onclick="skipPrev()" title="上一条">⏮️</button>
+        <button class="control-btn play-btn" id="playBtn" onclick="togglePlay()" title="播放/暂停">
+            <span id="playIcon">🎧</span>
+        </button>
+        <button class="control-btn" onclick="skipNext()" title="下一条">⏭️</button>
+        <select class="speed-select" id="speedSelect" onchange="setSpeed(this.value)">
+            <option value="0.8">0.8x</option>
+            <option value="1.0" selected>1x</option>
+            <option value="1.2">1.2x</option>
+            <option value="1.5">1.5x</option>
+        </select>
+    </div>
+    <div class="progress-row">
+        <span id="progressLabel">0/55</span>
+        <div class="progress-bar-outer">
+            <div class="progress-bar-inner" id="progressBar"></div>
+        </div>
+        <span class="progress-text" id="progressText">准备就绪</span>
+    </div>
+</div>
+
+<!-- 当前朗读提示 -->
+<div class="now-playing" id="nowPlaying">
+    🔊 正在朗读：<span id="nowPlayingText"></span>
+</div>
+
+<!-- 标题 -->
+<div class="header">
+    <h1>📰 每日要闻（20260729）</h1>
+    <p class="subtitle">55条新闻 | 点🎧按钮浏览器自动朗读</p>
+</div>
+
+<!-- 岗位/新闻列表 -->
+<div id="jobList">
+
+        <div class="job-item" data-index="0" onclick="jumpTo(0)">
+            <div class="job-index">1</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：2026年《财富》世界500强榜单正式揭晓。亚马逊以7169亿美元营收登顶，终结沃尔玛12年榜首纪录。上榜企业总营收43.1万亿美元（超全球GDP三分之一），同比+3.2%；净利润总和3.4万亿美元，同比+14%。中国122家企业上榜，总营收10.4万亿美元。科技行业以21%营收增速领跑所有行...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="1" onclick="jumpTo(1)">
+            <div class="job-index">2</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💼 工作就业</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">世界500强企业总员工7024万人，科技行业持续扩张带动高端人才需求。互联网巨头（京东/阿里/腾讯/拼多多/美团）排名集体上行，这些企业在供应链、物流、AI方向持续招人。对Gofy而言，500强供应链管理岗位需求稳健，尤其是制造业入围企业（比亚迪第91、宁德时代260位等）对采购管理人才需求强劲。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="2" onclick="jumpTo(2)">
+            <div class="job-index">3</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📈 职业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">科技行业以21%营收增速和8%盈利增长成为增长引擎，意味着供应链管理的「技术含量」要求持续提升。懂AI、懂数字化采购的复合型供应链经理将成为稀缺资源。京东的「AI价值=模型×体验×产业厚度」公式说明：供应链场景经验+AI工具能力是未来管理者的核心壁垒。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="3" onclick="jumpTo(3)">
+            <div class="job-index">4</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🏭 行业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">10家中国汽车及零部件企业上榜（比亚迪、宁德时代等），印证制造业尤其是新能源汽车供应链的巨大规模。38家科技企业上榜，平均盈利219.8亿美元——技术密集型产业的供应链管理复杂度远超传统行业，对供应商质量体系（PPAP、DFMA等）要求持续升级。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="4" onclick="jumpTo(4)">
+            <div class="job-index">5</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🚀 创业机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">世界500强的「产业厚度」概念对Gofy的液冷项目有直接启示：液冷供应链的价值不在于单一技术，而在于与AI算力基建的深度绑定。3D打印人像项目可对标「个性化定制+规模化交付」的消费升级趋势。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="5" onclick="jumpTo(5)">
+            <div class="job-index">6</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💰 投资机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">科技行业利润集中度极高（五巨头5265亿美元），但AI基础设施投入回报率争议加大（Alphabet自由现金流转负）。投资方向：关注中国上榜制造业企业（比亚迪、宁德时代、奇瑞）的供应链上下游标的；警惕AI基建过度投资风险。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="6" onclick="jumpTo(6)">
+            <div class="job-index">7</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：苹果股价盘中最高触及342.89美元，市值一度突破5万亿美元，成为继英伟达后第二家达到这一里程碑的公司。最终收涨0.94%，收盘市值约4.99万亿美元，重夺全球市值第一。与Alphabet（2050亿美元资本支出、自由现金流转负）、Meta（12501450亿美元资本支出）等科技巨头「烧钱」不...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="7" onclick="jumpTo(7)">
+            <div class="job-index">8</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💼 工作就业</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">苹果的「克制AI策略」说明企业开始重新评估AI投入产出比。这意味着：头部科技企业的招聘可能从「疯狂扩张」转向「精耕细作」，对候选人的实际价值创造能力要求更高。Gofy在面试中可强调「用有限资源创造最大价值」的供应链管理哲学。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="8" onclick="jumpTo(8)">
+            <div class="job-index">9</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📈 职业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">当行业从「比谁烧钱多」转向「比谁效率高」，供应链管理核心能力（成本控制、资源优化、TCO模型）的价值反而凸显。这正是Gofy的核心优势——17年采购降本经验（成本降低8%15%、库存降低30%）在AI时代依然是硬通货。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="9" onclick="jumpTo(9)">
+            <div class="job-index">10</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🏭 行业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">科技巨头「资本支出纪律」的回归可能影响AI硬件供应链短期订单节奏。但长期看，算力需求不会消失，只是从「粗放扩张」转向「精细化运营」——这对液冷散热等降本增效技术是利好而非利空。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="10" onclick="jumpTo(10)">
+            <div class="job-index">11</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🚀 创业机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">苹果模式给Gofy的创业启示：不一定要「大而全」，可以「精而省」。液冷项目可以聚焦「个人/小团队AI工作站」这一细分场景，用低成本高性价比方案切入，而非追求对标数据中心级产品。3D打印项目同理——先跑通最小闭环再扩张。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="11" onclick="jumpTo(11)">
+            <div class="job-index">12</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💰 投资机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">苹果年内涨约25%，英伟达自5月高点回落仅涨约7%。市场风向从「AI基建军火商」转向「AI应用效率派」。关注：苹果供应链（立讯精密等上榜企业）、AI应用层标的。警惕：过度依赖AI资本支出的纯硬件企业。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="12" onclick="jumpTo(12)">
+            <div class="job-index">13</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：SK海力士公布2026年Q2业绩：营收79.32万亿韩元（同比+256.8%），营业利润60.54万亿韩元（同比+557.2%），净利润93.92万亿韩元（同比+1242.5%），均创单季历史新高。HBM4已量产出货，下一代HBM4E样品已送样。与约10家客户签订长期供应协议。但营收和营业利润...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="13" onclick="jumpTo(13)">
+            <div class="job-index">14</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💼 工作就业</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">半导体超级周期仍在延续，但增速放缓信号已现。对Gofy的求职策略：半导体设备/材料供应链依然是高薪方向，但需注意行业景气度可能在2026下半年见顶。现在投递半导体相关采购岗位仍是好时机。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="14" onclick="jumpTo(14)">
+            <div class="job-index">15</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📈 职业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">SK海力士与10家客户签长协——这是供应链战略管理的经典案例。Gofy在面试中可直接引用：「长协锁价在牛市中看似吃亏，但在周期下行时是生命线——这正是供应链风险管理的核心」。同时，HBM从设计到量产的全流程采购管理经验是高价值能力标签。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="15" onclick="jumpTo(15)">
+            <div class="job-index">16</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🏭 行业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">HBM4量产意味着AI芯片进入新一代存储架构，对封装基板、热管理、测试设备等上游供应链产生新一轮需求拉动。通用DRAM涨幅从60%降至30%，NAND从70%降至5060%——存储芯片价格涨势趋缓，下游制造业采购成本压力有望缓解。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="16" onclick="jumpTo(16)">
+            <div class="job-index">17</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🚀 创业机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">HBM与新GPU的功耗持续攀升（单芯片可达1000W+），液冷散热需求只会更强。Gofy的氟化液方案如果能兼顾「高性能+低成本」，在HBM级别散热场景有差异化切入点。3D打印也可切入芯片散热器的快速原型制造。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="17" onclick="jumpTo(17)">
+            <div class="job-index">18</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💰 投资机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">存储芯片板块进入「业绩好但股价不涨」的阶段——典型周期顶部信号。建议关注：HBM封装供应链（国产替代标的）、存储模组厂商（成本端受益于涨价放缓）。谨慎对待：纯存储芯片制造商（长鑫科技上市后已大幅上涨，追高风险大）。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="18" onclick="jumpTo(18)">
+            <div class="job-index">19</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：月之暗面正式开源Kimi K3模型权重与技术报告，采用2.8万亿参数混合专家（MoE）架构，支持原生视觉理解与100万token上下文窗口。一并开源MoonEP、FlashKDA、AgentEnv三项关键Infra技术。全球AI模型聚合平台OpenRouter数据显示，中国大模型周调用量达33...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="19" onclick="jumpTo(19)">
+            <div class="job-index">20</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💼 工作就业</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">大模型开源化降低AI应用门槛，中小企业也能低成本接入AI能力。这意味着：未来几乎所有岗位都需要AI素养，而非只有技术岗。对Gofy求职而言，能在面试中展示「用AI工具提升采购效率」的具体案例将是巨大加分项。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="20" onclick="jumpTo(20)">
+            <div class="job-index">21</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📈 职业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">中国大模型从「单点亮相」走向「群体突破」，意味着本土AI生态加速成熟。供应链管理者需要掌握的不是写代码，而是用AI工具进行供应商分析、价格预测、风险评估、合同审查。这些能力将定义下一代供应链经理的核心竞争力。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="21" onclick="jumpTo(21)">
+            <div class="job-index">22</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🏭 行业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">开源大模型+行业数据的结合将深刻改变制造业。在供应链领域：AI可自动分析供应商报价合理性、预测原材料价格走势、优化库存水位。率先拥抱这些工具的企业和管理者将获得显著竞争优势。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="22" onclick="jumpTo(22)">
+            <div class="job-index">23</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🚀 创业机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">Kimi K3开源降低了AI创业的技术门槛。对Gofy的3D打印人像项目：可直接调用开源视觉大模型进行照片→3D模型转换，无需从零研发。对液冷项目：可用大模型辅助热仿真分析和结构优化设计。开源AI让「技术平权」成为现实，小团队也能用大模型武装自己。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="23" onclick="jumpTo(23)">
+            <div class="job-index">24</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💰 投资机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">中国大模型调用量全球第一，意味着AI应用层爆发在即。投资方向：AI+垂直行业应用（如AI+供应链、AI+制造）、国产算力基础设施（受益于大模型训练推理需求）。注意：基础大模型层竞争白热化，难以出现单一赢家。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="24" onclick="jumpTo(24)">
+            <div class="job-index">25</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：人形机器人基础模型公司德塔智能（Delta Intelligence）获近5亿元天使++轮融资，投资方含多家上市公司产业方和头部财务机构。这是公司成立半年内完成的第六轮融资。资金将用于基础模型迭代、自研数采设备量产与数据闭环建设、核心研发团队扩充，推动技术在真实工业场景中的工程化验证。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="25" onclick="jumpTo(25)">
+            <div class="job-index">26</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💼 工作就业</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">人形机器人产业进入工程化验证阶段，意味着从「实验室样品」到「工厂产品」的跨越。这个过程中需要大量制造业供应链人才——零部件采购、供应商管理、量产质量管控。Gofy的17年制造业采购经验恰好匹配这一需求窗口。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="26" onclick="jumpTo(26)">
+            <div class="job-index">27</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📈 职业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">机器人产业链包括：伺服电机、减速器、传感器、控制器、结构件等上千种零部件。这与Gofy熟悉的「冲压、CNC、压铸、MIM、精密加工」高度重合。可以考虑将职业发展方向拓展到「机器人/智能硬件供应链管理」。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="27" onclick="jumpTo(27)">
+            <div class="job-index">28</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🏭 行业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">半年六轮融资反映资本市场对人形机器人赛道的极度看好。佛山已有万台人形机器人工厂投产（7月28日报道），广东省正在形成机器人产业集聚效应。对佛山本地制造业从业者是直接利好。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="28" onclick="jumpTo(28)">
+            <div class="job-index">29</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🚀 创业机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">人形机器人的核心瓶颈之一是「热管理」——高密度电机和芯片产生大量热量。Gofy的液冷散热技术有机会切入机器人热管理赛道。3D打印也可为机器人提供定制化轻量化结构件。两个创业项目都能与人形机器人产业形成协同。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="29" onclick="jumpTo(29)">
+            <div class="job-index">30</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💰 投资机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">人形机器人产业链投资重点关注：核心零部件（减速器、伺服、传感器）、具身智能（数据采集与训练）。佛山/东莞的机器人相关上市企业（如拓斯达、汇川技术等）值得跟踪。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="30" onclick="jumpTo(30)">
+            <div class="job-index">31</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：生成式AI正在深刻冲击程序员职业。智联招聘数据显示：普通后端/前端开发岗位需求同比下降52%，薪资涨幅基本停滞。超过34%的新发岗位描述明确提及「AI」或「大模型」关键词。全球已提交代码中42%来自AI（预计2027年升至65%）。哈佛研究显示：采用AI的企业中初级开发者就业率下降约10%。前...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="31" onclick="jumpTo(31)">
+            <div class="job-index">32</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💼 工作就业</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">AI替代程序员的逻辑同样适用于其他白领岗位——重复性高、规则明确的工作最容易被替代。对Gofy的启示：采购管理中的订单处理、价格比对等重复性工作将被AI接管，但供应商谈判、战略寻源、风险判断等需要「模糊决策」的高阶能力更加稀缺。积极学习AI工具用于日常工作，是保持竞争力的最低成本保险。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="32" onclick="jumpTo(32)">
+            <div class="job-index">33</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📈 职业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">麦肯锡报告指出：AI时代最稀缺的是「判断力」——在信息不完整时做出正确决策的能力。这正是Gofy 17年供应链管理的核心资产：何时该锁价？何时该换供应商？何时该建安全库存？这些「说不清但做得对」的隐性知识，AI短期无法复制。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="33" onclick="jumpTo(33)">
+            <div class="job-index">34</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🏭 行业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">AI对程序员的冲击预示着：所有行业的「中低阶层」都将被压缩，但「高层+AI」的产出将倍增。制造业供应链领域同理——一人+AI可以管理以前三人的采购量。企业组织将从「金字塔」变成「松树形」（顶部更尖、中部更细）。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="34" onclick="jumpTo(34)">
+            <div class="job-index">35</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🚀 创业机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">程序员被「终结」的同时，「AI增强型一人公司」正在崛起。Gofy的3D打印+液冷项目完全可以以「一人公司」模式运营：AI做客服/营销/设计辅助，人做核心判断和创意。这恰好是WAIC 2026新设「OPC一人公司展区」的趋势延续。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="35" onclick="jumpTo(35)">
+            <div class="job-index">36</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💰 投资机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">AI编程工具赛道（Cursor、Claude Code等）持续受益。但更值得关注的是「AI+垂直行业工具」——如AI+采购管理系统、AI+供应链可视化。这类让非技术人员也能用AI提升效率的工具，市场空间远大于纯编程工具。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="36" onclick="jumpTo(36)">
+            <div class="job-index">37</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：华工科技宣布：利用高纯度铜粉+绿激光3D打印技术一体化成型的微通道散热构件已实现批量交付，生产排期饱满，武汉50亩新基地2027年投产，解决了0.1毫米级超细流道一体化成型难题。同时，东莞企石镇AI散热产业集群入选2026年度省级中小企业特色产业集群，聚焦AI热管理赛道，以精密金属成型、热管与...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="37" onclick="jumpTo(37)">
+            <div class="job-index">38</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💼 工作就业</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">液冷散热从「技术验证」进入「批量交付」阶段，意味着产业链对采购管理、供应商质量管控、量产工艺工程师的需求将大幅增长。佛山（Gofy所在地）与东莞企石同属珠三角制造业带，地理优势明显。这是Gofy求职的「甜蜜点」——17年制造业采购经验 + 液冷创业实践经验 = 稀缺复合人才。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="38" onclick="jumpTo(38)">
+            <div class="job-index">39</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📈 职业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3D打印+液冷的交叉领域正在创造全新的供应链管理岗位：铜粉原材料采购、绿激光设备采购、微通道散热器外协管理、量产质量体系建设。这些岗位要求同时懂传统制造工艺和新材料技术——很少有采购经理具备这种复合背景，Gofy有先发优势。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="39" onclick="jumpTo(39)">
+            <div class="job-index">40</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🏭 行业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">珠三角AI散热产业正在形成「东莞企石（省级集群）+ 佛山（机器人/制造基地）+ 深圳（算力中心）」的黄金三角。2026年液冷渗透率预计达47%，全球数据中心液冷市场规模165亿美元。华工科技产能排满说明：需求远大于供给，产业链扩张势在必行。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="40" onclick="jumpTo(40)">
+            <div class="job-index">41</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🚀 创业机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">这是今日对Gofy最重要的利好信号：华工科技用绿激光3D打印铜液冷板实现量产，验证了「3D打印+液冷」技术路线的商业可行性。Gofy的氟化液液冷方案如果能结合3D打印定制散热器，可形成「冷却液+定制冷板」组合方案，差异化竞争优势明显。企石省级集群认证也为Gofy未来可能的产业合作/政策支持打开了想象...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="41" onclick="jumpTo(41)">
+            <div class="job-index">42</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💰 投资机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">AI散热产业链直接受益标的：铜粉材料（有研粉材Q1营收+59%）、3D打印设备（华工科技）、液冷组件。3D打印板块波长光电涨停（+20.01%），但华工科技跌停（10%），说明板块分化严重——需精选有实际量产能力和订单的企业，而非概念炒作标的。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="42" onclick="jumpTo(42)">
+            <div class="job-index">43</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：商务部发布《关于所谓「产能过剩」问题的中方立场》，驳斥美方拟对中国AI企业的制裁威胁。商务部特别指出：美国企业在AI研发中存在「蒸馏中国模型」行为，敦促美方停止科技霸权行径。此前，美国商务部拟将多家中国AI企业列入实体清单。与此同时，全球AI版权治理呈现「三元地图」：美国收紧、欧盟英国模糊、印...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="43" onclick="jumpTo(43)">
+            <div class="job-index">44</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💼 工作就业</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">中美科技博弈持续升级，对中国制造业供应链管理提出新挑战：出口管制合规、供应商替代方案、双供应链策略等能力成为外资/合资企业采购经理的必备技能。Gofy在美资企业（斯多里、恺德仕）的工作经验恰好证明了这方面的能力。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="44" onclick="jumpTo(44)">
+            <div class="job-index">45</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📈 职业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">「国产替代」从芯片扩展到AI全产业链，意味着本土供应商的质量和技术水平在快速提升。供应链经理需要具备「全球寻源+本土深耕」的双重能力。Gofy的英语流利+本土供应链深耕的组合在制裁环境下反而更有价值。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="45" onclick="jumpTo(45)">
+            <div class="job-index">46</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🏭 行业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">AI企业的「蒸馏」争议说明：中国AI技术已达到让美国需要「反向学习」的水平。这对国内AI硬件供应链（芯片、服务器、散热）是利好——国产技术自主可控带来更稳定的内需市场。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="46" onclick="jumpTo(46)">
+            <div class="job-index">47</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🚀 创业机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">制裁环境下，「国产液冷方案」可能获得政策扶持和优先采购机会。Gofy的氟化液如果使用国产原料和设备，可争取国产替代政策红利。同时需关注：如果液冷关键原材料（如氟化液）涉及进出口管制，需提前布局国产替代方案。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="47" onclick="jumpTo(47)">
+            <div class="job-index">48</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💰 投资机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">国产AI芯片/算力板块受益于制裁预期（寒武纪虽有回调但长期逻辑不变）。国产替代是2026年最确定的投资主线之一。但需注意：部分标的估值已较高（寒武纪1128元），追高风险大。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="48" onclick="jumpTo(48)">
+            <div class="job-index">49</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：8月1日起，《个人贷款业务明示综合融资成本规定》正式施行，消费者将拿到「明白账」，息费「糊涂账」时代终结。同时，国家税务总局披露：上半年全国超2亿纳税人办理个税汇算，超1亿人申报退税，退税金额突破1500亿元。个税收入同比增长约13%达9000亿元，年收入前10%人群缴纳个税占比约九成。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="49" onclick="jumpTo(49)">
+            <div class="job-index">50</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💼 工作就业</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">退税1500亿+个税增长13%说明居民实际收入在改善，消费意愿可能回升。对求职市场是温和利好——企业招聘预算有望增加。个税前10%缴九成的结构也说明：中高收入岗位（如采购经理级别）的税负较重，谈薪资时要注意税后实际收入。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="50" onclick="jumpTo(50)">
+            <div class="job-index">51</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📈 职业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">个人贷款新规让融资成本透明化——这与供应链管理中的「总拥有成本TCO」理念一脉相承。Gofy在面试中可借题发挥：「就像贷款新规要求明示综合融资成本，供应链管理也需要TCO思维，不能只看采购单价」。这是很好的面试话术素材。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="51" onclick="jumpTo(51)">
+            <div class="job-index">52</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🏭 行业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">消费金融透明化可能抑制短期信贷冲动，对消费电子、汽车等依赖分期付款的制造业有一定短期影响。但长期看，规范市场有利于健康消费。制造业企业自身融资成本也可能随金融监管趋严而波动。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="52" onclick="jumpTo(52)">
+            <div class="job-index">53</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🚀 创业机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">退税1500亿意味着居民手中多了可支配收入。对Gofy的3D打印人像项目（1991999元客单价）是消费力层面的利好。个人贷款新规可能降低小微创业者的融资难度（明示成本后更容易比价选择）。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="53" onclick="jumpTo(53)">
+            <div class="job-index">54</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💰 投资机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">消费金融规范利好头部持牌机构（银行、消费金融公司），利空不合规的网贷平台。居民收入改善+退税落地，关注消费复苏受益板块（家电、汽车、零售）。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="54" onclick="jumpTo(54)">
+            <div class="job-index">55</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 面试准备：将「财富500强科技行业领跑」和「AI增强型供应链管理」融入面试话术，展示行业洞察力。2. 创业加速：华工科技3D打印液冷量产是重要验证信号，建议深入研究其技术路线作为氟化液方案的参考。3. 技能学习：本周尝试用Kimi K3或Claude Code辅助做一次供应商分析/价格预测，积...</span>
+                </div>
+            </div>
+        </div>
+</div>
+
+<!-- 底部提示 -->
+<div class="float-hint" id="floatHint">
+    <span class="icon">🎧</span>
+    <span id="floatText">点击顶部播放按钮开始朗读</span>
+</div>
+
+<script>
+// ===== 数据 =====
+const items = [{"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：2026年《财富》世界500强榜单正式揭晓。亚马逊以7169亿美元营收登顶，终结沃尔玛12年榜首纪录。上榜企业总营收43.1万亿美元（超全球GDP三分之一），同比+3.2%；净利润总和3.4万亿美元，同比+14%。中国122家企业上榜，总营收10.4万亿美元。科技行业以21%营收增速领跑所有行业板块（4万亿美元）。苹果、Alphabet、微软、英伟达、Meta五家科技巨头合计净利润5265亿美元。奇瑞汽车首次上榜。腾讯首次跻身百强（第97名）。"}, {"company": "💼 工作就业", "position": "", "salary": "", "location": "", "tag": "", "body": "世界500强企业总员工7024万人，科技行业持续扩张带动高端人才需求。互联网巨头（京东/阿里/腾讯/拼多多/美团）排名集体上行，这些企业在供应链、物流、AI方向持续招人。对Gofy而言，500强供应链管理岗位需求稳健，尤其是制造业入围企业（比亚迪第91、宁德时代260位等）对采购管理人才需求强劲。"}, {"company": "📈 职业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "科技行业以21%营收增速和8%盈利增长成为增长引擎，意味着供应链管理的「技术含量」要求持续提升。懂AI、懂数字化采购的复合型供应链经理将成为稀缺资源。京东的「AI价值=模型×体验×产业厚度」公式说明：供应链场景经验+AI工具能力是未来管理者的核心壁垒。"}, {"company": "🏭 行业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "10家中国汽车及零部件企业上榜（比亚迪、宁德时代等），印证制造业尤其是新能源汽车供应链的巨大规模。38家科技企业上榜，平均盈利219.8亿美元——技术密集型产业的供应链管理复杂度远超传统行业，对供应商质量体系（PPAP、DFMA等）要求持续升级。"}, {"company": "🚀 创业机会", "position": "", "salary": "", "location": "", "tag": "", "body": "世界500强的「产业厚度」概念对Gofy的液冷项目有直接启示：液冷供应链的价值不在于单一技术，而在于与AI算力基建的深度绑定。3D打印人像项目可对标「个性化定制+规模化交付」的消费升级趋势。"}, {"company": "💰 投资机会", "position": "", "salary": "", "location": "", "tag": "", "body": "科技行业利润集中度极高（五巨头5265亿美元），但AI基础设施投入回报率争议加大（Alphabet自由现金流转负）。投资方向：关注中国上榜制造业企业（比亚迪、宁德时代、奇瑞）的供应链上下游标的；警惕AI基建过度投资风险。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：苹果股价盘中最高触及342.89美元，市值一度突破5万亿美元，成为继英伟达后第二家达到这一里程碑的公司。最终收涨0.94%，收盘市值约4.99万亿美元，重夺全球市值第一。与Alphabet（2050亿美元资本支出、自由现金流转负）、Meta（1250-1450亿美元资本支出）等科技巨头「烧钱」不同，苹果在AI基础设施上保持克制，连续三个季度资本支出下降，以租赁算力满足需求。市场将其从「AI落后者」重新定价为「避险资产」。"}, {"company": "💼 工作就业", "position": "", "salary": "", "location": "", "tag": "", "body": "苹果的「克制AI策略」说明企业开始重新评估AI投入产出比。这意味着：头部科技企业的招聘可能从「疯狂扩张」转向「精耕细作」，对候选人的实际价值创造能力要求更高。Gofy在面试中可强调「用有限资源创造最大价值」的供应链管理哲学。"}, {"company": "📈 职业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "当行业从「比谁烧钱多」转向「比谁效率高」，供应链管理核心能力（成本控制、资源优化、TCO模型）的价值反而凸显。这正是Gofy的核心优势——17年采购降本经验（成本降低8%-15%、库存降低30%）在AI时代依然是硬通货。"}, {"company": "🏭 行业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "科技巨头「资本支出纪律」的回归可能影响AI硬件供应链短期订单节奏。但长期看，算力需求不会消失，只是从「粗放扩张」转向「精细化运营」——这对液冷散热等降本增效技术是利好而非利空。"}, {"company": "🚀 创业机会", "position": "", "salary": "", "location": "", "tag": "", "body": "苹果模式给Gofy的创业启示：不一定要「大而全」，可以「精而省」。液冷项目可以聚焦「个人/小团队AI工作站」这一细分场景，用低成本高性价比方案切入，而非追求对标数据中心级产品。3D打印项目同理——先跑通最小闭环再扩张。"}, {"company": "💰 投资机会", "position": "", "salary": "", "location": "", "tag": "", "body": "苹果年内涨约25%，英伟达自5月高点回落仅涨约7%。市场风向从「AI基建军火商」转向「AI应用效率派」。关注：苹果供应链（立讯精密等上榜企业）、AI应用层标的。警惕：过度依赖AI资本支出的纯硬件企业。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：SK海力士公布2026年Q2业绩：营收79.32万亿韩元（同比+256.8%），营业利润60.54万亿韩元（同比+557.2%），净利润93.92万亿韩元（同比+1242.5%），均创单季历史新高。HBM4已量产出货，下一代HBM4E样品已送样。与约10家客户签订长期供应协议。但营收和营业利润仍低于市场预期，主因：HBM占比偏高限制盈利弹性、通用DRAM涨幅放缓（Q2约30% vs Q1约60%）、长协锁价削弱现货涨价收益。"}, {"company": "💼 工作就业", "position": "", "salary": "", "location": "", "tag": "", "body": "半导体超级周期仍在延续，但增速放缓信号已现。对Gofy的求职策略：半导体设备/材料供应链依然是高薪方向，但需注意行业景气度可能在2026下半年见顶。现在投递半导体相关采购岗位仍是好时机。"}, {"company": "📈 职业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "SK海力士与10家客户签长协——这是供应链战略管理的经典案例。Gofy在面试中可直接引用：「长协锁价在牛市中看似吃亏，但在周期下行时是生命线——这正是供应链风险管理的核心」。同时，HBM从设计到量产的全流程采购管理经验是高价值能力标签。"}, {"company": "🏭 行业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "HBM4量产意味着AI芯片进入新一代存储架构，对封装基板、热管理、测试设备等上游供应链产生新一轮需求拉动。通用DRAM涨幅从60%降至30%，NAND从70%降至50-60%——存储芯片价格涨势趋缓，下游制造业采购成本压力有望缓解。"}, {"company": "🚀 创业机会", "position": "", "salary": "", "location": "", "tag": "", "body": "HBM与新GPU的功耗持续攀升（单芯片可达1000W+），液冷散热需求只会更强。Gofy的氟化液方案如果能兼顾「高性能+低成本」，在HBM级别散热场景有差异化切入点。3D打印也可切入芯片散热器的快速原型制造。"}, {"company": "💰 投资机会", "position": "", "salary": "", "location": "", "tag": "", "body": "存储芯片板块进入「业绩好但股价不涨」的阶段——典型周期顶部信号。建议关注：HBM封装供应链（国产替代标的）、存储模组厂商（成本端受益于涨价放缓）。谨慎对待：纯存储芯片制造商（长鑫科技上市后已大幅上涨，追高风险大）。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：月之暗面正式开源Kimi K3模型权重与技术报告，采用2.8万亿参数混合专家（MoE）架构，支持原生视觉理解与100万token上下文窗口。一并开源MoonEP、FlashKDA、AgentEnv三项关键Infra技术。全球AI模型聚合平台OpenRouter数据显示，中国大模型周调用量达33万亿词元，连续13周稳居全球首位。高盛预计2026下半年中国可能出现更多2-5万亿参数大模型。"}, {"company": "💼 工作就业", "position": "", "salary": "", "location": "", "tag": "", "body": "大模型开源化降低AI应用门槛，中小企业也能低成本接入AI能力。这意味着：未来几乎所有岗位都需要AI素养，而非只有技术岗。对Gofy求职而言，能在面试中展示「用AI工具提升采购效率」的具体案例将是巨大加分项。"}, {"company": "📈 职业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "中国大模型从「单点亮相」走向「群体突破」，意味着本土AI生态加速成熟。供应链管理者需要掌握的不是写代码，而是用AI工具进行供应商分析、价格预测、风险评估、合同审查。这些能力将定义下一代供应链经理的核心竞争力。"}, {"company": "🏭 行业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "开源大模型+行业数据的结合将深刻改变制造业。在供应链领域：AI可自动分析供应商报价合理性、预测原材料价格走势、优化库存水位。率先拥抱这些工具的企业和管理者将获得显著竞争优势。"}, {"company": "🚀 创业机会", "position": "", "salary": "", "location": "", "tag": "", "body": "Kimi K3开源降低了AI创业的技术门槛。对Gofy的3D打印人像项目：可直接调用开源视觉大模型进行照片→3D模型转换，无需从零研发。对液冷项目：可用大模型辅助热仿真分析和结构优化设计。开源AI让「技术平权」成为现实，小团队也能用大模型武装自己。"}, {"company": "💰 投资机会", "position": "", "salary": "", "location": "", "tag": "", "body": "中国大模型调用量全球第一，意味着AI应用层爆发在即。投资方向：AI+垂直行业应用（如AI+供应链、AI+制造）、国产算力基础设施（受益于大模型训练推理需求）。注意：基础大模型层竞争白热化，难以出现单一赢家。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：人形机器人基础模型公司德塔智能（Delta Intelligence）获近5亿元天使++轮融资，投资方含多家上市公司产业方和头部财务机构。这是公司成立半年内完成的第六轮融资。资金将用于基础模型迭代、自研数采设备量产与数据闭环建设、核心研发团队扩充，推动技术在真实工业场景中的工程化验证。"}, {"company": "💼 工作就业", "position": "", "salary": "", "location": "", "tag": "", "body": "人形机器人产业进入工程化验证阶段，意味着从「实验室样品」到「工厂产品」的跨越。这个过程中需要大量制造业供应链人才——零部件采购、供应商管理、量产质量管控。Gofy的17年制造业采购经验恰好匹配这一需求窗口。"}, {"company": "📈 职业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "机器人产业链包括：伺服电机、减速器、传感器、控制器、结构件等上千种零部件。这与Gofy熟悉的「冲压、CNC、压铸、MIM、精密加工」高度重合。可以考虑将职业发展方向拓展到「机器人/智能硬件供应链管理」。"}, {"company": "🏭 行业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "半年六轮融资反映资本市场对人形机器人赛道的极度看好。佛山已有万台人形机器人工厂投产（7月28日报道），广东省正在形成机器人产业集聚效应。对佛山本地制造业从业者是直接利好。"}, {"company": "🚀 创业机会", "position": "", "salary": "", "location": "", "tag": "", "body": "人形机器人的核心瓶颈之一是「热管理」——高密度电机和芯片产生大量热量。Gofy的液冷散热技术有机会切入机器人热管理赛道。3D打印也可为机器人提供定制化轻量化结构件。两个创业项目都能与人形机器人产业形成协同。"}, {"company": "💰 投资机会", "position": "", "salary": "", "location": "", "tag": "", "body": "人形机器人产业链投资重点关注：核心零部件（减速器、伺服、传感器）、具身智能（数据采集与训练）。佛山/东莞的机器人相关上市企业（如拓斯达、汇川技术等）值得跟踪。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：生成式AI正在深刻冲击程序员职业。智联招聘数据显示：普通后端/前端开发岗位需求同比下降52%，薪资涨幅基本停滞。超过34%的新发岗位描述明确提及「AI」或「大模型」关键词。全球已提交代码中42%来自AI（预计2027年升至65%）。哈佛研究显示：采用AI的企业中初级开发者就业率下降约10%。前Twitter CEO的Block公司一次性裁员40%，被业内视为首次完全由AI扩张引发的裁员。但专家指出：程序员不会被真正取代，而是从「代码执行者」转型为「智能体工程师」，核心能力从写代码转向系统架构设计、需求拆解和AI协作。"}, {"company": "💼 工作就业", "position": "", "salary": "", "location": "", "tag": "", "body": "AI替代程序员的逻辑同样适用于其他白领岗位——重复性高、规则明确的工作最容易被替代。对Gofy的启示：采购管理中的订单处理、价格比对等重复性工作将被AI接管，但供应商谈判、战略寻源、风险判断等需要「模糊决策」的高阶能力更加稀缺。积极学习AI工具用于日常工作，是保持竞争力的最低成本保险。"}, {"company": "📈 职业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "麦肯锡报告指出：AI时代最稀缺的是「判断力」——在信息不完整时做出正确决策的能力。这正是Gofy 17年供应链管理的核心资产：何时该锁价？何时该换供应商？何时该建安全库存？这些「说不清但做得对」的隐性知识，AI短期无法复制。"}, {"company": "🏭 行业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "AI对程序员的冲击预示着：所有行业的「中低阶层」都将被压缩，但「高层+AI」的产出将倍增。制造业供应链领域同理——一人+AI可以管理以前三人的采购量。企业组织将从「金字塔」变成「松树形」（顶部更尖、中部更细）。"}, {"company": "🚀 创业机会", "position": "", "salary": "", "location": "", "tag": "", "body": "程序员被「终结」的同时，「AI增强型一人公司」正在崛起。Gofy的3D打印+液冷项目完全可以以「一人公司」模式运营：AI做客服/营销/设计辅助，人做核心判断和创意。这恰好是WAIC 2026新设「OPC一人公司展区」的趋势延续。"}, {"company": "💰 投资机会", "position": "", "salary": "", "location": "", "tag": "", "body": "AI编程工具赛道（Cursor、Claude Code等）持续受益。但更值得关注的是「AI+垂直行业工具」——如AI+采购管理系统、AI+供应链可视化。这类让非技术人员也能用AI提升效率的工具，市场空间远大于纯编程工具。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：华工科技宣布：利用高纯度铜粉+绿激光3D打印技术一体化成型的微通道散热构件已实现批量交付，生产排期饱满，武汉50亩新基地2027年投产，解决了0.1毫米级超细流道一体化成型难题。同时，东莞企石镇AI散热产业集群入选2026年度省级中小企业特色产业集群，聚焦AI热管理赛道，以精密金属成型、热管与均热板、液冷模组为核心能力。思泉新材等企业液冷订单「滚动式下达，一边扩产一边交付」。"}, {"company": "💼 工作就业", "position": "", "salary": "", "location": "", "tag": "", "body": "液冷散热从「技术验证」进入「批量交付」阶段，意味着产业链对采购管理、供应商质量管控、量产工艺工程师的需求将大幅增长。佛山（Gofy所在地）与东莞企石同属珠三角制造业带，地理优势明显。这是Gofy求职的「甜蜜点」——17年制造业采购经验 + 液冷创业实践经验 = 稀缺复合人才。"}, {"company": "📈 职业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "3D打印+液冷的交叉领域正在创造全新的供应链管理岗位：铜粉原材料采购、绿激光设备采购、微通道散热器外协管理、量产质量体系建设。这些岗位要求同时懂传统制造工艺和新材料技术——很少有采购经理具备这种复合背景，Gofy有先发优势。"}, {"company": "🏭 行业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "珠三角AI散热产业正在形成「东莞企石（省级集群）+ 佛山（机器人/制造基地）+ 深圳（算力中心）」的黄金三角。2026年液冷渗透率预计达47%，全球数据中心液冷市场规模165亿美元。华工科技产能排满说明：需求远大于供给，产业链扩张势在必行。"}, {"company": "🚀 创业机会", "position": "", "salary": "", "location": "", "tag": "", "body": "这是今日对Gofy最重要的利好信号：华工科技用绿激光3D打印铜液冷板实现量产，验证了「3D打印+液冷」技术路线的商业可行性。Gofy的氟化液液冷方案如果能结合3D打印定制散热器，可形成「冷却液+定制冷板」组合方案，差异化竞争优势明显。企石省级集群认证也为Gofy未来可能的产业合作/政策支持打开了想象空间。"}, {"company": "💰 投资机会", "position": "", "salary": "", "location": "", "tag": "", "body": "AI散热产业链直接受益标的：铜粉材料（有研粉材Q1营收+59%）、3D打印设备（华工科技）、液冷组件。3D打印板块波长光电涨停（+20.01%），但华工科技跌停（-10%），说明板块分化严重——需精选有实际量产能力和订单的企业，而非概念炒作标的。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：商务部发布《关于所谓「产能过剩」问题的中方立场》，驳斥美方拟对中国AI企业的制裁威胁。商务部特别指出：美国企业在AI研发中存在「蒸馏中国模型」行为，敦促美方停止科技霸权行径。此前，美国商务部拟将多家中国AI企业列入实体清单。与此同时，全球AI版权治理呈现「三元地图」：美国收紧、欧盟英国模糊、印度开放。"}, {"company": "💼 工作就业", "position": "", "salary": "", "location": "", "tag": "", "body": "中美科技博弈持续升级，对中国制造业供应链管理提出新挑战：出口管制合规、供应商替代方案、双供应链策略等能力成为外资/合资企业采购经理的必备技能。Gofy在美资企业（斯多里、恺德仕）的工作经验恰好证明了这方面的能力。"}, {"company": "📈 职业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "「国产替代」从芯片扩展到AI全产业链，意味着本土供应商的质量和技术水平在快速提升。供应链经理需要具备「全球寻源+本土深耕」的双重能力。Gofy的英语流利+本土供应链深耕的组合在制裁环境下反而更有价值。"}, {"company": "🏭 行业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "AI企业的「蒸馏」争议说明：中国AI技术已达到让美国需要「反向学习」的水平。这对国内AI硬件供应链（芯片、服务器、散热）是利好——国产技术自主可控带来更稳定的内需市场。"}, {"company": "🚀 创业机会", "position": "", "salary": "", "location": "", "tag": "", "body": "制裁环境下，「国产液冷方案」可能获得政策扶持和优先采购机会。Gofy的氟化液如果使用国产原料和设备，可争取国产替代政策红利。同时需关注：如果液冷关键原材料（如氟化液）涉及进出口管制，需提前布局国产替代方案。"}, {"company": "💰 投资机会", "position": "", "salary": "", "location": "", "tag": "", "body": "国产AI芯片/算力板块受益于制裁预期（寒武纪虽有回调但长期逻辑不变）。国产替代是2026年最确定的投资主线之一。但需注意：部分标的估值已较高（寒武纪1128元），追高风险大。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：8月1日起，《个人贷款业务明示综合融资成本规定》正式施行，消费者将拿到「明白账」，息费「糊涂账」时代终结。同时，国家税务总局披露：上半年全国超2亿纳税人办理个税汇算，超1亿人申报退税，退税金额突破1500亿元。个税收入同比增长约13%达9000亿元，年收入前10%人群缴纳个税占比约九成。"}, {"company": "💼 工作就业", "position": "", "salary": "", "location": "", "tag": "", "body": "退税1500亿+个税增长13%说明居民实际收入在改善，消费意愿可能回升。对求职市场是温和利好——企业招聘预算有望增加。个税前10%缴九成的结构也说明：中高收入岗位（如采购经理级别）的税负较重，谈薪资时要注意税后实际收入。"}, {"company": "📈 职业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "个人贷款新规让融资成本透明化——这与供应链管理中的「总拥有成本TCO」理念一脉相承。Gofy在面试中可借题发挥：「就像贷款新规要求明示综合融资成本，供应链管理也需要TCO思维，不能只看采购单价」。这是很好的面试话术素材。"}, {"company": "🏭 行业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "消费金融透明化可能抑制短期信贷冲动，对消费电子、汽车等依赖分期付款的制造业有一定短期影响。但长期看，规范市场有利于健康消费。制造业企业自身融资成本也可能随金融监管趋严而波动。"}, {"company": "🚀 创业机会", "position": "", "salary": "", "location": "", "tag": "", "body": "退税1500亿意味着居民手中多了可支配收入。对Gofy的3D打印人像项目（199-1999元客单价）是消费力层面的利好。个人贷款新规可能降低小微创业者的融资难度（明示成本后更容易比价选择）。"}, {"company": "💰 投资机会", "position": "", "salary": "", "location": "", "tag": "", "body": "消费金融规范利好头部持牌机构（银行、消费金融公司），利空不合规的网贷平台。居民收入改善+退税落地，关注消费复苏受益板块（家电、汽车、零售）。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 面试准备：将「财富500强科技行业领跑」和「AI增强型供应链管理」融入面试话术，展示行业洞察力。2. 创业加速：华工科技3D打印液冷量产是重要验证信号，建议深入研究其技术路线作为氟化液方案的参考。3. 技能学习：本周尝试用Kimi K3或Claude Code辅助做一次供应商分析/价格预测，积累「AI+采购」实操案例。4. 人脉拓展：关注企石AI散热产业集群的产业对接活动，佛山到东莞仅1小时车程，值得实地考察"}];
+const totalItems = 55;
+const speakTemplate = "{company}。详细内容：{body}。";
+
+// ===== 状态 =====
+let currentIndex = 0;
+let isPlaying = false;
+let speechRate = 1.0;
+let readDoneSet = new Set();
+let synth = window.speechSynthesis;
+let currentUtterance = null;
+let selectedVoice = null;
+let voicesReady = false;
+
+// ===== 浏览器检测 =====
+function isQQBrowser() {
+    let ua = navigator.userAgent || '';
+    return /MQQBrowser|QQ\//i.test(ua);
+}
+function isUCBrowser() {
+    let ua = navigator.userAgent || '';
+    return /UCBrowser|UCWEB/i.test(ua);
+}
+function isWeChat() {
+    let ua = navigator.userAgent || '';
+    return /MicroMessenger/i.test(ua);
+}
+function isUnsupportedBrowser() {
+    return isQQBrowser() || isUCBrowser() || isWeChat();
+}
+
+// ===== 初始化 =====
+function init() {
+    // 浏览器检测：不支持的直接提示换浏览器
+    if (isUnsupportedBrowser()) {
+        let browserName = isQQBrowser() ? 'QQ浏览器' : (isUCBrowser() ? 'UC浏览器' : '微信内置浏览器');
+        showBrowserWarning(browserName);
+        return;
+    }
+
+    if (!synth) {
+        showBrowserWarning('当前浏览器');
+        return;
+    }
+
+    // Chrome/Edge: voices 通过异步事件加载
+    let voices = synth.getVoices();
+    if (voices && voices.length > 0) {
+        pickVoice(voices);
+    }
+
+    // 监听语音列表加载（关键！Android Chrome 需要等事件）
+    synth.onvoiceschanged = function() {
+        voices = synth.getVoices();
+        if (voices && voices.length > 0 && !voicesReady) {
+            pickVoice(voices);
+            document.getElementById('floatText').textContent =
+                '✅ 语音引擎就绪 (' + voices.length + '个) — 点🎧开始朗读';
+            document.getElementById('progressText').textContent = '就绪 ✓';
+        }
+    };
+
+    // 超时兜底：2秒后强制尝试
+    setTimeout(function() {
+        if (!voicesReady) {
+            voices = synth.getVoices();
+            if (voices && voices.length > 0) {
+                pickVoice(voices);
+            }
+            if (selectedVoice) {
+                document.getElementById('floatText').textContent =
+                    '✅ 语音引擎: ' + selectedVoice.name;
+                document.getElementById('progressText').textContent = '就绪 ✓';
+            } else {
+                document.getElementById('floatText').textContent =
+                    '⚠️ 未找到中文语音，请用系统自带 Chrome/Edge 打开';
+                document.getElementById('progressText').textContent = '无中文语音 ⚠️';
+            }
+            voicesReady = true;
+        }
+    }, 2500);
+}
+
+function showBrowserWarning(browserName) {
+    // 隐藏控制栏播放按钮
+    document.getElementById('playBtn').style.opacity = '0.3';
+    document.getElementById('playBtn').style.pointerEvents = 'none';
+    // 底部显示换浏览器提示
+    document.getElementById('floatHint').style.background = 'rgba(211,47,47,0.95)';
+    document.getElementById('floatText').innerHTML =
+        '❌ ' + browserName + '不支持语音朗读<br><small>👉 请用 <b>Chrome</b> 或 <b>Edge</b> 浏览器打开</small>';
+    document.getElementById('progressText').textContent = '❌ 浏览器不支持';
+    // 页面顶部插入醒目提示横幅
+    let banner = document.createElement('div');
+    banner.style.cssText = 'background:#FFEBEE;border-bottom:2px solid #EF5350;padding:16px;text-align:center;';
+    banner.innerHTML =
+        '<div style="font-size:40px;margin-bottom:8px;">🚫</div>' +
+        '<div style="font-size:15px;font-weight:bold;color:#C62828;margin-bottom:6px;">' +
+        browserName + ' 不支持语音朗读</div>' +
+        '<div style="font-size:14px;color:#555;line-height:1.6;">' +
+        '请用 <b style="color:#1A73E8;">Chrome</b> 或 <b style="color:#0078D4;">Edge</b> 浏览器打开即可朗读<br>' +
+        '<span style="font-size:12px;color:#999;">（应用商店搜索"Chrome"或"Edge"下载）</span></div>';
+    let header = document.querySelector('.header');
+    if (header) {
+        header.parentNode.insertBefore(banner, header);
+    }
+    // 禁用所有岗位点击
+    document.querySelectorAll('.job-item').forEach(function(el) {
+        el.style.pointerEvents = 'none';
+        el.style.opacity = '0.5';
+    });
+}
+
+function pickVoice(voices) {
+    // 优先级：zh-CN 中文女声 > zh-CN 任意 > zh-* > 第一个
+    let preferred = ['zh-CN', 'zh-Hans', 'zh-HK', 'zh-TW', 'zh'];
+    for (let lang of preferred) {
+        for (let v of voices) {
+            if (v.lang && v.lang.startsWith(lang)) {
+                // 优先女声
+                if (v.name.toLowerCase().indexOf('female') >= 0 ||
+                    v.name.indexOf('女') >= 0) {
+                    selectedVoice = v;
+                    voicesReady = true;
+                    return;
+                }
+            }
+        }
+    }
+    // 中文任意
+    for (let lang of preferred) {
+        for (let v of voices) {
+            if (v.lang && v.lang.startsWith(lang)) {
+                selectedVoice = v;
+                voicesReady = true;
+                return;
+            }
+        }
+    }
+    // 无中文语音 → 用第一个兜底
+    if (voices.length > 0) {
+        selectedVoice = voices[0];  // 用第一个兜底
+    }
+    voicesReady = true;
+}
+
+// ===== 构建朗读文本 =====
+function buildSpeakText(item) {
+    let raw = speakTemplate
+        .replace('{company}', item.company || '')
+        .replace('{position}', item.position || '')
+        .replace('{salary}', item.salary || '面议')
+        .replace('{location}', item.location || '')
+        .replace('{body}', item.body || '');
+    return _cleanForTTS(raw);
+}
+
+// ===== TTS 文本清洗：去除所有 Markdown 残留符号 =====
+function _cleanForTTS(text) {
+    if (!text) return text;
+    let cleaned = text;
+    // 去除 Markdown 标题标记 (# ## ### #### 等)
+    cleaned = cleaned.replace(/#{1,6}\s*/g, '');
+    // 去除加粗/斜体标记 (** __ * _)
+    cleaned = cleaned.replace(/\*{1,2}|_/g, '');
+    // 去除管道符 (表格)
+    cleaned = cleaned.replace(/\|/g, ' ');
+    // 去除反引号 (代码)
+    cleaned = cleaned.replace(/`+/g, '');
+    // 去除波浪线
+    cleaned = cleaned.replace(/~+/g, '');
+    // 去除分散的 -  :  标记（但不破坏正常连字符和冒号）
+    cleaned = cleaned.replace(/：/g, ':');
+    // 压缩多余空格
+    cleaned = cleaned.replace(/\s+/g, ' ');
+    // 去除连续连字符
+    cleaned = cleaned.replace(/-{2,}/g, '');
+    return cleaned.trim();
+}
+
+// ===== 朗读单条 =====
+function speakItem(index) {
+    if (index < 0 || index >= totalItems) return;
+
+    currentIndex = index;
+
+    synth.cancel();
+    let item = items[index];
+    let text = buildSpeakText(item);
+
+    let utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'zh-CN';
+    utterance.rate = speechRate;
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+    if (selectedVoice) {
+        utterance.voice = selectedVoice;
+    }
+
+    utterance.onstart = function() {
+        updateUI(index);
+        document.getElementById('nowPlaying').classList.add('active');
+        document.getElementById('nowPlayingText').textContent =
+            (item.company || '') + ' ' + (item.position || '');
+    };
+
+    utterance.onend = function() {
+        readDoneSet.add(index);
+        updateReadDone(index);
+        let next = index + 1;
+        if (next < totalItems && isPlaying) {
+            speakItem(next);
+        } else if (next >= totalItems) {
+            stopPlayback();
+            document.getElementById('floatText').textContent = '✅ 全部朗读完成！';
+            document.getElementById('progressText').textContent = '朗读完成';
+            document.getElementById('progressBar').style.width = '100%';
+            document.getElementById('progressLabel').textContent = totalItems + '/' + totalItems;
+        }
+    };
+
+    utterance.onerror = function(e) {
+        if (e.error !== 'canceled' && e.error !== 'interrupted') {
+            let errMsg = '⚠️ 朗读出错: ' + (e.error || 'unknown');
+            document.getElementById('progressText').textContent = errMsg;
+            document.getElementById('floatText').textContent =
+                errMsg + ' — 可尝试用系统自带浏览器打开';
+            let next = index + 1;
+            if (next < totalItems && isPlaying) {
+                setTimeout(function() { speakItem(next); }, 500);
+            }
+        }
+    };
+
+    currentUtterance = utterance;
+    synth.speak(utterance);
+}
+
+// ===== 播放控制 =====
+function togglePlay() {
+    if (isPlaying) {
+        pausePlayback();
+    } else {
+        startPlayback();
+    }
+}
+
+function startPlayback() {
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    document.getElementById('progressText').textContent = '朗读中...';
+    document.getElementById('floatText').textContent =
+        selectedVoice
+            ? '🔊 朗读中 (' + selectedVoice.name + ') ...'
+            : '🔊 朗读中 (系统默认语音)...';
+    speakItem(currentIndex);
+}
+
+function pausePlayback() {
+    isPlaying = false;
+    synth.cancel();
+    document.getElementById('playIcon').textContent = '🎧';
+    document.getElementById('playBtn').classList.remove('playing');
+    document.getElementById('nowPlaying').classList.remove('active');
+    document.getElementById('floatText').textContent = '⏸️ 已暂停，点击继续';
+    document.getElementById('progressText').textContent = '已暂停';
+}
+
+function stopPlayback() {
+    isPlaying = false;
+    synth.cancel();
+    document.getElementById('playIcon').textContent = '🎧';
+    document.getElementById('playBtn').classList.remove('playing');
+    document.getElementById('nowPlaying').classList.remove('active');
+    document.getElementById('floatText').textContent = '✅ 朗读完成';
+}
+
+function skipNext() {
+    synth.cancel();
+    let next = (currentIndex + 1) % totalItems;
+    currentIndex = next;
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function skipPrev() {
+    synth.cancel();
+    let prev = currentIndex - 1;
+    if (prev < 0) prev = totalItems - 1;
+    currentIndex = prev;
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function jumpTo(index) {
+    synth.cancel();
+    currentIndex = index;
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function setSpeed(val) {
+    speechRate = parseFloat(val);
+    document.getElementById('floatText').textContent =
+        '🎵 朗读速度: ' + val + 'x';
+    setTimeout(function() {
+        if (isPlaying) {
+            document.getElementById('floatText').textContent = '🔊 朗读中...';
+        }
+    }, 1500);
+}
+
+// ===== UI更新 =====
+function updateUI(index) {
+    // 进度条
+    let pct = (index / totalItems) * 100;
+    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent = (index + 1) + '/' + totalItems;
+    document.getElementById('progressText').textContent =
+        '正在朗读第 ' + (index + 1) + ' ' + '条新闻'.replace('个岗位','').replace('条新闻','');
+
+    // 高亮当前
+    document.querySelectorAll('.job-item').forEach(function(el) {
+        el.classList.remove('reading');
+    });
+    let currentEl = document.querySelector('.job-item[data-index="' + index + '"]');
+    if (currentEl) {
+        currentEl.classList.add('reading');
+        currentEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+function updateReadDone(index) {
+    let el = document.querySelector('.job-item[data-index="' + index + '"]');
+    if (el) {
+        el.classList.add('read-done');
+    }
+}
+
+// ===== 启动 =====
+init();
+
+// ===== 移动端保持屏幕唤醒（可选） =====
+if (navigator.wakeLock) {
+    try {
+        navigator.wakeLock.request('screen');
+    } catch(e) {}
+}
+</script>
+</body>
+</html>
