@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>📰 每日要闻（20260809）</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f5f5f5;
+    color: #333;
+    padding-bottom: 80px;
+}
+
+/* ===== 顶部控制栏 ===== */
+.control-bar {
+    position: sticky; top:0; z-index:100;
+    background: linear-gradient(135deg, #1A73E8 0%, #4FC3F7 100%);
+    padding: 12px 16px;
+    box-shadow: 0 2px 12px rgba(26,115,232,0.3);
+}
+.control-row {
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+}
+.control-btn {
+    width: 48px; height: 48px;
+    border: none; border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    font-size: 22px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
+.control-btn:active { transform: scale(0.9); background: rgba(255,255,255,0.35); }
+.control-btn.play-btn {
+    width: 64px; height: 64px;
+    background: #fff;
+    color: #1A73E8;
+    font-size: 28px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+.control-btn.play-btn.playing { color: #FF6B35; }
+
+.speed-select {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 14px;
+    cursor: pointer;
+    -webkit-appearance: none;
+}
+.speed-select option { color: #333; }
+
+/* ===== 进度信息 ===== */
+.progress-row {
+    display: flex; align-items: center; gap: 10px;
+    margin-top: 8px;
+    color: rgba(255,255,255,0.9);
+    font-size: 13px;
+}
+.progress-bar-outer {
+    flex: 1; height: 4px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 2px;
+    overflow: hidden;
+}
+.progress-bar-inner {
+    height: 100%;
+    background: #fff;
+    border-radius: 2px;
+    transition: width 0.3s;
+    width: 0%;
+}
+.progress-text {
+    white-space: nowrap;
+    min-width: 90px;
+    text-align: right;
+}
+
+/* ===== 当前朗读提示 ===== */
+.now-playing {
+    background: #FFF9C4;
+    padding: 8px 16px;
+    font-size: 13px;
+    color: #F57F17;
+    text-align: center;
+    display: none;
+    border-bottom: 2px solid #FFD54F;
+}
+.now-playing.active { display: block; }
+
+/* ===== 标题区 ===== */
+.header {
+    background: #fff;
+    padding: 20px 16px 12px;
+    border-bottom: 1px solid #eee;
+}
+.header h1 { font-size: 18px; color: #1A73E8; margin-bottom: 4px; }
+.header .subtitle { font-size: 13px; color: #888; }
+
+/* ===== 岗位列表 ===== */
+.job-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 14px 16px;
+    background: #fff;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
+.job-item:active { background: #f5f5f5; }
+.job-item.reading {
+    background: #E3F2FD;
+    border-left: 4px solid #1A73E8;
+    padding-left: 12px;
+}
+.job-item.read-done {
+    opacity: 0.6;
+}
+
+.job-index {
+    width: 32px; height: 32px;
+    background: #f0f0f0;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: bold;
+    color: #888;
+    flex-shrink: 0;
+}
+.job-item.reading .job-index {
+    background: #1A73E8;
+    color: #fff;
+}
+.job-item.read-done .job-index {
+    background: #4CAF50;
+    color: #fff;
+}
+
+.job-info { flex:1; min-width:0; }
+.job-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    display: flex; align-items: center; gap: 6px;
+    flex-wrap: wrap;
+}
+.job-detail {
+    font-size: 13px;
+    color: #666;
+    display: flex; flex-wrap: wrap; gap: 8px;
+}
+.position { color: #1A73E8; }
+.salary { color: #FF6B35; font-weight: bold; }
+.location { color: #888; }
+
+.tag {
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    white-space: nowrap;
+}
+.tag-new { background: #E8F5E9; color: #2E7D32; }
+.tag-repeat { background: #FFF3E0; color: #E65100; }
+.tag-update { background: #E3F2FD; color: #1565C0; }
+
+/* ===== 底部浮动条 ===== */
+.float-hint {
+    position: fixed; bottom: 0; left:0; right:0;
+    background: rgba(26,115,232,0.95);
+    color: #fff;
+    text-align: center;
+    padding: 10px 16px;
+    font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px;
+    z-index: 99;
+}
+.float-hint .icon { font-size: 20px; }
+
+/* ===== 状态标记 ===== */
+.status-badge {
+    display: inline-block;
+    background: #4CAF50;
+    color: #fff;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+    0%,100% { opacity:1; }
+    50% { opacity:0.5; }
+}
+</style>
+</head>
+<body>
+
+<!-- 控制栏 -->
+<div class="control-bar">
+    <div class="control-row">
+        <button class="control-btn" onclick="skipPrev()" title="上一条">⏮️</button>
+        <button class="control-btn play-btn" id="playBtn" onclick="togglePlay()" title="播放/暂停">
+            <span id="playIcon">🎧</span>
+        </button>
+        <button class="control-btn" onclick="skipNext()" title="下一条">⏭️</button>
+        <select class="speed-select" id="speedSelect" onchange="setSpeed(this.value)">
+            <option value="0.8">0.8x</option>
+            <option value="1.0" selected>1x</option>
+            <option value="1.2">1.2x</option>
+            <option value="1.5">1.5x</option>
+        </select>
+    </div>
+    <div class="progress-row">
+        <span id="progressLabel">0/57</span>
+        <div class="progress-bar-outer">
+            <div class="progress-bar-inner" id="progressBar"></div>
+        </div>
+        <span class="progress-text" id="progressText">准备就绪</span>
+    </div>
+</div>
+
+<!-- 当前朗读提示 -->
+<div class="now-playing" id="nowPlaying">
+    🔊 正在朗读：<span id="nowPlayingText"></span>
+</div>
+
+<!-- 标题 -->
+<div class="header">
+    <h1>📰 每日要闻（20260809）</h1>
+    <p class="subtitle">57条新闻 | 点🎧按钮浏览器自动朗读</p>
+</div>
+
+<!-- 岗位/新闻列表 -->
+<div id="jobList">
+
+        <div class="job-item" data-index="0" onclick="jumpTo(0)">
+            <div class="job-index">1</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">今天是2026年8月9日，星期日。本周(8/8周五)A股缩量回调，上证收2862.19点(0.27%)，深成指0.62%，创业板0.98%，地产链逆势走强+1.42%净流入14.51亿，AI/教育/游戏领跌。央视发布中国"新质生产力"8大创新成果(深海风电+AI双星+FAST国产化+蝉翼钢+华龙2....</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="1" onclick="jumpTo(1)">
+            <div class="job-index">2</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：8月初国务院国资委与央视集中发布我国近期创新成果——。"海油安澜号"：全球首座16兆瓦张力腿浮式风电平台投用，水深136米、用钢量减40%。"AI双星"高光谱卫星：每秒400万亿次AI运算，"天感天算"在轨处理。FAST中国天眼：馈源舱钢丝绳国产化，已发现近1300颗脉冲星。1:500万月球地...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="2" onclick="jumpTo(2)">
+            <div class="job-index">3</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💼 工作就业</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">7大领域密集"上新"为机械/能源/材料工程师创造大量岗位，采购端尤其受益——海风平台、核电模块、海缆设备都需要重新搭建国产化供应链，广东(太平岭核电)+福建(海风+海缆)双集群距离佛山3小时车程，Gofy的"机械+采购"复合背景是国产替代供应链急招对象。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="3" onclick="jumpTo(3)">
+            <div class="job-index">4</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📈 职业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">从"应用工程师"到"采购技术经理"的跃迁窗口出现：浮式风电张力腿系统、核电模块化建造、FAST馈源舱等都是典型"高复杂度+长周期"项目，需要既懂机械结构又懂供应商管理的"复合型供应链人才"。Gofy的NPI采购+铸造+精密加工经验+英语能力在国产替代赛道属稀缺组合，建议简历中突出"国产替代供应链搭建...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="4" onclick="jumpTo(4)">
+            <div class="job-index">5</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🏭 行业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3个高景气子行业信号明确：。1. 海上风电装备：从半潜式到张力腿，TCO模型下国产化空间巨大。2. 第三代核电：华龙2.0已批量化，单台100亿度/年，10台商运+37台在建。3. 特种钢材：蝉翼钢+无取向电工钢进入人形机器人/3C折叠屏新蓝海</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="5" onclick="jumpTo(5)">
+            <div class="job-index">6</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🚀 创业机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">"海工装备+氢能"上下游：海上风电+海上制氢耦合是下一个千亿赛道，可与Gofy液冷技术形成"海上数据中心+液冷"延伸场景。特种钢材销售/代理：蝉翼钢下游(手机弹片、5G基站、新能源电池连接片)需求暴增，佛山有钣金/冲压客户群。"国产替代咨询"副业：Gofy可包装"国产化供应链搭建方法论"对外培训，时...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="6" onclick="jumpTo(6)">
+            <div class="job-index">7</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💰 投资机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">核电装备：东方电气、上海电气、哈尔滨电气、华龙一号产业链(台海核电等)。海上风电：明阳智能、大金重工、东方电缆(海缆)。特种钢材：太钢不锈、首钢股份(电工钢)、甬金股份(精密冷轧)。风险提示：成果"密集发布"通常在业绩兑现前13个月，建议在Q3财报窗口后右侧布局</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="7" onclick="jumpTo(7)">
+            <div class="job-index">8</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：国家发改委国家信息中心发布7月数据——。线下消费支付金额同比+2.2%(增速比上月+0.8pp)，其中家用电器+8.5%(比上月+10.9pp，暑促效应)。"收钱吧"实体商业活力指数升至81.9(+3.1%)。先进制造领域投资+73.1%(比6月+42.5pp)，新基建中标金额+0.8%。工业...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="8" onclick="jumpTo(8)">
+            <div class="job-index">9</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💼 工作就业</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">"先进制造投资+73.1%"是Gofy求职最强基本面信号——资金正大规模涌入制造业，Q3Q4将出现机械/汽车/电子类采购/供应链岗位集中释放。"实体商业活力指数81.9"说明小微经济活跃，制造业上下游配套企业订单回暖，间接带动采购需求。行动：本周内更新BOSS直聘/猎聘简历状态为"开放"。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="9" onclick="jumpTo(9)">
+            <div class="job-index">10</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📈 职业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">"数字智能+4.8% vs AI专利+60%"反差说明：AI技术产出加速，但落地应用仍在早期。这意味着——懂AI的"传统岗位"价值远超纯AI岗位。Gofy的"AI技能+17年采购"组合在2026年Q3具备薪资溢价窗口，可在求职JD中量化："曾用AI工具(如ChatGPT+Python)优化供应商比价...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="10" onclick="jumpTo(10)">
+            <div class="job-index">11</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🏭 行业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">"半导体+11.6% 新材料+8.9% 数字智能+4.8%"的产业热度排序验证：。半导体仍是政策+资金+订单"三重共振"赛道(国产存储/逻辑/模拟芯片)。新材料次之(蝉翼钢/聚乙烯醇/陶瓷隔膜)。数字智能进入"应用落地期"，靠实际ROI而非概念讲故事</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="11" onclick="jumpTo(11)">
+            <div class="job-index">12</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">Gofy 求职行业排序（结合数据）：机械装备 汽车零部件 电子半导体 新材料</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="12" onclick="jumpTo(12)">
+            <div class="job-index">13</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🚀 创业机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">"AI+采购" SaaS 工具：基于Gofy采购经验 + LLM API，做"自动比价/合同审查/供应商画像"小工具，闲鱼/小红书获客，订阅制199499元/月。"智能工厂落地顾问"：佛山本地有大量小工厂需要"AI质检+数字孪生"轻改造，客单价310万。"AI专利+制造业" 内容创作：抖音/小红书科...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="13" onclick="jumpTo(13)">
+            <div class="job-index">14</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💰 投资机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">半导体设备ETF(159995) / 半导体ETF(512480)：热度+11.6%持续验证。先进制造主题基金：重点配置"机械+电子+汽车"。家电板块：消费+8.5% + 暑促，格力/美的/海尔在Q3财报窗口。风险：经济数据"超预期向好"可能已被pricein，Q4或迎回调</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="14" onclick="jumpTo(14)">
+            <div class="job-index">15</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：北京8月8日起优化房地产政策——非京籍购五环内住房社保年限由2年调减为1年，公积金贷款额度上限提至240万元；专家称全国新一轮房地产政策宽松即将到来。同期华尔街逆势加码中国硬科技——。Roundhill光通信ETF近半仓位押注新易盛等5家中企，规模超250亿美元。存储ETF对长鑫科技持仓翻倍。...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="15" onclick="jumpTo(15)">
+            <div class="job-index">16</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💼 工作就业</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">长鑫科技+716%的营收暴增直接拉动半导体采购/供应链人才需求。长鑫、长江存储、合肥长鑫(北京/上海外延)是国产存储三巨头，正在大规模招聘SQE/采购经理/物流计划岗位，Gofy的机械+电子双背景在存储芯片设备零部件采购上具备稀缺性。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="16" onclick="jumpTo(16)">
+            <div class="job-index">17</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📈 职业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">"房地产松绑+硬科技加仓" 是宏观资金切换信号——。短期看：消费/地产链上下游(建材、家电、家居)有政策红利。长期看：硬科技(半导体/光通信/液冷)是国家战略主线。Gofy 求职应坚定"硬科技优先，房地产链次之"策略，避免被地产链短期诱惑切换赛道。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="17" onclick="jumpTo(17)">
+            <div class="job-index">18</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🏭 行业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">国产存储首次进入"华尔街推荐名单"是里程碑事件——。2024年前：长鑫/长江存储被美方列入实体清单。2026年Q2：华尔街真金白银+716%营收。说明国产存储已通过"性能+良率+成本"三关，进入"商业化兑现期"。对Gofy的启示：35年内半导体国产化是最确定的供应链机会。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="18" onclick="jumpTo(18)">
+            <div class="job-index">19</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🚀 创业机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">"国产存储/光通信设备"代理销售：长鑫DRAM、新易盛光模块下游有大量应用端需求，佛山本地电子厂可做分销。"光模块散热"专项液冷方案：新易盛等光通信设备发热密度高，Gofy的氟化液浸没式方案正好匹配，这是液冷项目最高价值垂直场景。"中美脱钩合规咨询"：帮佛企应对BIS出口管制，客单价520万</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="19" onclick="jumpTo(19)">
+            <div class="job-index">20</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💰 投资机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">新易盛(300502) / 中际旭创(300308)：光通信龙头，250亿ETF资金背书。长鑫科技(待上市)：关注IPO进展，可通过战略配售/打新参与。半导体设备ETF(159995)：龙头集中。房地产板块：北京松绑是"政策底"信号，但避免追高二三线房企</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="20" onclick="jumpTo(20)">
+            <div class="job-index">21</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：Formnext Asia Shenzhen 2026将于2026年8月2628日在深圳国际会展中心(宝安)15号馆举办，本届预计汇聚350+品牌企业，同期十余场高端论坛——。AI散热管理板块：希禾增材、大族聚维、宝辰鑫激光、美光速造、惠普增材、南方增材等展出纯铜/铜合金3D打印冷板、换热器一...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="21" onclick="jumpTo(21)">
+            <div class="job-index">22</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💼 工作就业</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">Gofy 副业核心项目1（3D打印人像） + 核心项目2（液冷散热）双赛道同时出现在一个展会，极为罕见——。3D打印人像：拓竹/创想三维等头部消费级设备厂商可对接"人像3D打印代工/培训"合作。液冷散热：希禾增材/大族聚维的铜打印冷板是Gofy氟化液方案的最佳载体。行动：立即在微信小程序"展讯网"领...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="22" onclick="jumpTo(22)">
+            <div class="job-index">23</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📈 职业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">展会是Gofy 2026下半年最高ROI的事项——。可在论坛现场直接接触希禾/大族/铂力特/华曙等金属3D打印龙头采购负责人。"人像3D打印+AI建模"创业方向有Mesy AI/Tripo AI等工具加持，可直接对接合作。"铜打印液冷板"是Gofy液冷项目的"硬件载体"，找到代工厂就打通完整产品链。...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="23" onclick="jumpTo(23)">
+            <div class="job-index">24</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🏭 行业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3D打印行业从"原型验证"到"批量量产"的拐点已到——。OPPO Find N5铂力特铰链轴盖量产 = 消费电子首次规模化。铜打印冷板 = AI服务器散热是下一个万亿场景。消费级千元机 = 真正"破圈"，类似2010年代智能手机普及。Gofy 应在"消费级3D打印"和"工业级液冷3D打印"两条线同步...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="24" onclick="jumpTo(24)">
+            <div class="job-index">25</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🚀 创业机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">"3D打印人像工作室"参展引流：在展会上发传单/扫二维码，佛山到深圳高铁仅1.5小时，可发展深莞佛三角客户。"液冷套件代工合作"：与希禾/大族聚维谈"铜打印冷板+氟化液"整套方案OEM。"AI建模+3D打印"小工具SaaS：基于Mesy AI API做一键人像建模小程序，客单价199599元。"3D...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="25" onclick="jumpTo(25)">
+            <div class="job-index">26</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💰 投资机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">铂力特(688333)：金属3D打印龙头，OPPO量产背书。华曙高科(688433)：激光增材制造设备龙头。拓竹科技/创想三维：尚未上市，可关注一级市场。大族激光(002008)：旗下大族聚维展商。行业ETF：3D打印主题基金(规模较小，可定投)</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="26" onclick="jumpTo(26)">
+            <div class="job-index">27</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：伯克希尔哈撒韦8月8日发布二季度财报——净利润256.67亿美元同比+107%，上半年净利357.73亿美元+111%，保险板块持有现金及短债合计3592亿美元(历史新高)，二季度回购45亿美元。。中国旺旺同日发布警示——董事长蔡衍明公开信称2026财年一季度收益降约6%、净利降约38%，要求...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="27" onclick="jumpTo(27)">
+            <div class="job-index">28</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💼 工作就业</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">消费类供应链岗位分化加剧——头部(伯克希尔持仓苹果/可口可乐)稳健，但传统快消(旺旺)下行压力巨大。对Gofy的启示：。求职应避开"传统快消"赛道(旺旺、统一、康师傅类)。优先"硬科技+新消费"(元气森林、喜茶、瑞幸等新零售供应链)。巴菲特持现金3592亿=历史新高 = 全球资金在等"大象级"并购机...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="28" onclick="jumpTo(28)">
+            <div class="job-index">29</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📈 职业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">"巴菲特囤现金+旺旺现金告急"是"两极分化"教科书案例——。Gofy职业定位：应向"巴菲特式稳健"靠拢——选抗周期行业(机械装备/汽车零部件/电子制造)，避免"旺旺式"夕阳赛道。采购管理者价值在"逆周期"凸显：旺旺危机的核心是渠道老化，采购端无力回天；但若早3年做"线上+下沉渠道"供应链改革，结局会...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="29" onclick="jumpTo(29)">
+            <div class="job-index">30</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🏭 行业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">消费股"冰火两重天"延续——。新消费（零食很忙/茶饮/咖啡/健康零食）：增长。传统快消（旺旺/达利/盼盼）：承压。奢侈品/美妆：分化。采购岗位将向"新消费+硬科技"两端集中。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="30" onclick="jumpTo(30)">
+            <div class="job-index">31</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🚀 创业机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">"新消费品牌供应链服务"：帮新消费品牌(茶饮/零食/美妆)搭建"小批量+柔性+快反"供应链。"消费降级产品"代理：借鉴Costco/山姆模式，1688严选/拼多多品牌升级，佛山制造有天然优势。"企业级团餐/福利采购SaaS"：B端团餐年规模超万亿，渗透率仍低</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="31" onclick="jumpTo(31)">
+            <div class="job-index">32</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💰 投资机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">新消费ETF(159928) / 消费ETF(159928)：结构调整优于行业β。巴菲特持仓（间接参考）：苹果(AAPL)、美国运通(AXP)、可口可乐(KO)、西方石油(OXY)。A股消费龙头：贵州茅台(600519)、伊利股份(600887)、海天味业(603288)。避坑：传统快消(旺旺、统一...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="32" onclick="jumpTo(32)">
+            <div class="job-index">33</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：8月8日A股三大指数集体下挫——。上证指数收2862.19点(0.27%)，成交额2528.84亿。深证成指收8393.70点(0.62%)，成交额3101.93亿。创业板指收1595.64点(0.98%)，成交额1387.59亿。北证50+0.14%逆势翻红。资金流向：A股全天主力资金净流出...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="33" onclick="jumpTo(33)">
+            <div class="job-index">34</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💼 工作就业</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">教育2.72% / 医疗服务2.58% / 游戏2.38%三大板块领跌 = K12教培、医疗服务、游戏等"政策敏感型"行业承压；Gofy求职应坚定机械/制造/电子主航道，避开教育/医疗/游戏相关岗位。"工程咨询+2.07%"领涨 = 基建链回暖信号，机械/装备/工程类采购岗有结构性机会。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="34" onclick="jumpTo(34)">
+            <div class="job-index">35</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📈 职业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">"房地产净流入14.51亿 + 创业板0.98%"反差是经典的"高低切换"——。资金从"高估值成长(创业板/AI)" → "低估值价值(地产链)"。Gofy应顺势而为：求职JD强调"成本控制+TCO模型+降本"等价值型能力，而非"AI/数字化"等成长型标签</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="35" onclick="jumpTo(35)">
+            <div class="job-index">36</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🏭 行业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">板块轮动信号：。强势：地产链、工程咨询、消费电子(折叠屏/OLED)。弱势：教育、医疗服务、游戏、化学制药。结构性机会：铜打印/液冷/3D打印虽未明显上涨，但Formnext Asia展临近(8/26)有望成为催化</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="36" onclick="jumpTo(36)">
+            <div class="job-index">37</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🚀 创业机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">"低位布局副业"窗口：大盘28002900区间是"右侧定投"机会，Gofy可考虑每月定投10002000元"半导体设备ETF+科创50"。"消费电子后市场"：折叠屏(OLED+UTG)需求增长，可关注佛山本地UTG/铰链供应商机会。"工程咨询+采购优化"跨界：把17年采购经验包装成"工程采购优化顾问...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="37" onclick="jumpTo(37)">
+            <div class="job-index">38</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💰 投资机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">房地产ETF(512200) / 地产ETF基金(159707)：政策松绑催化，但仅适合短线(12周)。科创50ETF(588000)：8/8微跌0.48%，是长期定投窗口。半导体设备ETF(159995)：回调后估值合理。消费电子ETF(159732)：折叠屏/OLED/AI PC三驱动。风险提示...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="38" onclick="jumpTo(38)">
+            <div class="job-index">39</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">Token正式定名"词元"：2026年3月24日人民日报官宣，AI核心计量单位Token的中文标准译名为"词元"，由复旦大学邱锡鹏教授2021年首倡，历经5年产业共识沉淀。Agent主流译法"智能体"：学界+产业界广泛接纳。2026年8月人民网刊发锐评：公共传播、教育教学、政策普及等通用场景应大力推...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="39" onclick="jumpTo(39)">
+            <div class="job-index">40</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💼 工作就业</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">"AI+采购"复合人才仍是稀缺品——。"词元"标准化意味着AI将在教育/政策/产业全面落地。未来12年企业内部"AI采购工具"会爆发。Gofy的"懂AI+懂采购"组合价值远高于"纯AI工程师"或"纯采购"，这是17年经验+新工具的复利</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="40" onclick="jumpTo(40)">
+            <div class="job-index">41</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📈 职业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">"词元"定名 + "智能体"共识 = 中国AI产业话语权确立——。政策端：AI国产化、应用化、合规化加速。教育端：AI课程进校园进企业。产业端：AI Agent/AI工具全面铺开。Gofy应把握窗口：考取"AI应用工程师/Prompt工程师"等轻量证书+在简历中加入AI工具实操案例。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="41" onclick="jumpTo(41)">
+            <div class="job-index">42</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🏭 行业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">"中国AI=神仝"等本土化命名标志着中国AI产业从"跟随"到"定义"——。类似"高铁/移动支付/二维码"等"中国定义世界"路径。国产AI大模型(DeepSeek/Qwen/Kimi/文心)2026下半年将主导国内B端市场。Gofy 3D打印+AI建模(Meshy/Tripo)正赶上这波"AI+产业"...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="42" onclick="jumpTo(42)">
+            <div class="job-index">43</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🚀 创业机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">"AI采购顾问"知识付费：抖音/小红书"词元/智能体/AIGC"系列科普，结合Gofy 17年采购经验做差异化。"AI+采购"工具代理：帮佛企对接钉钉/飞书AI Agent/AI合同审查，客单价50005万。"AI中文名"衍生品：如果"神仝"成为官方名，可做品牌联名/周边(玩具/3D打印手办)，完美...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="43" onclick="jumpTo(43)">
+            <div class="job-index">44</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💰 投资机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">科大讯飞(002230)：中文语音+AI教育龙头。拓尔思(300229)：中文NLP龙头。汉王科技(002362)：AI+教育落地。国产AI ETF(159819)：聚焦国产大模型公司。规避：纯英文AI概念股(政策风险)</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="44" onclick="jumpTo(44)">
+            <div class="job-index">45</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">第18个全民健身日：全国举办超10万场赛事，预计拉动体育消费超百亿。上半年新兴产业与未来产业新设企业56.1万户，同比+15.3%。医药工业创新加速突破：1类创新药获批数量超50个，超2024年全年。台风"白海豚"逼近：最大风力14级，预计9日晚10日晨在浙江舟山到福建福鼎一带登陆。沙特土耳其巴基斯...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="45" onclick="jumpTo(45)">
+            <div class="job-index">46</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💼 工作就业</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">"上半年新设企业56.1万户(+15.3%)"=创业潮+招聘潮——。新兴产业(AI/新能源/生物医药/具身智能)新公司密集注册。Gofy可关注"新兴产业+传统制造"交叉领域创业公司：如"AI+机械"、"新材料+汽车"、"具身智能+工业"。台风白海豚提醒：本周华东物流可能延迟，Gofy做"应急供应链"...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="46" onclick="jumpTo(46)">
+            <div class="job-index">47</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📈 职业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">"1类创新药超50个"=医药工业创新兑现期——。医药工业2026年是"医保谈判+创新药放量"双驱动年。医药/医疗器械采购岗位专业度要求提升(懂GMP/懂临床/懂注册)。Gofy 求职若考虑医药赛道，需要补充医药行业基础知识，但17年制造经验可在医药装备/IVD仪器方向切入</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="47" onclick="jumpTo(47)">
+            <div class="job-index">48</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🏭 行业发展</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">"全民健身日10万场赛事+百亿消费" 信号：。体育用品/健身器材/可穿戴设备进入"消费升级+政策驱动"双红利期。佛山顺德/中山是健身器材产业带，距佛山三水仅1小时，采购人才缺口大。"沙特土巴防务协议" 中东地缘重塑：。影响油价/航运/军工/能源装备。Gofy 求职可关注"出口型机械装备"（中东/东南...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="48" onclick="jumpTo(48)">
+            <div class="job-index">49</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🚀 创业机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">"应急供应链咨询"：台风/疫情/地缘事件下的"备份供应链+多源采购"咨询，契合Gofy QCDS+ABCD分级能力。"体育用品供应链"对接：佛山周边健身器材厂(舒华/英派斯/好家庭)找"柔性供应链+小批量定制"代工。"中东/东南亚出口B2B"：借助沙特土耳其巴基斯坦防务协议带来的"中东工业化"机会，...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="49" onclick="jumpTo(49)">
+            <div class="job-index">50</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💰 投资机会</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">体育ETF(159778)：全民健身+消费升级。医药创新ETF(159992) / 创新药ETF(159567)：1类创新药放量。中东主题QDII：通过基金配置(沙特阿美ETF等)。佛山本地机械/家电股：美的集团(000333)、海信家电(000921)、新宝股份(002705)——出口+体育+健身...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="50" onclick="jumpTo(50)">
+            <div class="job-index">51</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📊 大盘信号</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">A股8/8缩量阴跌(0.27%)+地产链逆势+1.42% = 经典的"高低切换+缩量观望"格局。资金面+政策面+消息面"三不共振"导致缩量，下周(8/118/15)关注7月CPI/PPI/M2/社融数据及8/15 MLF续作。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="51" onclick="jumpTo(51)">
+            <div class="job-index">52</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🏭 行业机会排序</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">基于今日8条新闻，Gofy 关注行业：。1. 半导体/光通信/存储 —— 政策+资金+订单三重共振，长鑫+716%验证。2. 3D打印/液冷/AI散热 —— Formnext展8/26+铜打印冷板+消费破圈。3. 机械/装备/核电/海工 —— 8大"新质生产力"成果+国产替代。4. 新消费/茶饮/零...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="52" onclick="jumpTo(52)">
+            <div class="job-index">53</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💼 求职行动清单</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">今日（周日）：BOSS直聘/猎聘刷新简历状态为"开放" + 准备23个"AI+采购"实操案例。 本周内：锁定35个"半导体/机械/汽车"目标公司+1个"AI+采购"跨界目标。 8/15前：在闲鱼/小红书上线"供应链管理咨询"服务(199499元/次)。 8/2628：亲自参加Formnext Asi...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="53" onclick="jumpTo(53)">
+            <div class="job-index">54</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🚀 创业行动清单</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3D打印人像副业：本周内发2条小红书/抖音引流视频。 液冷项目：Formnext展前完成"氟化液+铜打印冷板"组合方案PPT。 AI+采购SaaS：基于现有采购经验+ChatGPT API，搭一个MVP原型</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="54" onclick="jumpTo(54)">
+            <div class="job-index">55</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💰 投资行动清单</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">定投：半导体ETF(159995)+科创50(588000)各1000元/月。 关注：Formnext展前(8/26)买入铂力特(688333)+华曙高科(688433)短期催化。 观察：8/15 MLF续作 + 7月经济数据，若降息或数据强于预期则加仓。 避坑：教育/医疗/游戏(政策风险)、传统快...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="55" onclick="jumpTo(55)">
+            <div class="job-index">56</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 大盘缩量阴跌，避免追高任何板块；短期(12周)关注地产链短线机会，长期(36月)聚焦半导体/AI/3D打印。2. Formnext Asia深圳展(8/2628) 是Gofy下半年最高ROI事件，务必提前领票+预约厂商。3. AI+采购复合能力是Gofy 17年经验的最大杠杆点，强化简历+对外...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="56" onclick="jumpTo(56)">
+            <div class="job-index">57</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">📌 数据来源：央视新闻、新华社、人民日报、每日经济新闻、证券时报、腾讯财经。📅 下次推送：20260810 06:15</span>
+                </div>
+            </div>
+        </div>
+</div>
+
+<!-- 底部提示 -->
+<div class="float-hint" id="floatHint">
+    <span class="icon">🎧</span>
+    <span id="floatText">点击顶部播放按钮开始朗读</span>
+</div>
+
+<script>
+// ===== 数据 =====
+const items = [{"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "今天是2026年8月9日，星期日。本周(8/8周五)A股缩量回调，上证收2862.19点(-0.27%)，深成指-0.62%，创业板-0.98%，地产链逆势走强+1.42%净流入14.51亿，AI/教育/游戏领跌。央视发布中国\"新质生产力\"8大创新成果(深海风电+AI双星+FAST国产化+蝉翼钢+华龙2.0等)；发改委披露7月数据——先进制造投资+73.1%、AI专利+60%；Formnext Asia深圳3D打印展8/26-28 即将召开，350+品牌聚焦铜打印+液冷散热，匹配Gofy液冷与3D打印双项目。本期共筛选8条深度新闻，详见下文。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：8月初国务院国资委与央视集中发布我国近期创新成果——。\"海油安澜号\"：全球首座16兆瓦张力腿浮式风电平台投用，水深136米、用钢量减40%。\"AI双星\"高光谱卫星：每秒400万亿次AI运算，\"天感天算\"在轨处理。FAST中国天眼：馈源舱钢丝绳国产化，已发现近1300颗脉冲星。1:500万月球地质图：中国数据改写月球\"编年史\"，刷新火山活动终点至20亿年前。\"蝉翼钢\"：最薄0.07mm，全球第一梯队，3辆新能源车中1辆搭载。重庆川维5万吨特种聚乙烯醇：打破进口依赖，光学膜/医药级关键材料。\"华龙一号2.0\"三代加核电：浙江金七门+广东太平岭示范落地，单台年发电100亿度。\"蓝海领航\"海缆船：排水量3.5万吨，亚洲前列，海上风电向深远海拓展"}, {"company": "💼 工作就业", "position": "", "salary": "", "location": "", "tag": "", "body": "7大领域密集\"上新\"为机械/能源/材料工程师创造大量岗位，采购端尤其受益——海风平台、核电模块、海缆设备都需要重新搭建国产化供应链，广东(太平岭核电)+福建(海风+海缆)双集群距离佛山3小时车程，Gofy的\"机械+采购\"复合背景是国产替代供应链急招对象。"}, {"company": "📈 职业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "从\"应用工程师\"到\"采购技术经理\"的跃迁窗口出现：浮式风电张力腿系统、核电模块化建造、FAST馈源舱等都是典型\"高复杂度+长周期\"项目，需要既懂机械结构又懂供应商管理的\"复合型供应链人才\"。Gofy的NPI采购+铸造+精密加工经验+英语能力在国产替代赛道属稀缺组合，建议简历中突出\"国产替代供应链搭建\"标签。"}, {"company": "🏭 行业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "3个高景气子行业信号明确：。1. 海上风电装备：从半潜式到张力腿，TCO模型下国产化空间巨大。2. 第三代核电：华龙2.0已批量化，单台100亿度/年，10台商运+37台在建。3. 特种钢材：蝉翼钢+无取向电工钢进入人形机器人/3C折叠屏新蓝海"}, {"company": "🚀 创业机会", "position": "", "salary": "", "location": "", "tag": "", "body": "\"海工装备+氢能\"上下游：海上风电+海上制氢耦合是下一个千亿赛道，可与Gofy液冷技术形成\"海上数据中心+液冷\"延伸场景。特种钢材销售/代理：蝉翼钢下游(手机弹片、5G基站、新能源电池连接片)需求暴增，佛山有钣金/冲压客户群。\"国产替代咨询\"副业：Gofy可包装\"国产化供应链搭建方法论\"对外培训，时薪可达500-1000元"}, {"company": "💰 投资机会", "position": "", "salary": "", "location": "", "tag": "", "body": "核电装备：东方电气、上海电气、哈尔滨电气、华龙一号产业链(台海核电等)。海上风电：明阳智能、大金重工、东方电缆(海缆)。特种钢材：太钢不锈、首钢股份(电工钢)、甬金股份(精密冷轧)。风险提示：成果\"密集发布\"通常在业绩兑现前1-3个月，建议在Q3财报窗口后右侧布局"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：国家发改委国家信息中心发布7月数据——。线下消费支付金额同比+2.2%(增速比上月+0.8pp)，其中家用电器+8.5%(比上月+10.9pp，暑促效应)。\"收钱吧\"实体商业活力指数升至81.9(+3.1%)。先进制造领域投资+73.1%(比6月+42.5pp)，新基建中标金额+0.8%。工业园区生产热度指数+1.0%，半导体+11.6% / 新材料+8.9% / 数字智能+4.8%。AI相关专利授权量+60.0%(比6月+21.7pp)"}, {"company": "💼 工作就业", "position": "", "salary": "", "location": "", "tag": "", "body": "\"先进制造投资+73.1%\"是Gofy求职最强基本面信号——资金正大规模涌入制造业，Q3-Q4将出现机械/汽车/电子类采购/供应链岗位集中释放。\"实体商业活力指数81.9\"说明小微经济活跃，制造业上下游配套企业订单回暖，间接带动采购需求。行动：本周内更新BOSS直聘/猎聘简历状态为\"开放\"。"}, {"company": "📈 职业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "\"数字智能+4.8% vs AI专利+60%\"反差说明：AI技术产出加速，但落地应用仍在早期。这意味着——懂AI的\"传统岗位\"价值远超纯AI岗位。Gofy的\"AI技能+17年采购\"组合在2026年Q3具备薪资溢价窗口，可在求职JD中量化：\"曾用AI工具(如ChatGPT+Python)优化供应商比价流程，年度降本XX%\"。"}, {"company": "🏭 行业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "\"半导体+11.6% > 新材料+8.9% > 数字智能+4.8%\"的产业热度排序验证：。半导体仍是政策+资金+订单\"三重共振\"赛道(国产存储/逻辑/模拟芯片)。新材料次之(蝉翼钢/聚乙烯醇/陶瓷隔膜)。数字智能进入\"应用落地期\"，靠实际ROI而非概念讲故事"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "Gofy 求职行业排序（结合数据）：机械装备 > 汽车零部件 > 电子半导体 > 新材料"}, {"company": "🚀 创业机会", "position": "", "salary": "", "location": "", "tag": "", "body": "\"AI+采购\" SaaS 工具：基于Gofy采购经验 + LLM API，做\"自动比价/合同审查/供应商画像\"小工具，闲鱼/小红书获客，订阅制199-499元/月。\"智能工厂落地顾问\"：佛山本地有大量小工厂需要\"AI质检+数字孪生\"轻改造，客单价3-10万。\"AI专利+制造业\" 内容创作：抖音/小红书科普\"AI专利背后的制造业机会\"，流量变现"}, {"company": "💰 投资机会", "position": "", "salary": "", "location": "", "tag": "", "body": "半导体设备ETF(159995) / 半导体ETF(512480)：热度+11.6%持续验证。先进制造主题基金：重点配置\"机械+电子+汽车\"。家电板块：消费+8.5% + 暑促，格力/美的/海尔在Q3财报窗口。风险：经济数据\"超预期向好\"可能已被price-in，Q4或迎回调"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：北京8月8日起优化房地产政策——非京籍购五环内住房社保年限由2年调减为1年，公积金贷款额度上限提至240万元；专家称全国新一轮房地产政策宽松即将到来。同期华尔街逆势加码中国硬科技——。Roundhill光通信ETF近半仓位押注新易盛等5家中企，规模超250亿美元。存储ETF对长鑫科技持仓翻倍。Counterpoint数据：二季度长鑫科技DRAM营收同比+716%"}, {"company": "💼 工作就业", "position": "", "salary": "", "location": "", "tag": "", "body": "长鑫科技+716%的营收暴增直接拉动半导体采购/供应链人才需求。长鑫、长江存储、合肥长鑫(北京/上海外延)是国产存储三巨头，正在大规模招聘SQE/采购经理/物流计划岗位，Gofy的机械+电子双背景在存储芯片设备零部件采购上具备稀缺性。"}, {"company": "📈 职业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "\"房地产松绑+硬科技加仓\" 是宏观资金切换信号——。短期看：消费/地产链上下游(建材、家电、家居)有政策红利。长期看：硬科技(半导体/光通信/液冷)是国家战略主线。Gofy 求职应坚定\"硬科技优先，房地产链次之\"策略，避免被地产链短期诱惑切换赛道。"}, {"company": "🏭 行业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "国产存储首次进入\"华尔街推荐名单\"是里程碑事件——。2024年前：长鑫/长江存储被美方列入实体清单。2026年Q2：华尔街真金白银+716%营收。说明国产存储已通过\"性能+良率+成本\"三关，进入\"商业化兑现期\"。对Gofy的启示：3-5年内半导体国产化是最确定的供应链机会。"}, {"company": "🚀 创业机会", "position": "", "salary": "", "location": "", "tag": "", "body": "\"国产存储/光通信设备\"代理销售：长鑫DRAM、新易盛光模块下游有大量应用端需求，佛山本地电子厂可做分销。\"光模块散热\"专项液冷方案：新易盛等光通信设备发热密度高，Gofy的氟化液浸没式方案正好匹配，这是液冷项目最高价值垂直场景。\"中美脱钩合规咨询\"：帮佛企应对BIS出口管制，客单价5-20万"}, {"company": "💰 投资机会", "position": "", "salary": "", "location": "", "tag": "", "body": "新易盛(300502) / 中际旭创(300308)：光通信龙头，250亿ETF资金背书。长鑫科技(待上市)：关注IPO进展，可通过战略配售/打新参与。半导体设备ETF(159995)：龙头集中。房地产板块：北京松绑是\"政策底\"信号，但避免追高二三线房企"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：Formnext Asia Shenzhen 2026将于2026年8月26-28日在深圳国际会展中心(宝安)15号馆举办，本届预计汇聚350+品牌企业，同期十余场高端论坛——。AI散热管理板块：希禾增材、大族聚维、宝辰鑫激光、美光速造、惠普增材、南方增材等展出纯铜/铜合金3D打印冷板、换热器一体化部件。机器人/具身智能板块：华曙高科、创想三维、惠普增材、盈普三维、倍丰智能等呈现机器人躯干轻量化、核心传感器、关节部件、柔性外皮。低空经济板块：拓竹科技、复志科技、Stratasys、铬莱铂等覆盖无人机机架、机臂、云台配件。3C电子板块：铂力特铰链轴盖已在OPPO Find N5规模化量产。消费级破圈：拓竹/创想三维千元级设备+Meshy AI/Tripo AI/趣丸万相AI建模先锋。同期举办\"热管理与液冷增材制造专题论坛\"、\"前沿3D打印机器人及具身智能应用高峰论坛\""}, {"company": "💼 工作就业", "position": "", "salary": "", "location": "", "tag": "", "body": "Gofy 副业核心项目1（3D打印人像） + 核心项目2（液冷散热）双赛道同时出现在一个展会，极为罕见——。3D打印人像：拓竹/创想三维等头部消费级设备厂商可对接\"人像3D打印代工/培训\"合作。液冷散热：希禾增材/大族聚维的铜打印冷板是Gofy氟化液方案的最佳载体。行动：立即在微信小程序\"展讯网\"领免费票（口令\"深圳增材制造展\"），提前预约5-8家目标厂商"}, {"company": "📈 职业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "展会是Gofy 2026下半年最高ROI的事项——。可在论坛现场直接接触希禾/大族/铂力特/华曙等金属3D打印龙头采购负责人。\"人像3D打印+AI建模\"创业方向有Mesy AI/Tripo AI等工具加持，可直接对接合作。\"铜打印液冷板\"是Gofy液冷项目的\"硬件载体\"，找到代工厂就打通完整产品链。简历加分项：展会后可在简历中加\"参展并对接XX代工厂，意向合作XX液冷套件\"。"}, {"company": "🏭 行业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "3D打印行业从\"原型验证\"到\"批量量产\"的拐点已到——。OPPO Find N5铂力特铰链轴盖量产 = 消费电子首次规模化。铜打印冷板 = AI服务器散热是下一个万亿场景。消费级千元机 = 真正\"破圈\"，类似2010年代智能手机普及。Gofy 应在\"消费级3D打印\"和\"工业级液冷3D打印\"两条线同步布局。"}, {"company": "🚀 创业机会", "position": "", "salary": "", "location": "", "tag": "", "body": "\"3D打印人像工作室\"参展引流：在展会上发传单/扫二维码，佛山到深圳高铁仅1.5小时，可发展深莞佛三角客户。\"液冷套件代工合作\"：与希禾/大族聚维谈\"铜打印冷板+氟化液\"整套方案OEM。\"AI建模+3D打印\"小工具SaaS：基于Mesy AI API做一键人像建模小程序，客单价199-599元。\"3D打印培训课程\"：抖音/视频号\"从0到1学3D打印\"，99-499元/套"}, {"company": "💰 投资机会", "position": "", "salary": "", "location": "", "tag": "", "body": "铂力特(688333)：金属3D打印龙头，OPPO量产背书。华曙高科(688433)：激光增材制造设备龙头。拓竹科技/创想三维：尚未上市，可关注一级市场。大族激光(002008)：旗下大族聚维展商。行业ETF：3D打印主题基金(规模较小，可定投)"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：伯克希尔哈撒韦8月8日发布二季度财报——净利润256.67亿美元同比+107%，上半年净利357.73亿美元+111%，保险板块持有现金及短债合计3592亿美元(历史新高)，二季度回购45亿美元。。中国旺旺同日发布警示——董事长蔡衍明公开信称2026财年一季度收益降约6%、净利降约38%，要求全员重视\"重大经营危机\"，传统批发渠道双位数衰退。"}, {"company": "💼 工作就业", "position": "", "salary": "", "location": "", "tag": "", "body": "消费类供应链岗位分化加剧——头部(伯克希尔持仓苹果/可口可乐)稳健，但传统快消(旺旺)下行压力巨大。对Gofy的启示：。求职应避开\"传统快消\"赛道(旺旺、统一、康师傅类)。优先\"硬科技+新消费\"(元气森林、喜茶、瑞幸等新零售供应链)。巴菲特持现金3592亿=历史新高 = 全球资金在等\"大象级\"并购机会 = 求职市场Q3可能更活跃"}, {"company": "📈 职业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "\"巴菲特囤现金+旺旺现金告急\"是\"两极分化\"教科书案例——。Gofy职业定位：应向\"巴菲特式稳健\"靠拢——选抗周期行业(机械装备/汽车零部件/电子制造)，避免\"旺旺式\"夕阳赛道。采购管理者价值在\"逆周期\"凸显：旺旺危机的核心是渠道老化，采购端无力回天；但若早3年做\"线上+下沉渠道\"供应链改革，结局会不同"}, {"company": "🏭 行业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "消费股\"冰火两重天\"延续——。新消费（零食很忙/茶饮/咖啡/健康零食）：增长。传统快消（旺旺/达利/盼盼）：承压。奢侈品/美妆：分化。采购岗位将向\"新消费+硬科技\"两端集中。"}, {"company": "🚀 创业机会", "position": "", "salary": "", "location": "", "tag": "", "body": "\"新消费品牌供应链服务\"：帮新消费品牌(茶饮/零食/美妆)搭建\"小批量+柔性+快反\"供应链。\"消费降级产品\"代理：借鉴Costco/山姆模式，1688严选/拼多多品牌升级，佛山制造有天然优势。\"企业级团餐/福利采购SaaS\"：B端团餐年规模超万亿，渗透率仍低"}, {"company": "💰 投资机会", "position": "", "salary": "", "location": "", "tag": "", "body": "新消费ETF(159928) / 消费ETF(159928)：结构调整优于行业β。巴菲特持仓（间接参考）：苹果(AAPL)、美国运通(AXP)、可口可乐(KO)、西方石油(OXY)。A股消费龙头：贵州茅台(600519)、伊利股份(600887)、海天味业(603288)。避坑：传统快消(旺旺、统一、康师傅)——除非\"困境反转\"信号明确。伯克希尔3592亿现金\"=市场等大回调\"信号：Q3-Q4若有回调是入场机会"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：8月8日A股三大指数集体下挫——。上证指数收2862.19点(-0.27%)，成交额2528.84亿。深证成指收8393.70点(-0.62%)，成交额3101.93亿。创业板指收1595.64点(-0.98%)，成交额1387.59亿。北证50+0.14%逆势翻红。资金流向：A股全天主力资金净流出87亿，但房地产行业净流入14.51亿居首。涨幅前五：工程咨询+2.07%、房地产服务+1.78%、房地产开发+1.42%、消费电子+1.0%、石油+0.93%。跌幅前五：教育-2.72%、医疗服务-2.58%、游戏-2.38%、商业百货-2.36%、化学制药-2.2%。龙虎榜：机构现身17股，四维图新等12股机构净买入"}, {"company": "💼 工作就业", "position": "", "salary": "", "location": "", "tag": "", "body": "教育-2.72% / 医疗服务-2.58% / 游戏-2.38%三大板块领跌 = K12教培、医疗服务、游戏等\"政策敏感型\"行业承压；Gofy求职应坚定机械/制造/电子主航道，避开教育/医疗/游戏相关岗位。\"工程咨询+2.07%\"领涨 = 基建链回暖信号，机械/装备/工程类采购岗有结构性机会。"}, {"company": "📈 职业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "\"房地产净流入14.51亿 + 创业板-0.98%\"反差是经典的\"高低切换\"——。资金从\"高估值成长(创业板/AI)\" → \"低估值价值(地产链)\"。Gofy应顺势而为：求职JD强调\"成本控制+TCO模型+降本\"等价值型能力，而非\"AI/数字化\"等成长型标签"}, {"company": "🏭 行业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "板块轮动信号：。强势：地产链、工程咨询、消费电子(折叠屏/OLED)。弱势：教育、医疗服务、游戏、化学制药。结构性机会：铜打印/液冷/3D打印虽未明显上涨，但Formnext Asia展临近(8/26)有望成为催化"}, {"company": "🚀 创业机会", "position": "", "salary": "", "location": "", "tag": "", "body": "\"低位布局副业\"窗口：大盘2800-2900区间是\"右侧定投\"机会，Gofy可考虑每月定投1000-2000元\"半导体设备ETF+科创50\"。\"消费电子后市场\"：折叠屏(OLED+UTG)需求增长，可关注佛山本地UTG/铰链供应商机会。\"工程咨询+采购优化\"跨界：把17年采购经验包装成\"工程采购优化顾问\"，对接地产/基建公司"}, {"company": "💰 投资机会", "position": "", "salary": "", "location": "", "tag": "", "body": "房地产ETF(512200) / 地产ETF基金(159707)：政策松绑催化，但仅适合短线(1-2周)。科创50ETF(588000)：8/8微跌-0.48%，是长期定投窗口。半导体设备ETF(159995)：回调后估值合理。消费电子ETF(159732)：折叠屏/OLED/AI PC三驱动。风险提示：两市成交仅5660亿(环比-571亿) = 缩量阴跌，警惕\"再下一台阶\"风险"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "Token正式定名\"词元\"：2026年3月24日人民日报官宣，AI核心计量单位Token的中文标准译名为\"词元\"，由复旦大学邱锡鹏教授2021年首倡，历经5年产业共识沉淀。Agent主流译法\"智能体\"：学界+产业界广泛接纳。2026年8月人民网刊发锐评：公共传播、教育教学、政策普及等通用场景应大力推广\"词元\"等标准中文译名。AI中文名征集：候选\"神仝\"等十万创意中突围，预计国家级AI中文名\"为期不远\""}, {"company": "💼 工作就业", "position": "", "salary": "", "location": "", "tag": "", "body": "\"AI+采购\"复合人才仍是稀缺品——。\"词元\"标准化意味着AI将在教育/政策/产业全面落地。未来1-2年企业内部\"AI采购工具\"会爆发。Gofy的\"懂AI+懂采购\"组合价值远高于\"纯AI工程师\"或\"纯采购\"，这是17年经验+新工具的复利"}, {"company": "📈 职业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "\"词元\"定名 + \"智能体\"共识 = 中国AI产业话语权确立——。政策端：AI国产化、应用化、合规化加速。教育端：AI课程进校园进企业。产业端：AI Agent/AI工具全面铺开。Gofy应把握窗口：考取\"AI应用工程师/Prompt工程师\"等轻量证书+在简历中加入AI工具实操案例。"}, {"company": "🏭 行业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "\"中国AI=神仝\"等本土化命名标志着中国AI产业从\"跟随\"到\"定义\"——。类似\"高铁/移动支付/二维码\"等\"中国定义世界\"路径。国产AI大模型(DeepSeek/Qwen/Kimi/文心)2026下半年将主导国内B端市场。Gofy 3D打印+AI建模(Meshy/Tripo)正赶上这波\"AI+产业\"红利"}, {"company": "🚀 创业机会", "position": "", "salary": "", "location": "", "tag": "", "body": "\"AI采购顾问\"知识付费：抖音/小红书\"词元/智能体/AIGC\"系列科普，结合Gofy 17年采购经验做差异化。\"AI+采购\"工具代理：帮佛企对接钉钉/飞书AI Agent/AI合同审查，客单价5000-5万。\"AI中文名\"衍生品：如果\"神仝\"成为官方名，可做品牌联名/周边(玩具/3D打印手办)，完美匹配Gofy 3D打印副业"}, {"company": "💰 投资机会", "position": "", "salary": "", "location": "", "tag": "", "body": "科大讯飞(002230)：中文语音+AI教育龙头。拓尔思(300229)：中文NLP龙头。汉王科技(002362)：AI+教育落地。国产AI ETF(159819)：聚焦国产大模型公司。规避：纯英文AI概念股(政策风险)"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "第18个全民健身日：全国举办超10万场赛事，预计拉动体育消费超百亿。上半年新兴产业与未来产业新设企业56.1万户，同比+15.3%。医药工业创新加速突破：1类创新药获批数量超50个，超2024年全年。台风\"白海豚\"逼近：最大风力14级，预计9日晚-10日晨在浙江舟山到福建福鼎一带登陆。沙特-土耳其-巴基斯坦签署共同防务协议：中东地缘格局重塑"}, {"company": "💼 工作就业", "position": "", "salary": "", "location": "", "tag": "", "body": "\"上半年新设企业56.1万户(+15.3%)\"=创业潮+招聘潮——。新兴产业(AI/新能源/生物医药/具身智能)新公司密集注册。Gofy可关注\"新兴产业+传统制造\"交叉领域创业公司：如\"AI+机械\"、\"新材料+汽车\"、\"具身智能+工业\"。台风白海豚提醒：本周华东物流可能延迟，Gofy做\"应急供应链\"咨询是个差异化卖点"}, {"company": "📈 职业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "\"1类创新药超50个\"=医药工业创新兑现期——。医药工业2026年是\"医保谈判+创新药放量\"双驱动年。医药/医疗器械采购岗位专业度要求提升(懂GMP/懂临床/懂注册)。Gofy 求职若考虑医药赛道，需要补充医药行业基础知识，但17年制造经验可在医药装备/IVD仪器方向切入"}, {"company": "🏭 行业发展", "position": "", "salary": "", "location": "", "tag": "", "body": "\"全民健身日10万场赛事+百亿消费\" 信号：。体育用品/健身器材/可穿戴设备进入\"消费升级+政策驱动\"双红利期。佛山顺德/中山是健身器材产业带，距佛山三水仅1小时，采购人才缺口大。\"沙特-土-巴防务协议\" 中东地缘重塑：。影响油价/航运/军工/能源装备。Gofy 求职可关注\"出口型机械装备\"（中东/东南亚/非洲市场）"}, {"company": "🚀 创业机会", "position": "", "salary": "", "location": "", "tag": "", "body": "\"应急供应链咨询\"：台风/疫情/地缘事件下的\"备份供应链+多源采购\"咨询，契合Gofy QCDS+ABCD分级能力。\"体育用品供应链\"对接：佛山周边健身器材厂(舒华/英派斯/好家庭)找\"柔性供应链+小批量定制\"代工。\"中东/东南亚出口B2B\"：借助沙特-土耳其-巴基斯坦防务协议带来的\"中东工业化\"机会，对接机械/装备/家电出口。\"AI+健身/AI+康复\"内容创作：垂直细分领域，3D打印+AI可做\"个性化运动护具\""}, {"company": "💰 投资机会", "position": "", "salary": "", "location": "", "tag": "", "body": "体育ETF(159778)：全民健身+消费升级。医药创新ETF(159992) / 创新药ETF(159567)：1类创新药放量。中东主题QDII：通过基金配置(沙特阿美ETF等)。佛山本地机械/家电股：美的集团(000333)、海信家电(000921)、新宝股份(002705)——出口+体育+健身多驱动。避坑：纯体育用品小厂——品牌力弱"}, {"company": "📊 大盘信号", "position": "", "salary": "", "location": "", "tag": "", "body": "A股8/8缩量阴跌(-0.27%)+地产链逆势+1.42% = 经典的\"高低切换+缩量观望\"格局。资金面+政策面+消息面\"三不共振\"导致缩量，下周(8/11-8/15)关注7月CPI/PPI/M2/社融数据及8/15 MLF续作。"}, {"company": "🏭 行业机会排序", "position": "", "salary": "", "location": "", "tag": "", "body": "基于今日8条新闻，Gofy 关注行业：。1. 半导体/光通信/存储 —— 政策+资金+订单三重共振，长鑫+716%验证。2. 3D打印/液冷/AI散热 —— Formnext展8/26+铜打印冷板+消费破圈。3. 机械/装备/核电/海工 —— 8大\"新质生产力\"成果+国产替代。4. 新消费/茶饮/零食 —— 旺旺警示下\"新消费\"反而有结构性机会。5. 体育/医药创新 —— 全民健身日+1类创新药超50个"}, {"company": "💼 求职行动清单", "position": "", "salary": "", "location": "", "tag": "", "body": "[ ] 今日（周日）：BOSS直聘/猎聘刷新简历状态为\"开放\" + 准备2-3个\"AI+采购\"实操案例。[ ] 本周内：锁定3-5个\"半导体/机械/汽车\"目标公司+1个\"AI+采购\"跨界目标。[ ] 8/15前：在闲鱼/小红书上线\"供应链管理咨询\"服务(199-499元/次)。[ ] 8/26-28：亲自参加Formnext Asia深圳展(高铁1.5h)，至少对接5家金属3D打印厂商"}, {"company": "🚀 创业行动清单", "position": "", "salary": "", "location": "", "tag": "", "body": "[ ] 3D打印人像副业：本周内发2条小红书/抖音引流视频。[ ] 液冷项目：Formnext展前完成\"氟化液+铜打印冷板\"组合方案PPT。[ ] AI+采购SaaS：基于现有采购经验+ChatGPT API，搭一个MVP原型"}, {"company": "💰 投资行动清单", "position": "", "salary": "", "location": "", "tag": "", "body": "[ ] 定投：半导体ETF(159995)+科创50(588000)各1000元/月。[ ] 关注：Formnext展前(8/26)买入铂力特(688333)+华曙高科(688433)短期催化。[ ] 观察：8/15 MLF续作 + 7月经济数据，若降息或数据强于预期则加仓。[ ] 避坑：教育/医疗/游戏(政策风险)、传统快消(旺旺式衰退)"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 大盘缩量阴跌，避免追高任何板块；短期(1-2周)关注地产链短线机会，长期(3-6月)聚焦半导体/AI/3D打印。2. Formnext Asia深圳展(8/26-28) 是Gofy下半年最高ROI事件，务必提前领票+预约厂商。3. AI+采购复合能力是Gofy 17年经验的最大杠杆点，强化简历+对外内容输出。4. 新质生产力8大成果集中发布后，Q3-Q4相关产业链订单会集中释放，求职/创业/投资三线同步布局"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "📌 数据来源：央视新闻、新华社、人民日报、每日经济新闻、证券时报、腾讯财经*。📅 下次推送：2026-08-10 06:15*"}];
+const totalItems = 57;
+const speakTemplate = "{company}。详细内容：{body}。";
+
+// ===== 状态 =====
+let currentIndex = 0;
+let isPlaying = false;
+let speechRate = 1.0;
+let readDoneSet = new Set();
+let synth = window.speechSynthesis;
+let currentUtterance = null;
+let selectedVoice = null;
+let voicesReady = false;
+
+// ===== 浏览器检测 =====
+function isQQBrowser() {
+    let ua = navigator.userAgent || '';
+    return /MQQBrowser|QQ\//i.test(ua);
+}
+function isUCBrowser() {
+    let ua = navigator.userAgent || '';
+    return /UCBrowser|UCWEB/i.test(ua);
+}
+function isWeChat() {
+    let ua = navigator.userAgent || '';
+    return /MicroMessenger/i.test(ua);
+}
+function isUnsupportedBrowser() {
+    return isQQBrowser() || isUCBrowser() || isWeChat();
+}
+
+// ===== 初始化 =====
+function init() {
+    // 浏览器检测：不支持的直接提示换浏览器
+    if (isUnsupportedBrowser()) {
+        let browserName = isQQBrowser() ? 'QQ浏览器' : (isUCBrowser() ? 'UC浏览器' : '微信内置浏览器');
+        showBrowserWarning(browserName);
+        return;
+    }
+
+    if (!synth) {
+        showBrowserWarning('当前浏览器');
+        return;
+    }
+
+    // Chrome/Edge: voices 通过异步事件加载
+    let voices = synth.getVoices();
+    if (voices && voices.length > 0) {
+        pickVoice(voices);
+    }
+
+    // 监听语音列表加载（关键！Android Chrome 需要等事件）
+    synth.onvoiceschanged = function() {
+        voices = synth.getVoices();
+        if (voices && voices.length > 0 && !voicesReady) {
+            pickVoice(voices);
+            document.getElementById('floatText').textContent =
+                '✅ 语音引擎就绪 (' + voices.length + '个) — 点🎧开始朗读';
+            document.getElementById('progressText').textContent = '就绪 ✓';
+        }
+    };
+
+    // 超时兜底：2秒后强制尝试
+    setTimeout(function() {
+        if (!voicesReady) {
+            voices = synth.getVoices();
+            if (voices && voices.length > 0) {
+                pickVoice(voices);
+            }
+            if (selectedVoice) {
+                document.getElementById('floatText').textContent =
+                    '✅ 语音引擎: ' + selectedVoice.name;
+                document.getElementById('progressText').textContent = '就绪 ✓';
+            } else {
+                document.getElementById('floatText').textContent =
+                    '⚠️ 未找到中文语音，请用系统自带 Chrome/Edge 打开';
+                document.getElementById('progressText').textContent = '无中文语音 ⚠️';
+            }
+            voicesReady = true;
+        }
+    }, 2500);
+}
+
+function showBrowserWarning(browserName) {
+    // 隐藏控制栏播放按钮
+    document.getElementById('playBtn').style.opacity = '0.3';
+    document.getElementById('playBtn').style.pointerEvents = 'none';
+    // 底部显示换浏览器提示
+    document.getElementById('floatHint').style.background = 'rgba(211,47,47,0.95)';
+    document.getElementById('floatText').innerHTML =
+        '❌ ' + browserName + '不支持语音朗读<br><small>👉 请用 <b>Chrome</b> 或 <b>Edge</b> 浏览器打开</small>';
+    document.getElementById('progressText').textContent = '❌ 浏览器不支持';
+    // 页面顶部插入醒目提示横幅
+    let banner = document.createElement('div');
+    banner.style.cssText = 'background:#FFEBEE;border-bottom:2px solid #EF5350;padding:16px;text-align:center;';
+    banner.innerHTML =
+        '<div style="font-size:40px;margin-bottom:8px;">🚫</div>' +
+        '<div style="font-size:15px;font-weight:bold;color:#C62828;margin-bottom:6px;">' +
+        browserName + ' 不支持语音朗读</div>' +
+        '<div style="font-size:14px;color:#555;line-height:1.6;">' +
+        '请用 <b style="color:#1A73E8;">Chrome</b> 或 <b style="color:#0078D4;">Edge</b> 浏览器打开即可朗读<br>' +
+        '<span style="font-size:12px;color:#999;">（应用商店搜索"Chrome"或"Edge"下载）</span></div>';
+    let header = document.querySelector('.header');
+    if (header) {
+        header.parentNode.insertBefore(banner, header);
+    }
+    // 禁用所有岗位点击
+    document.querySelectorAll('.job-item').forEach(function(el) {
+        el.style.pointerEvents = 'none';
+        el.style.opacity = '0.5';
+    });
+}
+
+function pickVoice(voices) {
+    // 优先级：zh-CN 中文女声 > zh-CN 任意 > zh-* > 第一个
+    let preferred = ['zh-CN', 'zh-Hans', 'zh-HK', 'zh-TW', 'zh'];
+    for (let lang of preferred) {
+        for (let v of voices) {
+            if (v.lang && v.lang.startsWith(lang)) {
+                // 优先女声
+                if (v.name.toLowerCase().indexOf('female') >= 0 ||
+                    v.name.indexOf('女') >= 0) {
+                    selectedVoice = v;
+                    voicesReady = true;
+                    return;
+                }
+            }
+        }
+    }
+    // 中文任意
+    for (let lang of preferred) {
+        for (let v of voices) {
+            if (v.lang && v.lang.startsWith(lang)) {
+                selectedVoice = v;
+                voicesReady = true;
+                return;
+            }
+        }
+    }
+    // 无中文语音 → 用第一个兜底
+    if (voices.length > 0) {
+        selectedVoice = voices[0];  // 用第一个兜底
+    }
+    voicesReady = true;
+}
+
+// ===== 构建朗读文本 =====
+function buildSpeakText(item) {
+    let raw = speakTemplate
+        .replace('{company}', item.company || '')
+        .replace('{position}', item.position || '')
+        .replace('{salary}', item.salary || '面议')
+        .replace('{location}', item.location || '')
+        .replace('{body}', item.body || '');
+    return _cleanForTTS(raw);
+}
+
+// ===== TTS 文本清洗：去除所有 Markdown 残留符号 =====
+function _cleanForTTS(text) {
+    if (!text) return text;
+    let cleaned = text;
+    // 去除 Markdown 标题标记 (# ## ### #### 等)
+    cleaned = cleaned.replace(/#{1,6}\s*/g, '');
+    // 去除加粗/斜体标记 (** __ * _)
+    cleaned = cleaned.replace(/\*{1,2}|_/g, '');
+    // 去除管道符 (表格)
+    cleaned = cleaned.replace(/\|/g, ' ');
+    // 去除反引号 (代码)
+    cleaned = cleaned.replace(/`+/g, '');
+    // 去除波浪线
+    cleaned = cleaned.replace(/~+/g, '');
+    // 去除分散的 -  :  标记（但不破坏正常连字符和冒号）
+    cleaned = cleaned.replace(/：/g, ':');
+    // 压缩多余空格
+    cleaned = cleaned.replace(/\s+/g, ' ');
+    // 去除连续连字符
+    cleaned = cleaned.replace(/-{2,}/g, '');
+    return cleaned.trim();
+}
+
+// ===== 朗读单条 =====
+function speakItem(index) {
+    if (index < 0 || index >= totalItems) return;
+
+    currentIndex = index;
+
+    synth.cancel();
+    let item = items[index];
+    let text = buildSpeakText(item);
+
+    let utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'zh-CN';
+    utterance.rate = speechRate;
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+    if (selectedVoice) {
+        utterance.voice = selectedVoice;
+    }
+
+    utterance.onstart = function() {
+        updateUI(index);
+        document.getElementById('nowPlaying').classList.add('active');
+        document.getElementById('nowPlayingText').textContent =
+            (item.company || '') + ' ' + (item.position || '');
+    };
+
+    utterance.onend = function() {
+        readDoneSet.add(index);
+        updateReadDone(index);
+        let next = index + 1;
+        if (next < totalItems && isPlaying) {
+            speakItem(next);
+        } else if (next >= totalItems) {
+            stopPlayback();
+            document.getElementById('floatText').textContent = '✅ 全部朗读完成！';
+            document.getElementById('progressText').textContent = '朗读完成';
+            document.getElementById('progressBar').style.width = '100%';
+            document.getElementById('progressLabel').textContent = totalItems + '/' + totalItems;
+        }
+    };
+
+    utterance.onerror = function(e) {
+        if (e.error !== 'canceled' && e.error !== 'interrupted') {
+            let errMsg = '⚠️ 朗读出错: ' + (e.error || 'unknown');
+            document.getElementById('progressText').textContent = errMsg;
+            document.getElementById('floatText').textContent =
+                errMsg + ' — 可尝试用系统自带浏览器打开';
+            let next = index + 1;
+            if (next < totalItems && isPlaying) {
+                setTimeout(function() { speakItem(next); }, 500);
+            }
+        }
+    };
+
+    currentUtterance = utterance;
+    synth.speak(utterance);
+}
+
+// ===== 播放控制 =====
+function togglePlay() {
+    if (isPlaying) {
+        pausePlayback();
+    } else {
+        startPlayback();
+    }
+}
+
+function startPlayback() {
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    document.getElementById('progressText').textContent = '朗读中...';
+    document.getElementById('floatText').textContent =
+        selectedVoice
+            ? '🔊 朗读中 (' + selectedVoice.name + ') ...'
+            : '🔊 朗读中 (系统默认语音)...';
+    speakItem(currentIndex);
+}
+
+function pausePlayback() {
+    isPlaying = false;
+    synth.cancel();
+    document.getElementById('playIcon').textContent = '🎧';
+    document.getElementById('playBtn').classList.remove('playing');
+    document.getElementById('nowPlaying').classList.remove('active');
+    document.getElementById('floatText').textContent = '⏸️ 已暂停，点击继续';
+    document.getElementById('progressText').textContent = '已暂停';
+}
+
+function stopPlayback() {
+    isPlaying = false;
+    synth.cancel();
+    document.getElementById('playIcon').textContent = '🎧';
+    document.getElementById('playBtn').classList.remove('playing');
+    document.getElementById('nowPlaying').classList.remove('active');
+    document.getElementById('floatText').textContent = '✅ 朗读完成';
+}
+
+function skipNext() {
+    synth.cancel();
+    let next = (currentIndex + 1) % totalItems;
+    currentIndex = next;
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function skipPrev() {
+    synth.cancel();
+    let prev = currentIndex - 1;
+    if (prev < 0) prev = totalItems - 1;
+    currentIndex = prev;
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function jumpTo(index) {
+    synth.cancel();
+    currentIndex = index;
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function setSpeed(val) {
+    speechRate = parseFloat(val);
+    document.getElementById('floatText').textContent =
+        '🎵 朗读速度: ' + val + 'x';
+    setTimeout(function() {
+        if (isPlaying) {
+            document.getElementById('floatText').textContent = '🔊 朗读中...';
+        }
+    }, 1500);
+}
+
+// ===== UI更新 =====
+function updateUI(index) {
+    // 进度条
+    let pct = (index / totalItems) * 100;
+    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent = (index + 1) + '/' + totalItems;
+    document.getElementById('progressText').textContent =
+        '正在朗读第 ' + (index + 1) + ' ' + '条新闻'.replace('个岗位','').replace('条新闻','');
+
+    // 高亮当前
+    document.querySelectorAll('.job-item').forEach(function(el) {
+        el.classList.remove('reading');
+    });
+    let currentEl = document.querySelector('.job-item[data-index="' + index + '"]');
+    if (currentEl) {
+        currentEl.classList.add('reading');
+        currentEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+function updateReadDone(index) {
+    let el = document.querySelector('.job-item[data-index="' + index + '"]');
+    if (el) {
+        el.classList.add('read-done');
+    }
+}
+
+// ===== 启动 =====
+init();
+
+// ===== 移动端保持屏幕唤醒（可选） =====
+if (navigator.wakeLock) {
+    try {
+        navigator.wakeLock.request('screen');
+    } catch(e) {}
+}
+</script>
+</body>
+</html>
