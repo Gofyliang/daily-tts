@@ -1,0 +1,1334 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>📰 每日要闻（20260812）</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f5f5f5;
+    color: #333;
+    padding-bottom: 80px;
+}
+
+/* ===== 顶部控制栏 ===== */
+.control-bar {
+    position: sticky; top:0; z-index:100;
+    background: linear-gradient(135deg, #1A73E8 0%, #4FC3F7 100%);
+    padding: 12px 16px;
+    box-shadow: 0 2px 12px rgba(26,115,232,0.3);
+}
+.control-row {
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+}
+.control-btn {
+    width: 48px; height: 48px;
+    border: none; border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    font-size: 22px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
+.control-btn:active { transform: scale(0.9); background: rgba(255,255,255,0.35); }
+.control-btn.play-btn {
+    width: 64px; height: 64px;
+    background: #fff;
+    color: #1A73E8;
+    font-size: 28px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+.control-btn.play-btn.playing { color: #FF6B35; }
+
+.speed-select {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 14px;
+    cursor: pointer;
+    -webkit-appearance: none;
+}
+.speed-select option { color: #333; }
+
+/* ===== 进度信息 ===== */
+.progress-row {
+    display: flex; align-items: center; gap: 10px;
+    margin-top: 8px;
+    color: rgba(255,255,255,0.9);
+    font-size: 13px;
+}
+.progress-bar-outer {
+    flex: 1; height: 4px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 2px;
+    overflow: hidden;
+}
+.progress-bar-inner {
+    height: 100%;
+    background: #fff;
+    border-radius: 2px;
+    transition: width 0.3s;
+    width: 0%;
+}
+.progress-text {
+    white-space: nowrap;
+    min-width: 90px;
+    text-align: right;
+}
+
+/* ===== 当前朗读提示 ===== */
+.now-playing {
+    background: #FFF9C4;
+    padding: 8px 16px;
+    font-size: 13px;
+    color: #F57F17;
+    text-align: center;
+    display: none;
+    border-bottom: 2px solid #FFD54F;
+}
+.now-playing.active { display: block; }
+
+/* ===== 标题区 ===== */
+.header {
+    background: #fff;
+    padding: 20px 16px 12px;
+    border-bottom: 1px solid #eee;
+}
+.header h1 { font-size: 18px; color: #1A73E8; margin-bottom: 4px; }
+.header .subtitle { font-size: 13px; color: #888; }
+
+/* ===== 岗位列表 ===== */
+.job-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 14px 16px;
+    background: #fff;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
+.job-item:active { background: #f5f5f5; }
+.job-item.reading {
+    background: #E3F2FD;
+    border-left: 4px solid #1A73E8;
+    padding-left: 12px;
+}
+.job-item.read-done {
+    opacity: 0.6;
+}
+
+.job-index {
+    width: 32px; height: 32px;
+    background: #f0f0f0;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: bold;
+    color: #888;
+    flex-shrink: 0;
+}
+.job-item.reading .job-index {
+    background: #1A73E8;
+    color: #fff;
+}
+.job-item.read-done .job-index {
+    background: #4CAF50;
+    color: #fff;
+}
+
+.job-info { flex:1; min-width:0; }
+.job-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    display: flex; align-items: center; gap: 6px;
+    flex-wrap: wrap;
+}
+.job-detail {
+    font-size: 13px;
+    color: #666;
+    display: flex; flex-wrap: wrap; gap: 8px;
+}
+.position { color: #1A73E8; }
+.salary { color: #FF6B35; font-weight: bold; }
+.location { color: #888; }
+
+.tag {
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    white-space: nowrap;
+}
+.tag-new { background: #E8F5E9; color: #2E7D32; }
+.tag-repeat { background: #FFF3E0; color: #E65100; }
+.tag-update { background: #E3F2FD; color: #1565C0; }
+
+/* ===== 底部浮动条 ===== */
+.float-hint {
+    position: fixed; bottom: 0; left:0; right:0;
+    background: rgba(26,115,232,0.95);
+    color: #fff;
+    text-align: center;
+    padding: 10px 16px;
+    font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px;
+    z-index: 99;
+}
+.float-hint .icon { font-size: 20px; }
+
+/* ===== 状态标记 ===== */
+.status-badge {
+    display: inline-block;
+    background: #4CAF50;
+    color: #fff;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+    0%,100% { opacity:1; }
+    50% { opacity:0.5; }
+}
+</style>
+</head>
+<body>
+
+<!-- 控制栏 -->
+<div class="control-bar">
+    <div class="control-row">
+        <button class="control-btn" onclick="skipPrev()" title="上一条">⏮️</button>
+        <button class="control-btn play-btn" id="playBtn" onclick="togglePlay()" title="播放/暂停">
+            <span id="playIcon">🎧</span>
+        </button>
+        <button class="control-btn" onclick="skipNext()" title="下一条">⏭️</button>
+        <select class="speed-select" id="speedSelect" onchange="setSpeed(this.value)">
+            <option value="0.8">0.8x</option>
+            <option value="1.0" selected>1x</option>
+            <option value="1.2">1.2x</option>
+            <option value="1.5">1.5x</option>
+        </select>
+    </div>
+    <div class="progress-row">
+        <span id="progressLabel">0/66</span>
+        <div class="progress-bar-outer">
+            <div class="progress-bar-inner" id="progressBar"></div>
+        </div>
+        <span class="progress-text" id="progressText">准备就绪</span>
+    </div>
+</div>
+
+<!-- 当前朗读提示 -->
+<div class="now-playing" id="nowPlaying">
+    🔊 正在朗读：<span id="nowPlayingText"></span>
+</div>
+
+<!-- 标题 -->
+<div class="header">
+    <h1>📰 每日要闻（20260812）</h1>
+    <p class="subtitle">66条新闻 | 点🎧按钮浏览器自动朗读</p>
+</div>
+
+<!-- 岗位/新闻列表 -->
+<div id="jobList">
+
+        <div class="job-item" data-index="0" onclick="jumpTo(0)">
+            <div class="job-index">1</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 苹果测试长鑫存储芯片，AI内存短缺倒逼供应链国产替代。2. 光刻机产业链国产化提速，350nm设备斩获批量重复订单。3. 安徽汽车产业链精耕细作，整车本地化采购占比已达40%。4. 深圳龙岗传统产业新政落地，智能眼镜技改年补最高2000万元。5. 深圳发布直播电商行动方案，2028年销售额目标...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="1" onclick="jumpTo(1)">
+            <div class="job-index">2</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：华尔街日报/新浪财经。发布时间：20260812</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="2" onclick="jumpTo(2)">
+            <div class="job-index">3</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">摘要</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">苹果公司正在包括iPhone和MacBook在内的多条产品线上测试长鑫存储的存储芯片，以应对AI热潮引发的内存短缺问题。这一动向被视为中国存储芯片厂商打入苹果供应链的重要信号。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="3" onclick="jumpTo(3)">
+            <div class="job-index">4</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">深度分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 💼 工作就业：苹果对国产存储芯片的导入将传导至其在中国大陆的代工厂和模组供应链，可能间接增加珠三角、长三角的采购岗位需求。供应链质量管理岗位、SQE工程师等核心采购相关岗位会受益于订单回流。同时也提示一个现实：能进入苹果供应链的国产替代商，背后需要完整的QCDS管控体系——这正是采购人能力的硬...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="4" onclick="jumpTo(4)">
+            <div class="job-index">5</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">2. 📈 职业发展：长鑫这类国产存储龙头正在从幕后走向台前，对采购管理者而言意味着更多"国产替代寻源"的实战机会。未来35年，半导体/AI算力板块的采购总监薪资溢价会持续放大，建议在简历中突出"国产替代寻源""多源备份策略"等标签，精准对标头部芯片厂的供应链岗位。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="5" onclick="jumpTo(5)">
+            <div class="job-index">6</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3. 🏭 行业发展：AI算力需求推动HBM/DDR5产能紧张，行业进入"卖方市场"，供应链话语权从整机厂向上游芯片厂转移。机械/装备类企业若涉及AI硬件配套（如液冷模组、钣金结构件），议价空间被压缩，必须在NPI阶段提前锁定关键芯片长协。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="6" onclick="jumpTo(6)">
+            <div class="job-index">7</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">4. 🚀 创业机会：内存短缺 + AI需求爆发，意味着高端浸没式液冷的需求会被进一步推高。可以借势在内容平台（抖音/小红书）输出"AI硬件散热刚需"的分析类视频，把浸没式液冷机箱项目与AI算力热点绑定，比单纯讲"我要做液冷"更具说服力；同时考虑为AI推理小集群提供定制散热方案，B端客单价可达C端的5...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="7" onclick="jumpTo(7)">
+            <div class="job-index">8</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5. 💰 投资机会：长鑫存储相关产业链（封测、设备、材料）值得关注，但需要甄别真正受益标的而非纯概念炒作。可关注跟踪A股半导体设备ETF（如159300等）的趋势性机会。黄金/存储芯片/AI算力构成当前"通胀+科技"双主线，对应的避险+成长组合适合稳健型配置。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="8" onclick="jumpTo(8)">
+            <div class="job-index">9</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：证券日报/同花顺。发布时间：20260812</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="9" onclick="jumpTo(9)">
+            <div class="job-index">10</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">摘要</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">国产光刻机产业链加速分层落地：上海微电子350nm步进投影光刻机获头部客户批量重复订单；成都超纯应用材料登陆A股首日涨幅662%。政策端"十五五"规划将半导体高端装备列为自立自强核心攻坚领域。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="10" onclick="jumpTo(10)">
+            <div class="job-index">11</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">深度分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 💼 工作就业：光刻机国产化推进将催生大量精密机械、电气、软件、控制类岗位。即便你不是半导体科班，光刻机的"机械精度、洁净度、温度控制"维度的供应商（比如超精密轴承、真空腔体、洁净机器人）也大量依赖传统机械/钣金/铸造企业，这是机械背景采购人转型半导体供应链的天然入口。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="11" onclick="jumpTo(11)">
+            <div class="job-index">12</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">2. 📈 职业发展：从传统制造业采购跳到半导体设备供应链，路径已经清晰——先把"精密加工、表面处理、洁净度管控"这几个标签打透，再向"零部件DFM评审、可追溯性体系"方向升级。半导体设备厂的供应商管理岗位，对有钣金/铸造/CNC背景的采购人极度友好，这是20262028年最确定的跨行跳板。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="12" onclick="jumpTo(12)">
+            <div class="job-index">13</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3. 🏭 行业发展：国内成熟制程光刻设备进入"分层替代"阶段，不同精度对应不同客户和应用场景，这意味着长尾市场被打开。机械/装备类企业可以瞄准3565nm精度区间的辅助设备做差异化突破，避免与ASML在上海正面竞争。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="13" onclick="jumpTo(13)">
+            <div class="job-index">14</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">4. 🚀 创业机会：浸没式液冷机箱与光刻机零部件的工艺有共通性——都涉及超精密加工、金属表面处理、流体散热。可考虑为半导体设备配套厂商提供定制散热模组，B端单价高于C端，且复购率高。光刻机国产替代带来的产业链溢出效应，是浸没式液冷项目最确定的B端切入点。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="14" onclick="jumpTo(14)">
+            <div class="job-index">15</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5. 💰 投资机会：半导体设备ETF、光刻机概念股（886054）是当前国产替代主线，但短期波动大、不建议重仓单一标的。建议采用"分批定投+组合分散"策略，重点跟踪真正进入头部客户量产名单的标的（如已披露订单的厂商），远离纯题材股。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="15" onclick="jumpTo(15)">
+            <div class="job-index">16</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：新浪财经/经济日报。发布时间：20260812</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="16" onclick="jumpTo(16)">
+            <div class="job-index">17</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">摘要</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">安徽上半年汽车产量168.67万辆（+12.5%），新能源汽车88.18万辆（+20.6%），出口100.6万辆（+120%）。以智界为例，整车本地化采购金额占比已达40%且逐年提升，就近配套显著降低物流成本与交付周期。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="17" onclick="jumpTo(17)">
+            <div class="job-index">18</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">深度分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 💼 工作就业：汽车产业链的"就近配套"模式正在催生大量长三角制造业采购岗——合肥（蔚来/智界/比亚迪）、芜湖（奇瑞）、蚌埠（传感器）形成产业带联动。具备汽车零部件寻源经验（钣金、压铸、注塑）的采购人，2026年下半年跳槽可以重点锁定安徽整车厂的SQE/采购岗，薪资普遍比珠三角同岗位高1520%...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="18" onclick="jumpTo(18)">
+            <div class="job-index">19</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">2. 📈 职业发展：智界"本地化采购40%"这个数字背后，是一套"产业集群+短链供应"的体系。如果能在简历中讲清楚"如何主导本地化率从20%提升到40%、降本多少个百分点"，这比单纯讲"采购金额管理规模"更有说服力。建议把这套方法论包装成面试故事，匹配50万元级MPV、30万元级新能源SUV等热门项...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="19" onclick="jumpTo(19)">
+            <div class="job-index">20</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3. 🏭 行业发展：新能源汽车产业链进入"集群战"——一个整车厂带飞50100家配套商，配套商再向二级、三级辐射。这是中国制造从"散点优势"走向"链式优势"的标志性阶段。机械/装备类企业若不能在23个核心集群中找到"链主"位置，会慢慢被边缘化。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="20" onclick="jumpTo(20)">
+            <div class="job-index">21</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">4. 🚀 创业机会：汽车产业链对小型化、定制化、就近交付的需求强烈，是3D打印业务的天然B端客户场景。可以主动接触安徽/广东汽车产业集群的零部件工程师，提供"小批量定制+快速打样"服务，单价是消费级人像打印的35倍，且客户决策周期短。浸没式液冷则可切入车载算力（智能驾驶中央计算平台）的散热场景。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="21" onclick="jumpTo(21)">
+            <div class="job-index">22</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5. 💰 投资机会：整车板块当前估值已偏高，但汽车电子、激光雷达、800V高压平台、汽车芯片等"增量赛道"仍有结构性机会。重点关注渗透率<20%、且具备技术壁垒的细分龙头，例如第三代半导体（碳化硅）、智能座舱SoC、4D毫米波雷达等。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="22" onclick="jumpTo(22)">
+            <div class="job-index">23</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：南方都市报/腾讯新闻。发布时间：20260812</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="23" onclick="jumpTo(23)">
+            <div class="job-index">24</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">摘要</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">《龙岗区关于促进优势传统产业高质量发展若干措施（修订版）》8月12日正式施行，有效期三年。政策以财政补贴+空间配套引导珠宝、家具、眼镜产业数字化智能化转型，到2029年优势传统产业增加值目标150亿元，智能眼镜产线技改最高年补2000万元。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="24" onclick="jumpTo(24)">
+            <div class="job-index">25</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">深度分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 💼 工作就业：智能眼镜产线技改最高年补2000万元，意味着未来12年龙岗会出现一波"产线升级+设备采购"小高峰。这是设备工程师、自动化采购、工艺工程师的利好窗口。供应商端则受益于光学模组、AR光波导、精密装配线的订单增量。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="25" onclick="jumpTo(25)">
+            <div class="job-index">26</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">2. 📈 职业发展：智能眼镜是2026年最具确定性的"下一代计算平台"候选品之一，供应链横跨光学（镜片/光波导）、精密结构（钛合金/镁合金）、电子（SoC/MCU）、声学（骨传导）。如果你已经熟悉钣金/压铸/CNC，跨界到智能眼镜结构件的寻源和质量管理会是低门槛、高天花板的选择。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="26" onclick="jumpTo(26)">
+            <div class="job-index">27</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3. 🏭 行业发展：政策端"传统产业+智能元素"的组合拳，预示着传统制造业的"含智量"成新的竞争力指标。这意味着——纯靠规模、低成本、低价格的工厂正在加速淘汰，能把"设计+技术+数字化"打进去的供应商才能享受政策红利。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="27" onclick="jumpTo(27)">
+            <div class="job-index">28</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">4. 🚀 创业机会：眼镜产业带给了3D打印项目一个精准切入场景——可以为眼镜厂商提供"钛合金/镁合金镜架小批量定制打样"，单副打印成本约50150元，按500元/副售卖给设计工作室，毛利可达70%。同时可以考虑为眼镜门店提供"AI智能选镜"3D试戴小程序，嫁接现有流量做增值服务。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="28" onclick="jumpTo(28)">
+            <div class="job-index">29</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5. 💰 投资机会：智能眼镜板块建议关注两类标的——一是上游光学龙头（光波导、衍射光栅），二是品牌+渠道双轮驱动的整机厂。短期建议先通过行业研报和ETF观察节奏，避免追高个股。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="29" onclick="jumpTo(29)">
+            <div class="job-index">30</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：读创/南方都市报。发布时间：20260801（深圳商报7月31日报道，8月持续发酵）</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="30" onclick="jumpTo(30)">
+            <div class="job-index">31</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">摘要</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">深圳正式发布《深圳市推动直播电商提质增效行动方案（20262028年）》。到2028年直播电商销售额突破4000亿元，培育超10家全国/全球影响力的主播服务机构，建成超40个成规模直播电商基地，培育超30个年直播销售额超10亿元消费品牌。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="31" onclick="jumpTo(31)">
+            <div class="job-index">32</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">深度分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 💼 工作就业：4000亿元盘子背后是巨量的主播运营、供应链选品、直播中控、视频剪辑岗位需求。Gofy作为有意向发展直播副业的供应链管理者，最该切入的不是"做主播"，而是"做供应链端的直播服务"——把供应链资源（3D打印定制、液冷机箱等差异化产品）变成直播场景的稀缺品，享受平台的流量倾斜。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="32" onclick="jumpTo(32)">
+            <div class="job-index">33</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">2. 📈 职业发展：直播+供应链的复合型人才在20262028年是极度稀缺的。可以考虑在简历或副业履历中强化"供应链+内容化能力"，这与深圳"提质增效"的导向高度匹配。供应链总监岗位的面试官越来越看重"你是否能让产品在抖音/视频号上跑得动"。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="33" onclick="jumpTo(33)">
+            <div class="job-index">34</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3. 🏭 行业发展："提质增效"四个字传递的信号是——直播行业从"野路子"进入"正规军"时代。MCN+品牌+供应链的三角打法会成为主流，单打独斗的野生主播流量下滑会加剧。行业准入门槛从"敢开播"升级到"会选品+会控制质量+会做品牌叙事"。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="34" onclick="jumpTo(34)">
+            <div class="job-index">35</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">4. 🚀 创业机会：深圳"直播+跨境电商+智能硬件"的政策组合，与你的浸没式液冷+3D打印高度契合。可以考虑搭建一个"AI硬件选品+直播内容"的差异化主播账号矩阵，初期SKU控制在1020个品类，借助差异化产品和"供应链透明化"的内容做破圈。关键不是单条视频爆款，而是稳定的供应链+每周23场的直播节...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="35" onclick="jumpTo(35)">
+            <div class="job-index">36</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5. 💰 投资机会：短视频/直播产业链的上下游——MCN龙头、直播电商SaaS（达摩盘/蝉妈妈）、跨境物流——都是值得长线关注的赛道。但个体创业者更适合做"轻资产"路径，而非重金投向MCN股权。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="36" onclick="jumpTo(36)">
+            <div class="job-index">37</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：大湾区经济网/今日头条。发布时间：20260808</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="37" onclick="jumpTo(37)">
+            <div class="job-index">38</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">摘要</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">"智播湾区·行稳致远"2026湾区直播产业赋能发展大会在深圳举办。深圳市网络直播协会联合中国联通启动"大湾区直播生态赋能行动"，整合供应链+流量渠道+产业园区+技术服务资源。"深姐姐"主播实训站揭牌，已培育超过1600名深圳女性主播。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="38" onclick="jumpTo(38)">
+            <div class="job-index">39</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">深度分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 💼 工作就业：直播生态需要"主播+运营+技术+合规"四类角色，技术岗位（直播搭建、信号处理、OBS配置、绿幕抠像、OBS虚拟摄像头）是Gofy的现有能力堆栈，这类岗位在直播行业的稀缺度远高于普通运营岗。可以考虑在BOSS直聘挂出"直播技术顾问/搭建工程师"的兼职简历，单次服务报价5002000...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="39" onclick="jumpTo(39)">
+            <div class="job-index">40</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">2. 📈 职业发展：从"硬件搭建"升级到"行业解决方案"是自然的职业升级路径。可以把直播间搭建的经验总结成35套标准化解决方案（小型带货直播间/中型才艺直播间/大型品牌发布直播间），按场景收费而不是按天收费，客单价提升23倍。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="40" onclick="jumpTo(40)">
+            <div class="job-index">41</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3. 🏭 行业发展：直播从"流量驱动"转向"质量驱动"意味着——平台和品牌方都在为"高完播率、高转化率、高复购率"的内容付费。"低质量内容+大额投流"的旧模式会被淘汰，"高质量内容+精准投流"的新模式占优。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="41" onclick="jumpTo(41)">
+            <div class="job-index">42</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">4. 🚀 创业机会：可以与"深姐姐"主播实训站之类的机构合作，为其提供"直播间搭建+技术培训"服务，签年框协议，单月可承接510场培训，单场报价30008000元。这是把B端客户运营经验嫁接到C端培训市场的典型路径。同时可以为小型MCN做"技术外包"，降低自己建直播间的沉没成本。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="42" onclick="jumpTo(42)">
+            <div class="job-index">43</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5. 💰 投资机会：直播行业头部化明显，腰部主播变现难。建议把"主播/网红"相关的股权投资谨慎对待，反而可以关注直播SaaS、虚拟人技术、AI数字员工等基础设施类标的。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="43" onclick="jumpTo(43)">
+            <div class="job-index">44</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：证券时报/九派财经。发布时间：20260811</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="44" onclick="jumpTo(44)">
+            <div class="job-index">45</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">摘要</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">8月11日现货黄金突破4400美元/盎司创两月新高，国内原料金价月内涨约80元/克至955元/克；周生生、周大福足金首饰报1336元/克，单日涨2829元。机构称央行购金与去美元化支撑长期上行。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="45" onclick="jumpTo(45)">
+            <div class="job-index">46</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">深度分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 💼 工作就业：黄金价格上涨对珠宝产业（深圳水贝、佛山平洲）的供应链管理者来说是直接利好——备货节奏、库销比管理、回款周期的精细化操作价值倍增。具备黄金/珠宝行业采购管理经验的人才溢价持续走高，建议在简历中明确"贵金属类目管理经验"。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="46" onclick="jumpTo(46)">
+            <div class="job-index">47</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">2. 📈 职业发展：黄金具备"抗通胀+抗风险"双重属性，长期被央行和散户共同增持的趋势已经确立。对供应链管理者而言，理解大宗商品价格波动对采购成本的影响，并能在合同中设计价格联动条款，是高级采购的核心能力——建议系统学习一次大宗商品价格风险管理课程。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="47" onclick="jumpTo(47)">
+            <div class="job-index">48</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3. 🏭 行业发展：去美元化是大势所趋，央行连续增持黄金支撑了金价的"政策底"。但金饰消费更多受婚庆/送礼场景驱动，与金价上涨存在一定的负相关——首饰销量短期承压，但回收/置换/投资金条业务将迎来增量。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="48" onclick="jumpTo(48)">
+            <div class="job-index">49</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">4. 🚀 创业机会：黄金回收+置换+直播间变现是当下肉眼可见的差异化赛道。可以小资金试水"黄金回收估价+直播即时回收"小程序，嫁接短视频科普"金价怎么看""金饰怎么回收才不被坑"等内容，Gofy现有供应链+直播间搭建能力可以直接复用。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="49" onclick="jumpTo(49)">
+            <div class="job-index">50</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5. 💰 投资机会：黄金ETF（如518880）定投仍是普通家庭最稳妥的抗通胀工具，建议把家庭资产的5%10%配置为实物金/黄金ETF，但杠杆类黄金产品（如黄金期货、黄金T+D）对非专业投资者风险极大，不建议触碰。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="50" onclick="jumpTo(50)">
+            <div class="job-index">51</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：国家邮政局/新浪财经。发布时间：20260812</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="51" onclick="jumpTo(51)">
+            <div class="job-index">52</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">摘要</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">上半年邮政行业寄递业务量累计1088.9亿件（+4.2%），快递业务量1003.8亿件（+5%）。全国建制村快递服务覆盖率超95%，交邮联运邮路1.3万条。无人车在乡村邮路、网点接驳等场景可降本20%70%。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="52" onclick="jumpTo(52)">
+            <div class="job-index">53</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">深度分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 💼 工作就业：快递/物流行业进入"无人化"加速期，传统仓库管理、网点配送岗位的"流水线"部分会被无人车+无人仓替代，但"无人装备的运维、调度、异常处理"等新岗位会诞生。供应链管理者若能加上"智能物流装备选型"标签，转型这类岗位会更顺畅。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="53" onclick="jumpTo(53)">
+            <div class="job-index">54</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">2. 📈 职业发展："无人车+无人仓+具身智能机器人"成为政策明确推广的方向，未来35年这类设备的供应链管理是个高价值细分赛道。可以关注菜鸟、京东物流、顺丰科技等头部企业的供应商管理岗，智能装备类供应商的准入门槛高，对应的话语权和薪资都比传统仓配岗位高一截。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="54" onclick="jumpTo(54)">
+            <div class="job-index">55</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3. 🏭 行业发展：政策密集出台推动"人、财、土地、技术、数据"五大生产要素协同创新，无人车、无人仓、具身智能机器人正在快速规模化。物流行业的"智能装备含量"会成为新的护城河——这与制造业"含智量"的逻辑一脉相承。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="55" onclick="jumpTo(55)">
+            <div class="job-index">56</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">4. 🚀 创业机会：可以小步尝试为本地物流园区提供"无人配送方案咨询+设备选型+现场调试"服务，核心是不卖硬件、卖方案，单项目客单价38万元，复购率高。需要先和12家无人车厂商（行深智能、新石器等）建立代理/合作关系。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="56" onclick="jumpTo(56)">
+            <div class="job-index">57</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5. 💰 投资机会：智能物流装备板块（无人车、AGV、智能分拣）仍是优质赛道。可通过物流主题ETF分散投资，或关注细分龙头如德邦、顺丰、京东物流的产业链上游标的。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="57" onclick="jumpTo(57)">
+            <div class="job-index">58</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：中国信通院。发布时间：20260811</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="58" onclick="jumpTo(58)">
+            <div class="job-index">59</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">摘要</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">截至2026年一季度全球eSIM连接破13亿，国内累计连接超2.3亿居全球第二；预测2028年国内总连接将破5亿，超越欧洲成为最大单一市场。三大运营商已完成31省eSIM开通覆盖。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="59" onclick="jumpTo(59)">
+            <div class="job-index">60</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">快速分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 💼 工作就业：eSIM芯片/模组供应链岗位需求增长，对芯片设计、电子元器件采购是利好。。2. 📈 职业发展：eSIM将重构终端设备的供应链结构，硬件BOM中"实体SIM卡槽"消失，对应供应链管理人员精简。。3. 🏭 行业发展：智能手表、汽车TBox、IoT设备是eSIM增长最快的三类终端。。4...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="60" onclick="jumpTo(60)">
+            <div class="job-index">61</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">一、今日信号盘点</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">科技主线：半导体国产替代+AI硬件需求（苹果测试长鑫/光刻机国产化）。本地热点：深圳龙岗传统产业新政+深圳直播电商4000亿政策包+湾区直播生态赋能。汽车主线：安徽产业链集群战，整车本地化率持续提升。物流变革：无人车规模化，智能装备成新护城河。避险行情：黄金长期上行，央行购金+去美元化双轮驱动</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="61" onclick="jumpTo(61)">
+            <div class="job-index">62</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">二、对你的行动建议</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 简历更新：在"供应链管理"模块补充"国产替代寻源""多源备份策略"等标签，匹配半导体/AI硬件/汽车板块的高价值岗位。2. 内容输出：围绕"AI内存短缺"+"半导体国产替代"在抖音/小红书输出23条分析视频，把浸没式液冷项目与AI算力热点绑定。3. 直播副业：考虑挂出"直播技术搭建+调试"兼职...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="62" onclick="jumpTo(62)">
+            <div class="job-index">63</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 副业现金流：3D打印切入眼镜产业带，提供"小批量钛合金/镁合金定制打样"，单价500元/副起。2. B端突破：用浸没式液冷技术切入"半导体设备配套散热"+"车载算力散热"两个B端场景。3. 直播生态合作：与"深姐姐"主播实训站类机构谈技术外包合作，签年框协议</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="63" onclick="jumpTo(63)">
+            <div class="job-index">64</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 岗位升级：为2026年下半年跳槽储备"AI硬件供应链""半导体设备供应链""新能源汽车供应链"三类岗位的能力模型。2. 投资组合：将家庭资产按"510%黄金+2030%宽基ETF+3050%稳健理财"的稳健结构配置。3. 品牌建设：孵化一个"AI硬件散热/液冷/3D打印"的差异化IP账号，沉淀...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="64" onclick="jumpTo(64)">
+            <div class="job-index">65</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">三、风险提示</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">⚠️ 半导体/光刻机概念股波动大，避免追高单一标的。⚠️ 直播行业头部化加剧，普通主播收入分化严重，建议从"供应链+技术"切入而非"个人主播"。⚠️ 黄金属高位震荡，不建议使用杠杆产品。⚠️ 暴雨极端天气频发，注意出行安全与物流时效性影响</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="65" onclick="jumpTo(65)">
+            <div class="job-index">66</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">新华社《早知天下事》（8.12）。新浪财经/证券日报。南方都市报/读创。大湾区经济网</span>
+                </div>
+            </div>
+        </div>
+</div>
+
+<!-- 底部提示 -->
+<div class="float-hint" id="floatHint">
+    <span class="icon">🎧</span>
+    <span id="floatText">点击顶部播放按钮开始朗读</span>
+</div>
+
+<script>
+// ===== 数据 =====
+const items = [{"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 苹果测试长鑫存储芯片，AI内存短缺倒逼供应链国产替代。2. 光刻机产业链国产化提速，350nm设备斩获批量重复订单。3. 安徽汽车产业链精耕细作，整车本地化采购占比已达40%。4. 深圳龙岗传统产业新政落地，智能眼镜技改年补最高2000万元。5. 深圳发布直播电商行动方案，2028年销售额目标突破4000亿元。6. 湾区直播产业进入\"质量驱动\"阶段，深圳启动生态赋能行动。7. 国内金饰克价飙至1336元，央行购金+去美元化支撑长期上行。8. 国内eSIM连接破2.3亿，2028年将超越欧洲成全球最大单一市场"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：华尔街日报/新浪财经。发布时间：2026-08-12"}, {"company": "摘要", "position": "", "salary": "", "location": "", "tag": "", "body": "苹果公司正在包括iPhone和MacBook在内的多条产品线上测试长鑫存储的存储芯片，以应对AI热潮引发的内存短缺问题。这一动向被视为中国存储芯片厂商打入苹果供应链的重要信号。"}, {"company": "深度分析", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 💼 工作就业：苹果对国产存储芯片的导入将传导至其在中国大陆的代工厂和模组供应链，可能间接增加珠三角、长三角的采购岗位需求。供应链质量管理岗位、SQE工程师等核心采购相关岗位会受益于订单回流。同时也提示一个现实：能进入苹果供应链的国产替代商，背后需要完整的QCDS管控体系——这正是采购人能力的硬核证明。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "2. 📈 职业发展：长鑫这类国产存储龙头正在从幕后走向台前，对采购管理者而言意味着更多\"国产替代寻源\"的实战机会。未来3-5年，半导体/AI算力板块的采购总监薪资溢价会持续放大，建议在简历中突出\"国产替代寻源\"\"多源备份策略\"等标签，精准对标头部芯片厂的供应链岗位。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "3. 🏭 行业发展：AI算力需求推动HBM/DDR5产能紧张，行业进入\"卖方市场\"，供应链话语权从整机厂向上游芯片厂转移。机械/装备类企业若涉及AI硬件配套（如液冷模组、钣金结构件），议价空间被压缩，必须在NPI阶段提前锁定关键芯片长协。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "4. 🚀 创业机会：内存短缺 + AI需求爆发，意味着高端浸没式液冷的需求会被进一步推高。可以借势在内容平台（抖音/小红书）输出\"AI硬件散热刚需\"的分析类视频，把浸没式液冷机箱项目与AI算力热点绑定，比单纯讲\"我要做液冷\"更具说服力；同时考虑为AI推理小集群提供定制散热方案，B端客单价可达C端的5-10倍。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "5. 💰 投资机会：长鑫存储相关产业链（封测、设备、材料）值得关注，但需要甄别真正受益标的而非纯概念炒作。可关注跟踪A股半导体设备ETF（如159300等）的趋势性机会。黄金/存储芯片/AI算力构成当前\"通胀+科技\"双主线，对应的避险+成长组合适合稳健型配置。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：证券日报/同花顺。发布时间：2026-08-12"}, {"company": "摘要", "position": "", "salary": "", "location": "", "tag": "", "body": "国产光刻机产业链加速分层落地：上海微电子350nm步进投影光刻机获头部客户批量重复订单；成都超纯应用材料登陆A股首日涨幅662%。政策端\"十五五\"规划将半导体高端装备列为自立自强核心攻坚领域。"}, {"company": "深度分析", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 💼 工作就业：光刻机国产化推进将催生大量精密机械、电气、软件、控制类岗位。即便你不是半导体科班，光刻机的\"机械精度、洁净度、温度控制\"维度的供应商（比如超精密轴承、真空腔体、洁净机器人）也大量依赖传统机械/钣金/铸造企业，这是机械背景采购人转型半导体供应链的天然入口。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "2. 📈 职业发展：从传统制造业采购跳到半导体设备供应链，路径已经清晰——先把\"精密加工、表面处理、洁净度管控\"这几个标签打透，再向\"零部件DFM评审、可追溯性体系\"方向升级。半导体设备厂的供应商管理岗位，对有钣金/铸造/CNC背景的采购人极度友好，这是2026-2028年最确定的跨行跳板。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "3. 🏭 行业发展：国内成熟制程光刻设备进入\"分层替代\"阶段，不同精度对应不同客户和应用场景，这意味着长尾市场被打开。机械/装备类企业可以瞄准35-65nm精度区间的辅助设备做差异化突破，避免与ASML在上海正面竞争。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "4. 🚀 创业机会：浸没式液冷机箱与光刻机零部件的工艺有共通性——都涉及超精密加工、金属表面处理、流体散热。可考虑为半导体设备配套厂商提供定制散热模组，B端单价高于C端，且复购率高。光刻机国产替代带来的产业链溢出效应，是浸没式液冷项目最确定的B端切入点。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "5. 💰 投资机会：半导体设备ETF、光刻机概念股（886054）是当前国产替代主线，但短期波动大、不建议重仓单一标的。建议采用\"分批定投+组合分散\"策略，重点跟踪真正进入头部客户量产名单的标的（如已披露订单的厂商），远离纯题材股。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：新浪财经/经济日报。发布时间：2026-08-12"}, {"company": "摘要", "position": "", "salary": "", "location": "", "tag": "", "body": "安徽上半年汽车产量168.67万辆（+12.5%），新能源汽车88.18万辆（+20.6%），出口100.6万辆（+120%）。以智界为例，整车本地化采购金额占比已达40%且逐年提升，就近配套显著降低物流成本与交付周期。"}, {"company": "深度分析", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 💼 工作就业：汽车产业链的\"就近配套\"模式正在催生大量长三角制造业采购岗——合肥（蔚来/智界/比亚迪）、芜湖（奇瑞）、蚌埠（传感器）形成产业带联动。具备汽车零部件寻源经验（钣金、压铸、注塑）的采购人，2026年下半年跳槽可以重点锁定安徽整车厂的SQE/采购岗，薪资普遍比珠三角同岗位高15-20%。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "2. 📈 职业发展：智界\"本地化采购40%\"这个数字背后，是一套\"产业集群+短链供应\"的体系。如果能在简历中讲清楚\"如何主导本地化率从20%提升到40%、降本多少个百分点\"，这比单纯讲\"采购金额管理规模\"更有说服力。建议把这套方法论包装成面试故事，匹配50万元级MPV、30万元级新能源SUV等热门项目的供应链岗位。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "3. 🏭 行业发展：新能源汽车产业链进入\"集群战\"——一个整车厂带飞50-100家配套商，配套商再向二级、三级辐射。这是中国制造从\"散点优势\"走向\"链式优势\"的标志性阶段。机械/装备类企业若不能在2-3个核心集群中找到\"链主\"位置，会慢慢被边缘化。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "4. 🚀 创业机会：汽车产业链对小型化、定制化、就近交付的需求强烈，是3D打印业务的天然B端客户场景。可以主动接触安徽/广东汽车产业集群的零部件工程师，提供\"小批量定制+快速打样\"服务，单价是消费级人像打印的3-5倍，且客户决策周期短。浸没式液冷则可切入车载算力（智能驾驶中央计算平台）的散热场景。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "5. 💰 投资机会：整车板块当前估值已偏高，但汽车电子、激光雷达、800V高压平台、汽车芯片等\"增量赛道\"仍有结构性机会。重点关注渗透率<20%、且具备技术壁垒的细分龙头，例如第三代半导体（碳化硅）、智能座舱SoC、4D毫米波雷达等。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：南方都市报/腾讯新闻。发布时间：2026-08-12"}, {"company": "摘要", "position": "", "salary": "", "location": "", "tag": "", "body": "《龙岗区关于促进优势传统产业高质量发展若干措施（修订版）》8月12日正式施行，有效期三年。政策以财政补贴+空间配套引导珠宝、家具、眼镜产业数字化智能化转型，到2029年优势传统产业增加值目标150亿元，智能眼镜产线技改最高年补2000万元。"}, {"company": "深度分析", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 💼 工作就业：智能眼镜产线技改最高年补2000万元，意味着未来1-2年龙岗会出现一波\"产线升级+设备采购\"小高峰。这是设备工程师、自动化采购、工艺工程师的利好窗口。供应商端则受益于光学模组、AR光波导、精密装配线的订单增量。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "2. 📈 职业发展：智能眼镜是2026年最具确定性的\"下一代计算平台\"候选品之一，供应链横跨光学（镜片/光波导）、精密结构（钛合金/镁合金）、电子（SoC/MCU）、声学（骨传导）。如果你已经熟悉钣金/压铸/CNC，跨界到智能眼镜结构件的寻源和质量管理会是低门槛、高天花板的选择。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "3. 🏭 行业发展：政策端\"传统产业+智能元素\"的组合拳，预示着传统制造业的\"含智量\"成新的竞争力指标。这意味着——纯靠规模、低成本、低价格的工厂正在加速淘汰，能把\"设计+技术+数字化\"打进去的供应商才能享受政策红利。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "4. 🚀 创业机会：眼镜产业带给了3D打印项目一个精准切入场景——可以为眼镜厂商提供\"钛合金/镁合金镜架小批量定制打样\"，单副打印成本约50-150元，按500元/副售卖给设计工作室，毛利可达70%。同时可以考虑为眼镜门店提供\"AI智能选镜\"3D试戴小程序，嫁接现有流量做增值服务。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "5. 💰 投资机会：智能眼镜板块建议关注两类标的——一是上游光学龙头（光波导、衍射光栅），二是品牌+渠道双轮驱动的整机厂。短期建议先通过行业研报和ETF观察节奏，避免追高个股。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：读创/南方都市报。发布时间：2026-08-01（深圳商报7月31日报道，8月持续发酵）"}, {"company": "摘要", "position": "", "salary": "", "location": "", "tag": "", "body": "深圳正式发布《深圳市推动直播电商提质增效行动方案（2026-2028年）》。到2028年直播电商销售额突破4000亿元，培育超10家全国/全球影响力的主播服务机构，建成超40个成规模直播电商基地，培育超30个年直播销售额超10亿元消费品牌。"}, {"company": "深度分析", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 💼 工作就业：4000亿元盘子背后是巨量的主播运营、供应链选品、直播中控、视频剪辑岗位需求。Gofy作为有意向发展直播副业的供应链管理者，最该切入的不是\"做主播\"，而是\"做供应链端的直播服务\"——把供应链资源（3D打印定制、液冷机箱等差异化产品）变成直播场景的稀缺品，享受平台的流量倾斜。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "2. 📈 职业发展：直播+供应链的复合型人才在2026-2028年是极度稀缺的。可以考虑在简历或副业履历中强化\"供应链+内容化能力\"，这与深圳\"提质增效\"的导向高度匹配。供应链总监岗位的面试官越来越看重\"你是否能让产品在抖音/视频号上跑得动\"。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "3. 🏭 行业发展：\"提质增效\"四个字传递的信号是——直播行业从\"野路子\"进入\"正规军\"时代。MCN+品牌+供应链的三角打法会成为主流，单打独斗的野生主播流量下滑会加剧。行业准入门槛从\"敢开播\"升级到\"会选品+会控制质量+会做品牌叙事\"。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "4. 🚀 创业机会：深圳\"直播+跨境电商+智能硬件\"的政策组合，与你的浸没式液冷+3D打印高度契合。可以考虑搭建一个\"AI硬件选品+直播内容\"的差异化主播账号矩阵，初期SKU控制在10-20个品类，借助差异化产品和\"供应链透明化\"的内容做破圈。关键不是单条视频爆款，而是稳定的供应链+每周2-3场的直播节奏。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "5. 💰 投资机会：短视频/直播产业链的上下游——MCN龙头、直播电商SaaS（达摩盘/蝉妈妈）、跨境物流——都是值得长线关注的赛道。但个体创业者更适合做\"轻资产\"路径，而非重金投向MCN股权。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：大湾区经济网/今日头条。发布时间：2026-08-08"}, {"company": "摘要", "position": "", "salary": "", "location": "", "tag": "", "body": "\"智播湾区·行稳致远\"2026湾区直播产业赋能发展大会在深圳举办。深圳市网络直播协会联合中国联通启动\"大湾区直播生态赋能行动\"，整合供应链+流量渠道+产业园区+技术服务资源。\"深姐姐\"主播实训站揭牌，已培育超过1600名深圳女性主播。"}, {"company": "深度分析", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 💼 工作就业：直播生态需要\"主播+运营+技术+合规\"四类角色，技术岗位（直播搭建、信号处理、OBS配置、绿幕抠像、OBS虚拟摄像头）是Gofy的现有能力堆栈，这类岗位在直播行业的稀缺度远高于普通运营岗。可以考虑在BOSS直聘挂出\"直播技术顾问/搭建工程师\"的兼职简历，单次服务报价500-2000元。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "2. 📈 职业发展：从\"硬件搭建\"升级到\"行业解决方案\"是自然的职业升级路径。可以把直播间搭建的经验总结成3-5套标准化解决方案（小型带货直播间/中型才艺直播间/大型品牌发布直播间），按场景收费而不是按天收费，客单价提升2-3倍。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "3. 🏭 行业发展：直播从\"流量驱动\"转向\"质量驱动\"意味着——平台和品牌方都在为\"高完播率、高转化率、高复购率\"的内容付费。\"低质量内容+大额投流\"的旧模式会被淘汰，\"高质量内容+精准投流\"的新模式占优。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "4. 🚀 创业机会：可以与\"深姐姐\"主播实训站之类的机构合作，为其提供\"直播间搭建+技术培训\"服务，签年框协议，单月可承接5-10场培训，单场报价3000-8000元。这是把B端客户运营经验嫁接到C端培训市场的典型路径。同时可以为小型MCN做\"技术外包\"，降低自己建直播间的沉没成本。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "5. 💰 投资机会：直播行业头部化明显，腰部主播变现难。建议把\"主播/网红\"相关的股权投资谨慎对待，反而可以关注直播SaaS、虚拟人技术、AI数字员工等基础设施类标的。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：证券时报/九派财经。发布时间：2026-08-11"}, {"company": "摘要", "position": "", "salary": "", "location": "", "tag": "", "body": "8月11日现货黄金突破4400美元/盎司创两月新高，国内原料金价月内涨约80元/克至955元/克；周生生、周大福足金首饰报1336元/克，单日涨28-29元。机构称央行购金与去美元化支撑长期上行。"}, {"company": "深度分析", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 💼 工作就业：黄金价格上涨对珠宝产业（深圳水贝、佛山平洲）的供应链管理者来说是直接利好——备货节奏、库销比管理、回款周期的精细化操作价值倍增。具备黄金/珠宝行业采购管理经验的人才溢价持续走高，建议在简历中明确\"贵金属类目管理经验\"。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "2. 📈 职业发展：黄金具备\"抗通胀+抗风险\"双重属性，长期被央行和散户共同增持的趋势已经确立。对供应链管理者而言，理解大宗商品价格波动对采购成本的影响，并能在合同中设计价格联动条款，是高级采购的核心能力——建议系统学习一次大宗商品价格风险管理课程。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "3. 🏭 行业发展：去美元化是大势所趋，央行连续增持黄金支撑了金价的\"政策底\"。但金饰消费更多受婚庆/送礼场景驱动，与金价上涨存在一定的负相关——首饰销量短期承压，但回收/置换/投资金条业务将迎来增量。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "4. 🚀 创业机会：黄金回收+置换+直播间变现是当下肉眼可见的差异化赛道。可以小资金试水\"黄金回收估价+直播即时回收\"小程序，嫁接短视频科普\"金价怎么看\"\"金饰怎么回收才不被坑\"等内容，Gofy现有供应链+直播间搭建能力可以直接复用。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "5. 💰 投资机会：黄金ETF（如518880）定投仍是普通家庭最稳妥的抗通胀工具，建议把家庭资产的5%-10%配置为实物金/黄金ETF，但杠杆类黄金产品（如黄金期货、黄金T+D）对非专业投资者风险极大，不建议触碰。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：国家邮政局/新浪财经。发布时间：2026-08-12"}, {"company": "摘要", "position": "", "salary": "", "location": "", "tag": "", "body": "上半年邮政行业寄递业务量累计1088.9亿件（+4.2%），快递业务量1003.8亿件（+5%）。全国建制村快递服务覆盖率超95%，交邮联运邮路1.3万条。无人车在乡村邮路、网点接驳等场景可降本20%-70%。"}, {"company": "深度分析", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 💼 工作就业：快递/物流行业进入\"无人化\"加速期，传统仓库管理、网点配送岗位的\"流水线\"部分会被无人车+无人仓替代，但\"无人装备的运维、调度、异常处理\"等新岗位会诞生。供应链管理者若能加上\"智能物流装备选型\"标签，转型这类岗位会更顺畅。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "2. 📈 职业发展：\"无人车+无人仓+具身智能机器人\"成为政策明确推广的方向，未来3-5年这类设备的供应链管理是个高价值细分赛道。可以关注菜鸟、京东物流、顺丰科技等头部企业的供应商管理岗，智能装备类供应商的准入门槛高，对应的话语权和薪资都比传统仓配岗位高一截。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "3. 🏭 行业发展：政策密集出台推动\"人、财、土地、技术、数据\"五大生产要素协同创新，无人车、无人仓、具身智能机器人正在快速规模化。物流行业的\"智能装备含量\"会成为新的护城河——这与制造业\"含智量\"的逻辑一脉相承。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "4. 🚀 创业机会：可以小步尝试为本地物流园区提供\"无人配送方案咨询+设备选型+现场调试\"服务，核心是不卖硬件、卖方案，单项目客单价3-8万元，复购率高。需要先和1-2家无人车厂商（行深智能、新石器等）建立代理/合作关系。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "5. 💰 投资机会：智能物流装备板块（无人车、AGV、智能分拣）仍是优质赛道。可通过物流主题ETF分散投资，或关注细分龙头如德邦、顺丰、京东物流的产业链上游标的。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：中国信通院。发布时间：2026-08-11"}, {"company": "摘要", "position": "", "salary": "", "location": "", "tag": "", "body": "截至2026年一季度全球eSIM连接破13亿，国内累计连接超2.3亿居全球第二；预测2028年国内总连接将破5亿，超越欧洲成为最大单一市场。三大运营商已完成31省eSIM开通覆盖。"}, {"company": "快速分析", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 💼 工作就业：eSIM芯片/模组供应链岗位需求增长，对芯片设计、电子元器件采购是利好。。2. 📈 职业发展：eSIM将重构终端设备的供应链结构，硬件BOM中\"实体SIM卡槽\"消失，对应供应链管理人员精简。。3. 🏭 行业发展：智能手表、汽车T-Box、IoT设备是eSIM增长最快的三类终端。。4. 🚀 创业机会：跨境电商物联网设备（如全球智能手表）可借eSIM红利做\"开箱即用\"产品。。5. 💰 投资机会：关注eSIM芯片厂商、物联网模组厂商（如移远通信、广和通）。"}, {"company": "一、今日信号盘点", "position": "", "salary": "", "location": "", "tag": "", "body": "科技主线：半导体国产替代+AI硬件需求（苹果测试长鑫/光刻机国产化）。本地热点：深圳龙岗传统产业新政+深圳直播电商4000亿政策包+湾区直播生态赋能。汽车主线：安徽产业链集群战，整车本地化率持续提升。物流变革：无人车规模化，智能装备成新护城河。避险行情：黄金长期上行，央行购金+去美元化双轮驱动"}, {"company": "二、对你的行动建议", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 简历更新：在\"供应链管理\"模块补充\"国产替代寻源\"\"多源备份策略\"等标签，匹配半导体/AI硬件/汽车板块的高价值岗位。2. 内容输出：围绕\"AI内存短缺\"+\"半导体国产替代\"在抖音/小红书输出2-3条分析视频，把浸没式液冷项目与AI算力热点绑定。3. 直播副业：考虑挂出\"直播技术搭建+调试\"兼职简历，瞄准MCN/品牌方需求"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 副业现金流：3D打印切入眼镜产业带，提供\"小批量钛合金/镁合金定制打样\"，单价500元/副起。2. B端突破：用浸没式液冷技术切入\"半导体设备配套散热\"+\"车载算力散热\"两个B端场景。3. 直播生态合作：与\"深姐姐\"主播实训站类机构谈技术外包合作，签年框协议"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 岗位升级：为2026年下半年跳槽储备\"AI硬件供应链\"\"半导体设备供应链\"\"新能源汽车供应链\"三类岗位的能力模型。2. 投资组合：将家庭资产按\"5-10%黄金+20-30%宽基ETF+30-50%稳健理财\"的稳健结构配置。3. 品牌建设：孵化一个\"AI硬件散热/液冷/3D打印\"的差异化IP账号，沉淀私域用户"}, {"company": "三、风险提示", "position": "", "salary": "", "location": "", "tag": "", "body": "⚠️ 半导体/光刻机概念股波动大，避免追高单一标的。⚠️ 直播行业头部化加剧，普通主播收入分化严重，建议从\"供应链+技术\"切入而非\"个人主播\"。⚠️ 黄金属高位震荡，不建议使用杠杆产品。⚠️ 暴雨极端天气频发，注意出行安全与物流时效性影响"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "新华社《早知天下事》（8.12）。新浪财经/证券日报。南方都市报/读创。大湾区经济网"}];
+const totalItems = 66;
+const speakTemplate = "{company}。详细内容：{body}。";
+
+// ===== 状态 =====
+let currentIndex = 0;
+let isPlaying = false;
+let speechRate = 1.0;
+let readDoneSet = new Set();
+let synth = window.speechSynthesis;
+let currentUtterance = null;
+let selectedVoice = null;
+let voicesReady = false;
+
+// ===== 浏览器检测 =====
+function isQQBrowser() {
+    let ua = navigator.userAgent || '';
+    return /MQQBrowser|QQ\//i.test(ua);
+}
+function isUCBrowser() {
+    let ua = navigator.userAgent || '';
+    return /UCBrowser|UCWEB/i.test(ua);
+}
+function isWeChat() {
+    let ua = navigator.userAgent || '';
+    return /MicroMessenger/i.test(ua);
+}
+function isUnsupportedBrowser() {
+    return isQQBrowser() || isUCBrowser() || isWeChat();
+}
+
+// ===== 初始化 =====
+function init() {
+    // 浏览器检测：不支持的直接提示换浏览器
+    if (isUnsupportedBrowser()) {
+        let browserName = isQQBrowser() ? 'QQ浏览器' : (isUCBrowser() ? 'UC浏览器' : '微信内置浏览器');
+        showBrowserWarning(browserName);
+        return;
+    }
+
+    if (!synth) {
+        showBrowserWarning('当前浏览器');
+        return;
+    }
+
+    // Chrome/Edge: voices 通过异步事件加载
+    let voices = synth.getVoices();
+    if (voices && voices.length > 0) {
+        pickVoice(voices);
+    }
+
+    // 监听语音列表加载（关键！Android Chrome 需要等事件）
+    synth.onvoiceschanged = function() {
+        voices = synth.getVoices();
+        if (voices && voices.length > 0 && !voicesReady) {
+            pickVoice(voices);
+            document.getElementById('floatText').textContent =
+                '✅ 语音引擎就绪 (' + voices.length + '个) — 点🎧开始朗读';
+            document.getElementById('progressText').textContent = '就绪 ✓';
+        }
+    };
+
+    // 超时兜底：2秒后强制尝试
+    setTimeout(function() {
+        if (!voicesReady) {
+            voices = synth.getVoices();
+            if (voices && voices.length > 0) {
+                pickVoice(voices);
+            }
+            if (selectedVoice) {
+                document.getElementById('floatText').textContent =
+                    '✅ 语音引擎: ' + selectedVoice.name;
+                document.getElementById('progressText').textContent = '就绪 ✓';
+            } else {
+                document.getElementById('floatText').textContent =
+                    '⚠️ 未找到中文语音，请用系统自带 Chrome/Edge 打开';
+                document.getElementById('progressText').textContent = '无中文语音 ⚠️';
+            }
+            voicesReady = true;
+        }
+    }, 2500);
+}
+
+function showBrowserWarning(browserName) {
+    // 隐藏控制栏播放按钮
+    document.getElementById('playBtn').style.opacity = '0.3';
+    document.getElementById('playBtn').style.pointerEvents = 'none';
+    // 底部显示换浏览器提示
+    document.getElementById('floatHint').style.background = 'rgba(211,47,47,0.95)';
+    document.getElementById('floatText').innerHTML =
+        '❌ ' + browserName + '不支持语音朗读<br><small>👉 请用 <b>Chrome</b> 或 <b>Edge</b> 浏览器打开</small>';
+    document.getElementById('progressText').textContent = '❌ 浏览器不支持';
+    // 页面顶部插入醒目提示横幅
+    let banner = document.createElement('div');
+    banner.style.cssText = 'background:#FFEBEE;border-bottom:2px solid #EF5350;padding:16px;text-align:center;';
+    banner.innerHTML =
+        '<div style="font-size:40px;margin-bottom:8px;">🚫</div>' +
+        '<div style="font-size:15px;font-weight:bold;color:#C62828;margin-bottom:6px;">' +
+        browserName + ' 不支持语音朗读</div>' +
+        '<div style="font-size:14px;color:#555;line-height:1.6;">' +
+        '请用 <b style="color:#1A73E8;">Chrome</b> 或 <b style="color:#0078D4;">Edge</b> 浏览器打开即可朗读<br>' +
+        '<span style="font-size:12px;color:#999;">（应用商店搜索"Chrome"或"Edge"下载）</span></div>';
+    let header = document.querySelector('.header');
+    if (header) {
+        header.parentNode.insertBefore(banner, header);
+    }
+    // 禁用所有岗位点击
+    document.querySelectorAll('.job-item').forEach(function(el) {
+        el.style.pointerEvents = 'none';
+        el.style.opacity = '0.5';
+    });
+}
+
+function pickVoice(voices) {
+    // 优先级：zh-CN 中文女声 > zh-CN 任意 > zh-* > 第一个
+    let preferred = ['zh-CN', 'zh-Hans', 'zh-HK', 'zh-TW', 'zh'];
+    for (let lang of preferred) {
+        for (let v of voices) {
+            if (v.lang && v.lang.startsWith(lang)) {
+                // 优先女声
+                if (v.name.toLowerCase().indexOf('female') >= 0 ||
+                    v.name.indexOf('女') >= 0) {
+                    selectedVoice = v;
+                    voicesReady = true;
+                    return;
+                }
+            }
+        }
+    }
+    // 中文任意
+    for (let lang of preferred) {
+        for (let v of voices) {
+            if (v.lang && v.lang.startsWith(lang)) {
+                selectedVoice = v;
+                voicesReady = true;
+                return;
+            }
+        }
+    }
+    // 无中文语音 → 用第一个兜底
+    if (voices.length > 0) {
+        selectedVoice = voices[0];  // 用第一个兜底
+    }
+    voicesReady = true;
+}
+
+// ===== 构建朗读文本 =====
+function buildSpeakText(item) {
+    let raw = speakTemplate
+        .replace('{company}', item.company || '')
+        .replace('{position}', item.position || '')
+        .replace('{salary}', item.salary || '面议')
+        .replace('{location}', item.location || '')
+        .replace('{body}', item.body || '');
+    return _cleanForTTS(raw);
+}
+
+// ===== TTS 文本清洗：去除所有 Markdown 残留符号 =====
+function _cleanForTTS(text) {
+    if (!text) return text;
+    let cleaned = text;
+    // 去除 Markdown 标题标记 (# ## ### #### 等)
+    cleaned = cleaned.replace(/#{1,6}\s*/g, '');
+    // 去除加粗/斜体标记 (** __ * _)
+    cleaned = cleaned.replace(/\*{1,2}|_/g, '');
+    // 去除管道符 (表格)
+    cleaned = cleaned.replace(/\|/g, ' ');
+    // 去除反引号 (代码)
+    cleaned = cleaned.replace(/`+/g, '');
+    // 去除波浪线
+    cleaned = cleaned.replace(/~+/g, '');
+    // 去除分散的 -  :  标记（但不破坏正常连字符和冒号）
+    cleaned = cleaned.replace(/：/g, ':');
+    // 压缩多余空格
+    cleaned = cleaned.replace(/\s+/g, ' ');
+    // 去除连续连字符
+    cleaned = cleaned.replace(/-{2,}/g, '');
+    return cleaned.trim();
+}
+
+// ===== 朗读单条 =====
+function speakItem(index) {
+    if (index < 0 || index >= totalItems) return;
+
+    currentIndex = index;
+
+    synth.cancel();
+    let item = items[index];
+    let text = buildSpeakText(item);
+
+    let utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'zh-CN';
+    utterance.rate = speechRate;
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+    if (selectedVoice) {
+        utterance.voice = selectedVoice;
+    }
+
+    utterance.onstart = function() {
+        updateUI(index);
+        document.getElementById('nowPlaying').classList.add('active');
+        document.getElementById('nowPlayingText').textContent =
+            (item.company || '') + ' ' + (item.position || '');
+    };
+
+    utterance.onend = function() {
+        readDoneSet.add(index);
+        updateReadDone(index);
+        let next = index + 1;
+        if (next < totalItems && isPlaying) {
+            speakItem(next);
+        } else if (next >= totalItems) {
+            stopPlayback();
+            document.getElementById('floatText').textContent = '✅ 全部朗读完成！';
+            document.getElementById('progressText').textContent = '朗读完成';
+            document.getElementById('progressBar').style.width = '100%';
+            document.getElementById('progressLabel').textContent = totalItems + '/' + totalItems;
+        }
+    };
+
+    utterance.onerror = function(e) {
+        if (e.error !== 'canceled' && e.error !== 'interrupted') {
+            let errMsg = '⚠️ 朗读出错: ' + (e.error || 'unknown');
+            document.getElementById('progressText').textContent = errMsg;
+            document.getElementById('floatText').textContent =
+                errMsg + ' — 可尝试用系统自带浏览器打开';
+            let next = index + 1;
+            if (next < totalItems && isPlaying) {
+                setTimeout(function() { speakItem(next); }, 500);
+            }
+        }
+    };
+
+    currentUtterance = utterance;
+    synth.speak(utterance);
+}
+
+// ===== 播放控制 =====
+function togglePlay() {
+    if (isPlaying) {
+        pausePlayback();
+    } else {
+        startPlayback();
+    }
+}
+
+function startPlayback() {
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    document.getElementById('progressText').textContent = '朗读中...';
+    document.getElementById('floatText').textContent =
+        selectedVoice
+            ? '🔊 朗读中 (' + selectedVoice.name + ') ...'
+            : '🔊 朗读中 (系统默认语音)...';
+    speakItem(currentIndex);
+}
+
+function pausePlayback() {
+    isPlaying = false;
+    synth.cancel();
+    document.getElementById('playIcon').textContent = '🎧';
+    document.getElementById('playBtn').classList.remove('playing');
+    document.getElementById('nowPlaying').classList.remove('active');
+    document.getElementById('floatText').textContent = '⏸️ 已暂停，点击继续';
+    document.getElementById('progressText').textContent = '已暂停';
+}
+
+function stopPlayback() {
+    isPlaying = false;
+    synth.cancel();
+    document.getElementById('playIcon').textContent = '🎧';
+    document.getElementById('playBtn').classList.remove('playing');
+    document.getElementById('nowPlaying').classList.remove('active');
+    document.getElementById('floatText').textContent = '✅ 朗读完成';
+}
+
+function skipNext() {
+    synth.cancel();
+    let next = (currentIndex + 1) % totalItems;
+    currentIndex = next;
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function skipPrev() {
+    synth.cancel();
+    let prev = currentIndex - 1;
+    if (prev < 0) prev = totalItems - 1;
+    currentIndex = prev;
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function jumpTo(index) {
+    synth.cancel();
+    currentIndex = index;
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function setSpeed(val) {
+    speechRate = parseFloat(val);
+    document.getElementById('floatText').textContent =
+        '🎵 朗读速度: ' + val + 'x';
+    setTimeout(function() {
+        if (isPlaying) {
+            document.getElementById('floatText').textContent = '🔊 朗读中...';
+        }
+    }, 1500);
+}
+
+// ===== UI更新 =====
+function updateUI(index) {
+    // 进度条
+    let pct = (index / totalItems) * 100;
+    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent = (index + 1) + '/' + totalItems;
+    document.getElementById('progressText').textContent =
+        '正在朗读第 ' + (index + 1) + ' ' + '条新闻'.replace('个岗位','').replace('条新闻','');
+
+    // 高亮当前
+    document.querySelectorAll('.job-item').forEach(function(el) {
+        el.classList.remove('reading');
+    });
+    let currentEl = document.querySelector('.job-item[data-index="' + index + '"]');
+    if (currentEl) {
+        currentEl.classList.add('reading');
+        currentEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+function updateReadDone(index) {
+    let el = document.querySelector('.job-item[data-index="' + index + '"]');
+    if (el) {
+        el.classList.add('read-done');
+    }
+}
+
+// ===== 启动 =====
+init();
+
+// ===== 移动端保持屏幕唤醒（可选） =====
+if (navigator.wakeLock) {
+    try {
+        navigator.wakeLock.request('screen');
+    } catch(e) {}
+}
+</script>
+</body>
+</html>
