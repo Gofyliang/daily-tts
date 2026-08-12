@@ -1,0 +1,1334 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>📰 每日要闻（20260813）</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f5f5f5;
+    color: #333;
+    padding-bottom: 80px;
+}
+
+/* ===== 顶部控制栏 ===== */
+.control-bar {
+    position: sticky; top:0; z-index:100;
+    background: linear-gradient(135deg, #1A73E8 0%, #4FC3F7 100%);
+    padding: 12px 16px;
+    box-shadow: 0 2px 12px rgba(26,115,232,0.3);
+}
+.control-row {
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+}
+.control-btn {
+    width: 48px; height: 48px;
+    border: none; border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    font-size: 22px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
+.control-btn:active { transform: scale(0.9); background: rgba(255,255,255,0.35); }
+.control-btn.play-btn {
+    width: 64px; height: 64px;
+    background: #fff;
+    color: #1A73E8;
+    font-size: 28px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+.control-btn.play-btn.playing { color: #FF6B35; }
+
+.speed-select {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 14px;
+    cursor: pointer;
+    -webkit-appearance: none;
+}
+.speed-select option { color: #333; }
+
+/* ===== 进度信息 ===== */
+.progress-row {
+    display: flex; align-items: center; gap: 10px;
+    margin-top: 8px;
+    color: rgba(255,255,255,0.9);
+    font-size: 13px;
+}
+.progress-bar-outer {
+    flex: 1; height: 4px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 2px;
+    overflow: hidden;
+}
+.progress-bar-inner {
+    height: 100%;
+    background: #fff;
+    border-radius: 2px;
+    transition: width 0.3s;
+    width: 0%;
+}
+.progress-text {
+    white-space: nowrap;
+    min-width: 90px;
+    text-align: right;
+}
+
+/* ===== 当前朗读提示 ===== */
+.now-playing {
+    background: #FFF9C4;
+    padding: 8px 16px;
+    font-size: 13px;
+    color: #F57F17;
+    text-align: center;
+    display: none;
+    border-bottom: 2px solid #FFD54F;
+}
+.now-playing.active { display: block; }
+
+/* ===== 标题区 ===== */
+.header {
+    background: #fff;
+    padding: 20px 16px 12px;
+    border-bottom: 1px solid #eee;
+}
+.header h1 { font-size: 18px; color: #1A73E8; margin-bottom: 4px; }
+.header .subtitle { font-size: 13px; color: #888; }
+
+/* ===== 岗位列表 ===== */
+.job-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 14px 16px;
+    background: #fff;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
+.job-item:active { background: #f5f5f5; }
+.job-item.reading {
+    background: #E3F2FD;
+    border-left: 4px solid #1A73E8;
+    padding-left: 12px;
+}
+.job-item.read-done {
+    opacity: 0.6;
+}
+
+.job-index {
+    width: 32px; height: 32px;
+    background: #f0f0f0;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: bold;
+    color: #888;
+    flex-shrink: 0;
+}
+.job-item.reading .job-index {
+    background: #1A73E8;
+    color: #fff;
+}
+.job-item.read-done .job-index {
+    background: #4CAF50;
+    color: #fff;
+}
+
+.job-info { flex:1; min-width:0; }
+.job-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    display: flex; align-items: center; gap: 6px;
+    flex-wrap: wrap;
+}
+.job-detail {
+    font-size: 13px;
+    color: #666;
+    display: flex; flex-wrap: wrap; gap: 8px;
+}
+.position { color: #1A73E8; }
+.salary { color: #FF6B35; font-weight: bold; }
+.location { color: #888; }
+
+.tag {
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    white-space: nowrap;
+}
+.tag-new { background: #E8F5E9; color: #2E7D32; }
+.tag-repeat { background: #FFF3E0; color: #E65100; }
+.tag-update { background: #E3F2FD; color: #1565C0; }
+
+/* ===== 底部浮动条 ===== */
+.float-hint {
+    position: fixed; bottom: 0; left:0; right:0;
+    background: rgba(26,115,232,0.95);
+    color: #fff;
+    text-align: center;
+    padding: 10px 16px;
+    font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px;
+    z-index: 99;
+}
+.float-hint .icon { font-size: 20px; }
+
+/* ===== 状态标记 ===== */
+.status-badge {
+    display: inline-block;
+    background: #4CAF50;
+    color: #fff;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+    0%,100% { opacity:1; }
+    50% { opacity:0.5; }
+}
+</style>
+</head>
+<body>
+
+<!-- 控制栏 -->
+<div class="control-bar">
+    <div class="control-row">
+        <button class="control-btn" onclick="skipPrev()" title="上一条">⏮️</button>
+        <button class="control-btn play-btn" id="playBtn" onclick="togglePlay()" title="播放/暂停">
+            <span id="playIcon">🎧</span>
+        </button>
+        <button class="control-btn" onclick="skipNext()" title="下一条">⏭️</button>
+        <select class="speed-select" id="speedSelect" onchange="setSpeed(this.value)">
+            <option value="0.8">0.8x</option>
+            <option value="1.0" selected>1x</option>
+            <option value="1.2">1.2x</option>
+            <option value="1.5">1.5x</option>
+        </select>
+    </div>
+    <div class="progress-row">
+        <span id="progressLabel">0/66</span>
+        <div class="progress-bar-outer">
+            <div class="progress-bar-inner" id="progressBar"></div>
+        </div>
+        <span class="progress-text" id="progressText">准备就绪</span>
+    </div>
+</div>
+
+<!-- 当前朗读提示 -->
+<div class="now-playing" id="nowPlaying">
+    🔊 正在朗读：<span id="nowPlayingText"></span>
+</div>
+
+<!-- 标题 -->
+<div class="header">
+    <h1>📰 每日要闻（20260813）</h1>
+    <p class="subtitle">66条新闻 | 点🎧按钮浏览器自动朗读</p>
+</div>
+
+<!-- 岗位/新闻列表 -->
+<div id="jobList">
+
+        <div class="job-item" data-index="0" onclick="jumpTo(0)">
+            <div class="job-index">1</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 英伟达联手六大华尔街巨头，5000亿美元AI基础设施融资平台启航。2. 7月新能源汽车新车销量占比首破60%，中国汽车出口连续两月破百万。3. 宇树科技科创板上市，"人形机器人第一股"市值约610亿。4. 国仪量子登陆科创板，合肥量子产业链迎"IPO元年"。5. 炬光科技/源杰科技定增超65亿...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="1" onclick="jumpTo(1)">
+            <div class="job-index">2</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：英伟达官方博客/澎湃新闻/网易财经。发布时间：20260810</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="2" onclick="jumpTo(2)">
+            <div class="job-index">3</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">摘要</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">英伟达正式宣布与阿波罗、贝莱德、黑石、博枫、高盛、KKR六大华尔街金融机构签署谅解备忘录，共建独立的AI算力融资平台，目标调动超过5000亿美元的第三方资本，用于建设AI芯片采购、电力生产、数据中心等AI基础设施。黄仁勋称"算力即收入"，但市场对"循环融资"风险的讨论也随之发酵。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="3" onclick="jumpTo(3)">
+            <div class="job-index">4</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">深度分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 💼 工作就业：5000亿美元盘子背后，是AI算力中心的疯狂扩建潮，对应国内"AI硬件供应链"岗位的持续增量——服务器/电源/液冷/机柜结构件的SQE、采购工程师、供应商管理岗都会受益。Gofy有过钣金、CNC、五金冲压经验，是这些岗位转型的天然"接口人"，建议在BOSS直聘挂出"AI硬件供应链...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="4" onclick="jumpTo(4)">
+            <div class="job-index">5</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">2. 📈 职业发展：英伟达从"卖芯片的"升级为"AI算力资本组织者"——这种角色升级映射到供应链管理者身上意味着一个新方向：供应链金融化。能理解"供应商融资、保理、设备租赁、可转债"等金融工具的采购管理者，未来5年的稀缺度和议价权将明显高于"只会砍价"的人。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="5" onclick="jumpTo(5)">
+            <div class="job-index">6</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3. 🏭 行业发展：算力被定性为"新型基础设施"，意味着"机柜+液冷+电源"三大件将进入产能扩张周期。机械/装备类企业凡是涉及这三类配套的，20262028年都将享受订单红利。同时"循环融资"模式的可持续性也是潜在风险点——一旦AI泡沫破裂，配套产能过剩会快速发生。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="6" onclick="jumpTo(6)">
+            <div class="job-index">7</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">4. 🚀 创业机会：浸没式液冷项目遇到史诗级风口。AI算力扩张=液冷刚需爆发。建议把当前的"DIY液冷套件"定位升级为"中小AI工作站式浸没散热方案"，定价从20004000元提到1.53万元的"成品工作站套装"，客单价翻倍。同时关注是否能为AI推理小集群（520卡）提供"上门部署+调试"服务，B端...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="7" onclick="jumpTo(7)">
+            <div class="job-index">8</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5. 💰 投资机会：算力基础设施赛道是当前最确定的成长主线，可关注AI ETF、半导体设备ETF的定投机会。短期注意"循环融资"质疑带来的回调压力，建议分批定投而非一次性重仓。重点跟踪真正进入英伟达供应链名单的国内厂商（电源/液冷/机柜/连接器）。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="8" onclick="jumpTo(8)">
+            <div class="job-index">9</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：中国汽车工业协会/新华社/中新经纬。发布时间：20260812</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="9" onclick="jumpTo(9)">
+            <div class="job-index">10</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">摘要</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">中汽协8月12日数据显示，2026年7月新能源汽车产销分别完成157.6万辆和156.1万辆，同比+26.8%/+23.7%。月度新车销量占比首次超60%，17月累计占比首次超50%。汽车出口104.3万辆、连续两月破百万，新能源车出口占比连续两月超50%。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="10" onclick="jumpTo(10)">
+            <div class="job-index">11</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">深度分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 💼 工作就业：60%渗透率+100万辆月度出口，意味着新能源产业链的人才需求继续放量。整车厂"出海建厂"会催生大量海外供应链岗位——海外仓、当地供应商管理、合规采购、汇率对冲等岗位需求大涨。具备机械+外语+海外采购三角能力的复合人才，2026年下半年薪资预期上调2030%。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="11" onclick="jumpTo(11)">
+            <div class="job-index">12</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">2. 📈 职业发展：渗透率破60%意味着行业进入"深水区"，纯靠"BEV/PHEV/REEV"老故事的简历已经不够看了。未来35年，"海外业务、合规采购、ESG供应链、可持续材料"这些标签更具差异化价值。建议在简历中补充"新能源汽车出口配套""海外供应链体系建设"经验。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="12" onclick="jumpTo(12)">
+            <div class="job-index">13</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3. 🏭 行业发展：6成新车=新能源，意味着传统燃油车的供应链进入"存量博弈+加速出清"阶段。原本做燃油车变速器/油路/排气管的零部件供应商，必须在2年内完成新能源转型，否则会被市场淘汰。这是机械背景采购管理者需要关注的"产业链断链风险"——你原来的供应商会不会突然倒闭？</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="13" onclick="jumpTo(13)">
+            <div class="job-index">14</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">4. 🚀 创业机会：3D打印业务的天然客户群。汽车后市场"小批量定制改装件""个性化外观件""赛事专用件"对外卖到欧美后增长明显，靠Alibaba/Amazon海外仓+小批量定制打印模型毛利率可达5070%。液冷项目则可切入车载算力（智能驾驶中央计算平台）的散热场景，单台车液冷模组采购价500150...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="14" onclick="jumpTo(14)">
+            <div class="job-index">15</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5. 💰 投资机会：新能源车整车板块估值已偏高，但出海配套、新能源商用车、汽车芯片、电池回收四个细分仍有结构性机会。重点关注头部Tier1的海外业务占比、零部件出海企业的第二增长曲线。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="15" onclick="jumpTo(15)">
+            <div class="job-index">16</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：腾讯财经/澎湃新闻/科技日报。发布时间：20260810/12</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="16" onclick="jumpTo(16)">
+            <div class="job-index">17</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">摘要</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">8月10日宇树科技科创板申购、12日缴款，发行价150.8元/股，发行市值约610亿元，89家公募旗下5036只产品获配近18亿元。2025年人形机器人销量5215台（+1166%），全球市场份额约31%。公司募资42亿元主投具身智能大模型+机器人本体研发。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="17" onclick="jumpTo(17)">
+            <div class="job-index">18</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">深度分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 💼 工作就业：人形机器人第一股上市意味着具身智能赛道进入"招兵买马"阶段。宇树、智元已合计占全球人形机器人75%份额，对应电机、减速器、传感器、丝杠等核心零部件的B端供应链岗位全面爆发。北特科技押注18.5亿做机器人丝杠——类似跨界案例如今每周都在发生，"机械零部件+机器人"的跨界岗位值得重点...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="18" onclick="jumpTo(18)">
+            <div class="job-index">19</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">2. 📈 职业发展：具身智能+人形机器人本质上是"机械+电子+AI"的集合体，与你过去17年的机械背景天然衔接。如果想跨行到这类公司，简历建议突出精密机械加工、模具开发、丝杠/齿轮/轴承这类硬核制造经验，而不是仅讲"采购管理"。能在宇树供应链上"挂名"的零部件商，未来3年的估值溢价非常可观。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="19" onclick="jumpTo(19)">
+            <div class="job-index">20</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3. 🏭 行业发展：人形机器人从"demo"走向"量产"，意味着核心零部件需求结构性放大。行星滚柱丝杠、谐波减速器、空心杯电机、力矩传感器四大件是当前的"卡脖子件"，国产化进程刚启动。这给佛山/东莞/苏州一带的精密机械企业打开了第二增长曲线。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="20" onclick="jumpTo(20)">
+            <div class="job-index">21</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">4. 🚀 创业机会：可在"缩微人像3D打印"基础上，开辟新业务线——为机器人厂商提供"小批量精密外壳/结构件定制打印"，单价5002000元/件，35天交付，是传统CNC的天然补充。同时可以考虑为教育/培训机构提供"教具级人形机器人二手再制造"服务（清洗+喷涂+功能测试），单台利润20005000元...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="21" onclick="jumpTo(21)">
+            <div class="job-index">22</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5. 💰 投资机会：人形机器人板块短期波动大、投机情绪浓，不建议重仓单一个股。可通过机器人ETF分散投资，关注真正进入量产名单的核心零部件供应商（如已批量供货的丝杠/减速器厂商），远离纯题材股。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="22" onclick="jumpTo(22)">
+            <div class="job-index">23</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：每日经济新闻/钛媒体。发布时间：20260811</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="23" onclick="jumpTo(23)">
+            <div class="job-index">24</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">摘要</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">8月11日国仪量子在上交所科创板上市，成为合肥今年第3家科创板公司。合肥量子产业链已集聚107家企业、年营收超60亿元。本源量子完成近30亿元PreIPO融资；北京玻色量子、上海图灵智算也启动IPO辅导。2026年被业内称为"中国量子科技IPO元年"。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="24" onclick="jumpTo(24)">
+            <div class="job-index">25</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">深度分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 💼 工作就业：量子科技产业化早期，对人才的吸纳力有限，但量子精密测量、量子计算外围设备这些方向已经开始产业化。建议关注中科大系、合肥本源/国盾系公司的招聘——尤其是量子计算整机厂的"硬件工程师+采购+供应链"三角岗位。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="25" onclick="jumpTo(25)">
+            <div class="job-index">26</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">2. 📈 职业发展：量子计算目前离产业化还有35年，但作为"机械+电子+半导体"的跨界能力延伸点非常值得提前布局。如果未来想进入"高科技+国产替代"赛道，先打牢精密制造、半导体工艺、洁净度管控等基础功是基础，准备期建议2436个月。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="26" onclick="jumpTo(26)">
+            <div class="job-index">27</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3. 🏭 行业发展：合肥北京上海三城正在形成量子产业"原始森林"，政策与资本双向涌入。但行业核心痛点——量子比特数量、纠错能力、规模化的工程化能力——仍未解决。未来5年更多的是"概念+原型机"阶段，不会有规模化的杀手级应用。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="27" onclick="jumpTo(27)">
+            <div class="job-index">28</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">4. 🚀 创业机会：量子产业对特种真空设备、低温系统、超导材料、精密光学元件的需求强烈。可以考虑为这个细分赛道提供精密机械配件/真空腔体的小批量定制，初期客单价高（几万几十万）、但订单量小。一旦成为供应商，绑定时间长、定价权强。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="28" onclick="jumpTo(28)">
+            <div class="job-index">29</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5. 💰 投资机会：量子板块当前阶段"PE/PB无锚"——尚无稳定盈利公司，建议只通过ETF或低价闲钱小试水，远离个股追高。真正的产业投资窗口期在20282030年。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="29" onclick="jumpTo(29)">
+            <div class="job-index">30</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：每日经济新闻/蓝鲸新闻。发布时间：20260812</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="30" onclick="jumpTo(30)">
+            <div class="job-index">31</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">摘要</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">炬光科技上半年营收4.19亿元（+6.57%）、亏损6722.88万元，同时抛出不超10.21亿元定增预案，聚焦高速光互联核心光学元器件。源杰科技拟投资42.68亿元建半导体科技产业园，叠加2月12.51亿元项目合计扩产超55亿元，并上调年度授信至60亿元、抵押资产。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="31" onclick="jumpTo(31)">
+            <div class="job-index">32</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">深度分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 💼 工作就业：AI算力扩张对光模块、光器件、光芯片需求出现指数级增长。炬光科技、源杰科技这类公司大规模扩产意味着光学元件、光通信设备、光芯片封测的全产业链岗位需求暴增。具备光学/精密机械背景的采购人，2026年下半年可以重点盯这些公司的供应链岗位。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="32" onclick="jumpTo(32)">
+            <div class="job-index">33</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">2. 📈 职业发展：光通信技术（800G/1.6T/相干光模块）是当前少数仍享受技术溢价的硬件赛道。掌握硅光技术、CPO封装、光路无源器件的采购管理者将成为"硬通货"。建议开始系统学习这些技术名词，23个月内能与工程师对得上话。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="33" onclick="jumpTo(33)">
+            <div class="job-index">34</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3. 🏭 行业发展：源杰科技这样的扩产动作+无确定性订单托底，存在一定泡沫风险。光通信看似火爆但2025年已经出现过光模块价格腰斩的剧烈波动。这一轮AI推动的行情，"成色"程度需要观察是否真正转化为头部厂商的量产订单。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="34" onclick="jumpTo(34)">
+            <div class="job-index">35</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">4. 🚀 创业机会：小型光通信企业往往需要高精度光机模组、定制化封装治具、洁净度极高的零部件。可以利用自身机械背景为这类公司提供小批量定制治具+精密光学元件代加工服务，利润率比传统钣金件高23倍。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="35" onclick="jumpTo(35)">
+            <div class="job-index">36</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5. 💰 投资机会：光模块ETF、光通信概念股当前估值偏高且波动剧烈，建议采用"分批+组合"策略。真正值得长线关注的是光芯片国产替代标的（源杰、长光华芯、仕佳光子等具备光芯片自研能力的公司）。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="36" onclick="jumpTo(36)">
+            <div class="job-index">37</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：新华社/中国民航报。发布时间：20260812</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="37" onclick="jumpTo(37)">
+            <div class="job-index">38</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">摘要</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">8月12日下午，从北京首都国际机场起飞的国产大飞机C919平稳降落在蒙古国新乌兰巴托机场，完成首次国际商业航班飞行，这是C919投入商业运营后开通的首条国际航线，标志着国产大飞机"出海"进入实操阶段。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="38" onclick="jumpTo(38)">
+            <div class="job-index">39</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">深度分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 💼 工作就业：C919出海打开国产航空制造业的全球市场空间，航材采购、MRO（维修/翻修/运营）、机务工程师、航材计划员等岗位将持续放量。同时"国产替代航材件"的产业机会涌现——你能找到这些供应商，是Gofy就业市场的新蓝海。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="39" onclick="jumpTo(39)">
+            <div class="job-index">40</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">2. 📈 职业发展：航空航天+机械制造的复合能力，在国内属于稀缺竞争力。如果未来想跨界到航空制造业，建议先从"精密机械加工、特种合金、紧固件、表面处理"这些已经有客户基础的赛道切入。航空业的供应商认证流程长（一般23年），但一旦进入就稳定多年。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="40" onclick="jumpTo(40)">
+            <div class="job-index">41</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3. 🏭 行业发展：C919出海标志着国产民机进入"国际市场考验期"——这背后是航空级铝合金/钛合金、复合材料、精密机加件、特种紧固件全产业链的国产替代机会。波音、空客市场被分割后，相关供应链订单会回流国内。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="41" onclick="jumpTo(41)">
+            <div class="job-index">42</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">4. 🚀 创业机会：可以考虑为航空维修市场提供3D打印的航空非关键件/内饰件（如杯托、装饰件、扶手件），单价可达5003000元/件，毛利50%以上。液冷项目则可切入机舱电子设备的散热散热场景。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="42" onclick="jumpTo(42)">
+            <div class="job-index">43</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5. 💰 投资机会：航空制造板块（大飞机产业链）属于"政策+长期"主线，但短期波动较大。可关注航空ETF、国产航空材料标的，但仍以定投策略为主。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="43" onclick="jumpTo(43)">
+            <div class="job-index">44</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：南方日报/顺德官方发布/科技日报。发布时间：202608040812</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="44" onclick="jumpTo(44)">
+            <div class="job-index">45</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">摘要</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">8月3日顺德北滘机器人谷智造产业园（二期）正式揭牌，总规划7050亩，已集聚库卡、中大力德、埃斯顿等行业头部企业。同步动工联丰（顺德）供应链智汇产业园，总投资约20亿元，与库卡合作建设国内首创"库架一体"全自动立体智能仓库。8月12日顺德具身智能精密制造产业园在伦教揭牌，2平方公里规划、26个产业项...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="45" onclick="jumpTo(45)">
+            <div class="job-index">46</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">深度分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 💼 工作就业：佛山顺德机器人产业集群进入"2.0版"——从"建厂"升级到"建链"。顺德本地+深圳外溢+广佛同城的就近岗位需求大涨，尤其是能跨"机械+电子+AI"边界的人才，Gofy这种"机械+采购+供应链"复合背景稀缺度极高。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="46" onclick="jumpTo(46)">
+            <div class="job-index">47</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">2. 📈 职业发展："大脑（大良）+眼睛（容桂）+身体（伦教）+核心（北滘）"的产业分工，提示一个清晰的职业定位策略——锁定"伦教具身智能精密制造"这个赛道做长期投入。精密机械加工是你最熟悉的能力，将其延伸到机器人结构件、传感模组外壳等场景，转型路径平滑。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="47" onclick="jumpTo(47)">
+            <div class="job-index">48</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3. 🏭 行业发展：联丰+库卡合作的"黑灯智库"（无人化立体仓库+数字孪生）开创国内先河，意味着智能仓储+数字孪生正在从PPT走向落地。机械/装备类企业的"软件含量"开始被重新定义——未来35年，"卖硬件+卖软件+卖服务"的复合模式会更受客户欢迎。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="48" onclick="jumpTo(48)">
+            <div class="job-index">49</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">4. 🚀 创业机会：液冷项目可以主动对接"顺德具身智能精密制造产业园"的整机厂商，提供"紧凑型算力+视觉模组"散热方案；3D打印业务则可以切入"机器人零部件小批量定制"赛道，单价比消费级人像高35倍。同时"无人仓+数字孪生"相关咨询服务（实施顾问）也有市场空间。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="49" onclick="jumpTo(49)">
+            <div class="job-index">50</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5. 💰 投资机会：佛山/顺德的机器人+智能制造板块属于"近水楼台"机会。联丰集团是港股老牌供应链公司（港股上市），若有供应链金融相关产品可关注；本地优质未上市公司（库卡供应链合作伙伴）的PreIPO/股权机会可留意（合规风险需评估）。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="50" onclick="jumpTo(50)">
+            <div class="job-index">51</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：证券时报网/同花顺。发布时间：20260804</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="51" onclick="jumpTo(51)">
+            <div class="job-index">52</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">摘要</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">星徽股份（300464）服务器滑轨制造基地在佛山顺德五沙工业园区正式投产。公司依托30余年精密制造积淀，正式切入AI算力基础设施核心部件赛道。AI服务器单台重量普遍突破50kg，对滑轨承载、超薄化设计、抗震稳定性提出更高要求。该领域国产化渗透率早期，公司已掌握精密五金冲压、液压成型、滚道成型等多项核...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="52" onclick="jumpTo(52)">
+            <div class="job-index">53</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">深度分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 💼 工作就业：星徽在佛山的投产意味着本地出现了一个AI硬件精密制造新基地，对应的精密五金、模具开发、SQE、质量工程师、采购岗位都有需求。Gofy作为佛山本地人且有精密制造采购经验，是这类公司的天然候选人——建议主动投递。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="53" onclick="jumpTo(53)">
+            <div class="job-index">54</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">2. 📈 职业发展：服务器滑轨这一零部件看似"小件"，但具备"卡位+国产替代+大空间"三重特性。能在AI硬件产业链上找到自己有能力切入的细分零部件赛道，再做35年深耕，就是非常好的职业锚点。星徽这个赛道值得去聊聊。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="54" onclick="jumpTo(54)">
+            <div class="job-index">55</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3. 🏭 行业发展：AI服务器对机柜内部件（滑轨/PDU/连接器/液冷接头/理线架）的需求结构正在升级——从"工业级"到"算力级"，对应的规格标准、价格、利润率都上一个台阶。佛山/顺德的精密制造企业正在被这一波"AI硬件化"卷出新一轮机会。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="55" onclick="jumpTo(55)">
+            <div class="job-index">56</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">4. 🚀 创业机会：液冷项目的供应链上同样需要"精密五金件"，可以主动接洽星徽这类企业的供应商网络，嫁接他们的精密制造能力补足液冷模组所需的结构件。3D打印业务则可切入"小批量服务器机柜配件打样"（如治具、夹具），单价虽小但订单稳定。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="56" onclick="jumpTo(56)">
+            <div class="job-index">57</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5. 💰 投资机会：星徽股份（300464）已上市，是A股直接对标"AI算力硬件精密件"的小市值标的。但需注意——精密五金行业本身毛利率不高（约1525%），AI概念是否能转化为持续业绩兑现需要持续跟踪。建议以"成长股ETF+组合分散"方式参与，不重仓单股。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="57" onclick="jumpTo(57)">
+            <div class="job-index">58</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">一、今日信号盘点</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">英伟达5000亿AI融资平台启航 → 算力被定性为"新型基础设施"，液冷/电源/机柜全产业链受益。炬光科技/源杰科技65亿定增 → 光通信+光芯片赛道扩产。国仪量子上市 → 量子科技"IPO元年"，但产业兑现仍需35年</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="58" onclick="jumpTo(58)">
+            <div class="job-index">59</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">顺德北滘机器人谷二期揭牌+伦教具身智能精密制造产业园揭牌 → 佛山机器人产业链"2.0版"加速。星徽股份顺德投产服务器滑轨 → 佛山企业切入AI硬件新赛道。C919首次国际商业航班 → 国产大飞机"出海"突破</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="59" onclick="jumpTo(59)">
+            <div class="job-index">60</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">7月新能源车销量占比首破60% + 出口连续两月破百万 → 中国汽车产业链进入"深水区"。宇树科技上市 → 人形机器人进入"量产竞争"阶段</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="60" onclick="jumpTo(60)">
+            <div class="job-index">61</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">英伟达模式的"循环融资"质疑 → 算力赛道存在一定泡沫风险</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="61" onclick="jumpTo(61)">
+            <div class="job-index">62</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">二、对你的行动建议</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 简历更新：在采购简历的"核心能力"模块补充：。"AI硬件供应链（服务器/液冷/机柜）经验"。"汽车出海配套/海外供应链体系建设"标签。"精密制造+机器人结构件"赛道储备。2. 投递行动：针对星徽股份（300464）顺德工厂或顺德机器人谷头部企业（库卡/中大力德），主动投递"供应链管理"或"精密...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="62" onclick="jumpTo(62)">
+            <div class="job-index">63</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 液冷项目升级：。把现有DIY套件升级为"中小AI工作站成品方案"，客单价1.53万元。主动接洽顺德/光谷的中小AI推理集群客户，提供"上门部署+调试"。2. 3D打印B端突破：。切入机器人小批量精密结构件定制，单价5002000元/件。拓展"小批量服务器机柜配件打样"业务。3. 直播副业：。在...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="63" onclick="jumpTo(63)">
+            <div class="job-index">64</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 岗位升级：锁定"AI硬件供应链经理""新能源车供应链海外业务""机器人精密件SQE"三个赛道做能力储备。2. 投资组合：。510% 黄金ETF（避险）。2030% 宽基ETF（稳健）。1015% AI/半导体/新能源主题ETF（成长，分批定投）。不碰杠杆产品、不追高个股。3. 品牌建设：孵化一...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="64" onclick="jumpTo(64)">
+            <div class="job-index">65</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">三、风险提示</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">⚠️ AI算力赛道的"循环融资"质疑 + 短期估值偏高，注意回调风险。⚠️ 新能源车整车板块估值已高，关注Tier1出海/回收/商用车等结构性机会。⚠️ 宇树上市后人形机器人板块情绪面高度亢奋，远离纯题材股。⚠️ 河南/湖北/安徽/江苏中南部暴雨橙色预警持续，注意出行安全和物流时效。⚠️ 量子科技产...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="65" onclick="jumpTo(65)">
+            <div class="job-index">66</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">新华社《早知天下事》（8.13）。新浪财经/澎湃新闻/网易财经。中国汽车工业协会数据。每日经济新闻/钛媒体/科技日报。南方日报/顺德官方发布。英伟达官方博客</span>
+                </div>
+            </div>
+        </div>
+</div>
+
+<!-- 底部提示 -->
+<div class="float-hint" id="floatHint">
+    <span class="icon">🎧</span>
+    <span id="floatText">点击顶部播放按钮开始朗读</span>
+</div>
+
+<script>
+// ===== 数据 =====
+const items = [{"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 英伟达联手六大华尔街巨头，5000亿美元AI基础设施融资平台启航。2. 7月新能源汽车新车销量占比首破60%，中国汽车出口连续两月破百万。3. 宇树科技科创板上市，\"人形机器人第一股\"市值约610亿。4. 国仪量子登陆科创板，合肥量子产业链迎\"IPO元年\"。5. 炬光科技/源杰科技定增超65亿加码光通信与高端光芯片。6. C919国产大飞机首条国际商业航线开通，飞抵蒙古乌兰巴托。7. 顺德北滘机器人谷二期揭牌+联丰20亿供应链智汇产业园动工。8. 星徽股份顺德五沙投产服务器滑轨，切入AI算力基础设施核心部件"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：英伟达官方博客/澎湃新闻/网易财经。发布时间：2026-08-10"}, {"company": "摘要", "position": "", "salary": "", "location": "", "tag": "", "body": "英伟达正式宣布与阿波罗、贝莱德、黑石、博枫、高盛、KKR六大华尔街金融机构签署谅解备忘录，共建独立的AI算力融资平台，目标调动超过5000亿美元的第三方资本，用于建设AI芯片采购、电力生产、数据中心等AI基础设施。黄仁勋称\"算力即收入\"，但市场对\"循环融资\"风险的讨论也随之发酵。"}, {"company": "深度分析", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 💼 工作就业：5000亿美元盘子背后，是AI算力中心的疯狂扩建潮，对应国内\"AI硬件供应链\"岗位的持续增量——服务器/电源/液冷/机柜结构件的SQE、采购工程师、供应商管理岗都会受益。Gofy有过钣金、CNC、五金冲压经验，是这些岗位转型的天然\"接口人\"，建议在BOSS直聘挂出\"AI硬件供应链\"标签。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "2. 📈 职业发展：英伟达从\"卖芯片的\"升级为\"AI算力资本组织者\"——这种角色升级映射到供应链管理者身上意味着一个新方向：供应链金融化。能理解\"供应商融资、保理、设备租赁、可转债\"等金融工具的采购管理者，未来5年的稀缺度和议价权将明显高于\"只会砍价\"的人。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "3. 🏭 行业发展：算力被定性为\"新型基础设施\"，意味着\"机柜+液冷+电源\"三大件将进入产能扩张周期。机械/装备类企业凡是涉及这三类配套的，2026-2028年都将享受订单红利。同时\"循环融资\"模式的可持续性也是潜在风险点——一旦AI泡沫破裂，配套产能过剩会快速发生。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "4. 🚀 创业机会：浸没式液冷项目遇到史诗级风口。AI算力扩张=液冷刚需爆发。建议把当前的\"DIY液冷套件\"定位升级为\"中小AI工作站式浸没散热方案\"，定价从2000-4000元提到1.5-3万元的\"成品工作站套装\"，客单价翻倍。同时关注是否能为AI推理小集群（5-20卡）提供\"上门部署+调试\"服务，B端价格天花板更高。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "5. 💰 投资机会：算力基础设施赛道是当前最确定的成长主线，可关注AI ETF、半导体设备ETF的定投机会。短期注意\"循环融资\"质疑带来的回调压力，建议分批定投而非一次性重仓。重点跟踪真正进入英伟达供应链名单的国内厂商（电源/液冷/机柜/连接器）。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：中国汽车工业协会/新华社/中新经纬。发布时间：2026-08-12"}, {"company": "摘要", "position": "", "salary": "", "location": "", "tag": "", "body": "中汽协8月12日数据显示，2026年7月新能源汽车产销分别完成157.6万辆和156.1万辆，同比+26.8%/+23.7%。月度新车销量占比首次超60%，1-7月累计占比首次超50%。汽车出口104.3万辆、连续两月破百万，新能源车出口占比连续两月超50%。"}, {"company": "深度分析", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 💼 工作就业：60%渗透率+100万辆月度出口，意味着新能源产业链的人才需求继续放量。整车厂\"出海建厂\"会催生大量海外供应链岗位——海外仓、当地供应商管理、合规采购、汇率对冲等岗位需求大涨。具备机械+外语+海外采购三角能力的复合人才，2026年下半年薪资预期上调20-30%。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "2. 📈 职业发展：渗透率破60%意味着行业进入\"深水区\"，纯靠\"BEV/PHEV/REEV\"老故事的简历已经不够看了。未来3-5年，\"海外业务、合规采购、ESG供应链、可持续材料\"这些标签更具差异化价值。建议在简历中补充\"新能源汽车出口配套\"\"海外供应链体系建设\"经验。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "3. 🏭 行业发展：6成新车=新能源，意味着传统燃油车的供应链进入\"存量博弈+加速出清\"阶段。原本做燃油车变速器/油路/排气管的零部件供应商，必须在2年内完成新能源转型，否则会被市场淘汰。这是机械背景采购管理者需要关注的\"产业链断链风险\"——你原来的供应商会不会突然倒闭？"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "4. 🚀 创业机会：3D打印业务的天然客户群。汽车后市场\"小批量定制改装件\"\"个性化外观件\"\"赛事专用件\"对外卖到欧美后增长明显，靠Alibaba/Amazon海外仓+小批量定制打印模型毛利率可达50-70%。液冷项目则可切入车载算力（智能驾驶中央计算平台）的散热场景，单台车液冷模组采购价500-1500元，比C端DIY套件稳定10倍。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "5. 💰 投资机会：新能源车整车板块估值已偏高，但出海配套、新能源商用车、汽车芯片、电池回收四个细分仍有结构性机会。重点关注头部Tier1的海外业务占比、零部件出海企业的第二增长曲线。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：腾讯财经/澎湃新闻/科技日报。发布时间：2026-08-10/12"}, {"company": "摘要", "position": "", "salary": "", "location": "", "tag": "", "body": "8月10日宇树科技科创板申购、12日缴款，发行价150.8元/股，发行市值约610亿元，89家公募旗下5036只产品获配近18亿元。2025年人形机器人销量5215台（+1166%），全球市场份额约31%。公司募资42亿元主投具身智能大模型+机器人本体研发。"}, {"company": "深度分析", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 💼 工作就业：人形机器人第一股上市意味着具身智能赛道进入\"招兵买马\"阶段。宇树、智元已合计占全球人形机器人75%份额，对应电机、减速器、传感器、丝杠等核心零部件的B端供应链岗位全面爆发。北特科技押注18.5亿做机器人丝杠——类似跨界案例如今每周都在发生，\"机械零部件+机器人\"的跨界岗位值得重点关注。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "2. 📈 职业发展：具身智能+人形机器人本质上是\"机械+电子+AI\"的集合体，与你过去17年的机械背景天然衔接。如果想跨行到这类公司，简历建议突出精密机械加工、模具开发、丝杠/齿轮/轴承这类硬核制造经验，而不是仅讲\"采购管理\"。能在宇树供应链上\"挂名\"的零部件商，未来3年的估值溢价非常可观。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "3. 🏭 行业发展：人形机器人从\"demo\"走向\"量产\"，意味着核心零部件需求结构性放大。行星滚柱丝杠、谐波减速器、空心杯电机、力矩传感器四大件是当前的\"卡脖子件\"，国产化进程刚启动。这给佛山/东莞/苏州一带的精密机械企业打开了第二增长曲线。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "4. 🚀 创业机会：可在\"缩微人像3D打印\"基础上，开辟新业务线——为机器人厂商提供\"小批量精密外壳/结构件定制打印\"，单价500-2000元/件，3-5天交付，是传统CNC的天然补充。同时可以考虑为教育/培训机构提供\"教具级人形机器人二手再制造\"服务（清洗+喷涂+功能测试），单台利润2000-5000元。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "5. 💰 投资机会：人形机器人板块短期波动大、投机情绪浓，不建议重仓单一个股。可通过机器人ETF分散投资，关注真正进入量产名单的核心零部件供应商（如已批量供货的丝杠/减速器厂商），远离纯题材股。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：每日经济新闻/钛媒体。发布时间：2026-08-11"}, {"company": "摘要", "position": "", "salary": "", "location": "", "tag": "", "body": "8月11日国仪量子在上交所科创板上市，成为合肥今年第3家科创板公司。合肥量子产业链已集聚107家企业、年营收超60亿元。本源量子完成近30亿元Pre-IPO融资；北京玻色量子、上海图灵智算也启动IPO辅导。2026年被业内称为\"中国量子科技IPO元年\"。"}, {"company": "深度分析", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 💼 工作就业：量子科技产业化早期，对人才的吸纳力有限，但量子精密测量、量子计算外围设备这些方向已经开始产业化。建议关注中科大系、合肥本源/国盾系公司的招聘——尤其是量子计算整机厂的\"硬件工程师+采购+供应链\"三角岗位。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "2. 📈 职业发展：量子计算目前离产业化还有3-5年，但作为\"机械+电子+半导体\"的跨界能力延伸点非常值得提前布局。如果未来想进入\"高科技+国产替代\"赛道，先打牢精密制造、半导体工艺、洁净度管控等基础功是基础，准备期建议24-36个月。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "3. 🏭 行业发展：合肥-北京-上海三城正在形成量子产业\"原始森林\"，政策与资本双向涌入。但行业核心痛点——量子比特数量、纠错能力、规模化的工程化能力——仍未解决。未来5年更多的是\"概念+原型机\"阶段，不会有规模化的杀手级应用。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "4. 🚀 创业机会：量子产业对特种真空设备、低温系统、超导材料、精密光学元件的需求强烈。可以考虑为这个细分赛道提供精密机械配件/真空腔体的小批量定制，初期客单价高（几万-几十万）、但订单量小。一旦成为供应商，绑定时间长、定价权强。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "5. 💰 投资机会：量子板块当前阶段\"PE/PB无锚\"——尚无稳定盈利公司，建议只通过ETF或低价闲钱小试水，远离个股追高。真正的产业投资窗口期在2028-2030年。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：每日经济新闻/蓝鲸新闻。发布时间：2026-08-12"}, {"company": "摘要", "position": "", "salary": "", "location": "", "tag": "", "body": "炬光科技上半年营收4.19亿元（+6.57%）、亏损6722.88万元，同时抛出不超10.21亿元定增预案，聚焦高速光互联核心光学元器件。源杰科技拟投资42.68亿元建半导体科技产业园，叠加2月12.51亿元项目合计扩产超55亿元，并上调年度授信至60亿元、抵押资产。"}, {"company": "深度分析", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 💼 工作就业：AI算力扩张对光模块、光器件、光芯片需求出现指数级增长。炬光科技、源杰科技这类公司大规模扩产意味着光学元件、光通信设备、光芯片封测的全产业链岗位需求暴增。具备光学/精密机械背景的采购人，2026年下半年可以重点盯这些公司的供应链岗位。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "2. 📈 职业发展：光通信技术（800G/1.6T/相干光模块）是当前少数仍享受技术溢价的硬件赛道。掌握硅光技术、CPO封装、光路无源器件的采购管理者将成为\"硬通货\"。建议开始系统学习这些技术名词，2-3个月内能与工程师对得上话。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "3. 🏭 行业发展：源杰科技这样的扩产动作+无确定性订单托底，存在一定泡沫风险。光通信看似火爆但2025年已经出现过光模块价格腰斩的剧烈波动。这一轮AI推动的行情，\"成色\"程度需要观察是否真正转化为头部厂商的量产订单。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "4. 🚀 创业机会：小型光通信企业往往需要高精度光机模组、定制化封装治具、洁净度极高的零部件。可以利用自身机械背景为这类公司提供小批量定制治具+精密光学元件代加工服务，利润率比传统钣金件高2-3倍。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "5. 💰 投资机会：光模块ETF、光通信概念股当前估值偏高且波动剧烈，建议采用\"分批+组合\"策略。真正值得长线关注的是光芯片国产替代标的（源杰、长光华芯、仕佳光子等具备光芯片自研能力的公司）。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：新华社/中国民航报。发布时间：2026-08-12"}, {"company": "摘要", "position": "", "salary": "", "location": "", "tag": "", "body": "8月12日下午，从北京首都国际机场起飞的国产大飞机C919平稳降落在蒙古国新乌兰巴托机场，完成首次国际商业航班飞行，这是C919投入商业运营后开通的首条国际航线，标志着国产大飞机\"出海\"进入实操阶段。"}, {"company": "深度分析", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 💼 工作就业：C919出海打开国产航空制造业的全球市场空间，航材采购、MRO（维修/翻修/运营）、机务工程师、航材计划员等岗位将持续放量。同时\"国产替代航材件\"的产业机会涌现——你能找到这些供应商，是Gofy就业市场的新蓝海。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "2. 📈 职业发展：航空航天+机械制造的复合能力，在国内属于稀缺竞争力。如果未来想跨界到航空制造业，建议先从\"精密机械加工、特种合金、紧固件、表面处理\"这些已经有客户基础的赛道切入。航空业的供应商认证流程长（一般2-3年），但一旦进入就稳定多年。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "3. 🏭 行业发展：C919出海标志着国产民机进入\"国际市场考验期\"——这背后是航空级铝合金/钛合金、复合材料、精密机加件、特种紧固件全产业链的国产替代机会。波音、空客市场被分割后，相关供应链订单会回流国内。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "4. 🚀 创业机会：可以考虑为航空维修市场提供3D打印的航空非关键件/内饰件（如杯托、装饰件、扶手件），单价可达500-3000元/件，毛利50%以上。液冷项目则可切入机舱电子设备的散热散热场景。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "5. 💰 投资机会：航空制造板块（大飞机产业链）属于\"政策+长期\"主线，但短期波动较大。可关注航空ETF、国产航空材料标的，但仍以定投策略为主。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：南方日报/顺德官方发布/科技日报。发布时间：2026-08-04~08-12"}, {"company": "摘要", "position": "", "salary": "", "location": "", "tag": "", "body": "8月3日顺德北滘机器人谷智造产业园（二期）正式揭牌，总规划7050亩，已集聚库卡、中大力德、埃斯顿等行业头部企业。同步动工联丰（顺德）供应链智汇产业园，总投资约20亿元，与库卡合作建设国内首创\"库架一体\"全自动立体智能仓库。8月12日顺德具身智能精密制造产业园在伦教揭牌，2平方公里规划、26个产业项目131亿元投资，已形成\"大脑+眼睛+身体\"具身智能全链条布局。"}, {"company": "深度分析", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 💼 工作就业：佛山顺德机器人产业集群进入\"2.0版\"——从\"建厂\"升级到\"建链\"。顺德本地+深圳外溢+广佛同城的就近岗位需求大涨，尤其是能跨\"机械+电子+AI\"边界的人才，Gofy这种\"机械+采购+供应链\"复合背景稀缺度极高。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "2. 📈 职业发展：\"大脑（大良）+眼睛（容桂）+身体（伦教）+核心（北滘）\"的产业分工，提示一个清晰的职业定位策略——锁定\"伦教具身智能精密制造\"这个赛道做长期投入。精密机械加工是你最熟悉的能力，将其延伸到机器人结构件、传感模组外壳等场景，转型路径平滑。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "3. 🏭 行业发展：联丰+库卡合作的\"黑灯智库\"（无人化立体仓库+数字孪生）开创国内先河，意味着智能仓储+数字孪生正在从PPT走向落地。机械/装备类企业的\"软件含量\"开始被重新定义——未来3-5年，\"卖硬件+卖软件+卖服务\"的复合模式会更受客户欢迎。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "4. 🚀 创业机会：液冷项目可以主动对接\"顺德具身智能精密制造产业园\"的整机厂商，提供\"紧凑型算力+视觉模组\"散热方案；3D打印业务则可以切入\"机器人零部件小批量定制\"赛道，单价比消费级人像高3-5倍。同时\"无人仓+数字孪生\"相关咨询服务（实施顾问）也有市场空间。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "5. 💰 投资机会：佛山/顺德的机器人+智能制造板块属于\"近水楼台\"机会。联丰集团是港股老牌供应链公司（港股上市），若有供应链金融相关产品可关注；本地优质未上市公司（库卡供应链合作伙伴）的Pre-IPO/股权机会可留意（合规风险需评估）。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：证券时报网/同花顺。发布时间：2026-08-04"}, {"company": "摘要", "position": "", "salary": "", "location": "", "tag": "", "body": "星徽股份（300464）服务器滑轨制造基地在佛山顺德五沙工业园区正式投产。公司依托30余年精密制造积淀，正式切入AI算力基础设施核心部件赛道。AI服务器单台重量普遍突破50kg，对滑轨承载、超薄化设计、抗震稳定性提出更高要求。该领域国产化渗透率早期，公司已掌握精密五金冲压、液压成型、滚道成型等多项核心工艺。"}, {"company": "深度分析", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 💼 工作就业：星徽在佛山的投产意味着本地出现了一个AI硬件精密制造新基地，对应的精密五金、模具开发、SQE、质量工程师、采购岗位都有需求。Gofy作为佛山本地人且有精密制造采购经验，是这类公司的天然候选人——建议主动投递。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "2. 📈 职业发展：服务器滑轨这一零部件看似\"小件\"，但具备\"卡位+国产替代+大空间\"三重特性。能在AI硬件产业链上找到自己有能力切入的细分零部件赛道，再做3-5年深耕，就是非常好的职业锚点。星徽这个赛道值得去聊聊。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "3. 🏭 行业发展：AI服务器对机柜内部件（滑轨/PDU/连接器/液冷接头/理线架）的需求结构正在升级——从\"工业级\"到\"算力级\"，对应的规格标准、价格、利润率都上一个台阶。佛山/顺德的精密制造企业正在被这一波\"AI硬件化\"卷出新一轮机会。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "4. 🚀 创业机会：液冷项目的供应链上同样需要\"精密五金件\"，可以主动接洽星徽这类企业的供应商网络，嫁接他们的精密制造能力补足液冷模组所需的结构件。3D打印业务则可切入\"小批量服务器机柜配件打样\"（如治具、夹具），单价虽小但订单稳定。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "5. 💰 投资机会：星徽股份（300464）已上市，是A股直接对标\"AI算力硬件精密件\"的小市值标的。但需注意——精密五金行业本身毛利率不高（约15-25%），AI概念是否能转化为持续业绩兑现需要持续跟踪。建议以\"成长股ETF+组合分散\"方式参与，不重仓单股。"}, {"company": "一、今日信号盘点", "position": "", "salary": "", "location": "", "tag": "", "body": "英伟达5000亿AI融资平台启航 → 算力被定性为\"新型基础设施\"，液冷/电源/机柜全产业链受益。炬光科技/源杰科技65亿定增 → 光通信+光芯片赛道扩产。国仪量子上市 → 量子科技\"IPO元年\"，但产业兑现仍需3-5年"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "顺德北滘机器人谷二期揭牌+伦教具身智能精密制造产业园揭牌 → 佛山机器人产业链\"2.0版\"加速。星徽股份顺德投产服务器滑轨 → 佛山企业切入AI硬件新赛道。C919首次国际商业航班 → 国产大飞机\"出海\"突破"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "7月新能源车销量占比首破60% + 出口连续两月破百万 → 中国汽车产业链进入\"深水区\"。宇树科技上市 → 人形机器人进入\"量产竞争\"阶段"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "英伟达模式的\"循环融资\"质疑 → 算力赛道存在一定泡沫风险"}, {"company": "二、对你的行动建议", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 简历更新：在采购简历的\"核心能力\"模块补充：。\"AI硬件供应链（服务器/液冷/机柜）经验\"。\"汽车出海配套/海外供应链体系建设\"标签。\"精密制造+机器人结构件\"赛道储备。2. 投递行动：针对星徽股份（300464）顺德工厂或顺德机器人谷头部企业（库卡/中大力德），主动投递\"供应链管理\"或\"精密件SQE\"岗位。3. 内容输出：在抖音/小红书发布2-3条围绕\"英伟达5000亿\"\"人形机器人量产\"的短视频，借势内容做品牌曝光"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 液冷项目升级：。把现有DIY套件升级为\"中小AI工作站成品方案\"，客单价1.5-3万元。主动接洽顺德/光谷的中小AI推理集群客户，提供\"上门部署+调试\"。2. 3D打印B端突破：。切入机器人小批量精密结构件定制，单价500-2000元/件。拓展\"小批量服务器机柜配件打样\"业务。3. 直播副业：。在BOSS直聘挂出\"AI硬件/精密制造\"行业直播搭建工程师的兼职简历。与本地机器人谷产业园谈\"展厅直播间搭建\"外包合作"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 岗位升级：锁定\"AI硬件供应链经理\"\"新能源车供应链海外业务\"\"机器人精密件SQE\"三个赛道做能力储备。2. 投资组合：。5-10% 黄金ETF（避险）。20-30% 宽基ETF（稳健）。10-15% AI/半导体/新能源主题ETF（成长，分批定投）。不碰杠杆产品、不追高个股。3. 品牌建设：孵化一个\"AI硬件散热工程师\"或\"精密制造转型教练\"的IP账号，沉淀私域用户"}, {"company": "三、风险提示", "position": "", "salary": "", "location": "", "tag": "", "body": "⚠️ AI算力赛道的\"循环融资\"质疑 + 短期估值偏高，注意回调风险。⚠️ 新能源车整车板块估值已高，关注Tier1出海/回收/商用车等结构性机会。⚠️ 宇树上市后人形机器人板块情绪面高度亢奋，远离纯题材股。⚠️ 河南/湖北/安徽/江苏中南部暴雨橙色预警持续，注意出行安全和物流时效。⚠️ 量子科技产业化早期，估值缺乏锚点，建议只通过ETF小试水"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "新华社《早知天下事》（8.13）。新浪财经/澎湃新闻/网易财经。中国汽车工业协会数据。每日经济新闻/钛媒体/科技日报。南方日报/顺德官方发布。英伟达官方博客"}];
+const totalItems = 66;
+const speakTemplate = "{company}。详细内容：{body}。";
+
+// ===== 状态 =====
+let currentIndex = 0;
+let isPlaying = false;
+let speechRate = 1.0;
+let readDoneSet = new Set();
+let synth = window.speechSynthesis;
+let currentUtterance = null;
+let selectedVoice = null;
+let voicesReady = false;
+
+// ===== 浏览器检测 =====
+function isQQBrowser() {
+    let ua = navigator.userAgent || '';
+    return /MQQBrowser|QQ\//i.test(ua);
+}
+function isUCBrowser() {
+    let ua = navigator.userAgent || '';
+    return /UCBrowser|UCWEB/i.test(ua);
+}
+function isWeChat() {
+    let ua = navigator.userAgent || '';
+    return /MicroMessenger/i.test(ua);
+}
+function isUnsupportedBrowser() {
+    return isQQBrowser() || isUCBrowser() || isWeChat();
+}
+
+// ===== 初始化 =====
+function init() {
+    // 浏览器检测：不支持的直接提示换浏览器
+    if (isUnsupportedBrowser()) {
+        let browserName = isQQBrowser() ? 'QQ浏览器' : (isUCBrowser() ? 'UC浏览器' : '微信内置浏览器');
+        showBrowserWarning(browserName);
+        return;
+    }
+
+    if (!synth) {
+        showBrowserWarning('当前浏览器');
+        return;
+    }
+
+    // Chrome/Edge: voices 通过异步事件加载
+    let voices = synth.getVoices();
+    if (voices && voices.length > 0) {
+        pickVoice(voices);
+    }
+
+    // 监听语音列表加载（关键！Android Chrome 需要等事件）
+    synth.onvoiceschanged = function() {
+        voices = synth.getVoices();
+        if (voices && voices.length > 0 && !voicesReady) {
+            pickVoice(voices);
+            document.getElementById('floatText').textContent =
+                '✅ 语音引擎就绪 (' + voices.length + '个) — 点🎧开始朗读';
+            document.getElementById('progressText').textContent = '就绪 ✓';
+        }
+    };
+
+    // 超时兜底：2秒后强制尝试
+    setTimeout(function() {
+        if (!voicesReady) {
+            voices = synth.getVoices();
+            if (voices && voices.length > 0) {
+                pickVoice(voices);
+            }
+            if (selectedVoice) {
+                document.getElementById('floatText').textContent =
+                    '✅ 语音引擎: ' + selectedVoice.name;
+                document.getElementById('progressText').textContent = '就绪 ✓';
+            } else {
+                document.getElementById('floatText').textContent =
+                    '⚠️ 未找到中文语音，请用系统自带 Chrome/Edge 打开';
+                document.getElementById('progressText').textContent = '无中文语音 ⚠️';
+            }
+            voicesReady = true;
+        }
+    }, 2500);
+}
+
+function showBrowserWarning(browserName) {
+    // 隐藏控制栏播放按钮
+    document.getElementById('playBtn').style.opacity = '0.3';
+    document.getElementById('playBtn').style.pointerEvents = 'none';
+    // 底部显示换浏览器提示
+    document.getElementById('floatHint').style.background = 'rgba(211,47,47,0.95)';
+    document.getElementById('floatText').innerHTML =
+        '❌ ' + browserName + '不支持语音朗读<br><small>👉 请用 <b>Chrome</b> 或 <b>Edge</b> 浏览器打开</small>';
+    document.getElementById('progressText').textContent = '❌ 浏览器不支持';
+    // 页面顶部插入醒目提示横幅
+    let banner = document.createElement('div');
+    banner.style.cssText = 'background:#FFEBEE;border-bottom:2px solid #EF5350;padding:16px;text-align:center;';
+    banner.innerHTML =
+        '<div style="font-size:40px;margin-bottom:8px;">🚫</div>' +
+        '<div style="font-size:15px;font-weight:bold;color:#C62828;margin-bottom:6px;">' +
+        browserName + ' 不支持语音朗读</div>' +
+        '<div style="font-size:14px;color:#555;line-height:1.6;">' +
+        '请用 <b style="color:#1A73E8;">Chrome</b> 或 <b style="color:#0078D4;">Edge</b> 浏览器打开即可朗读<br>' +
+        '<span style="font-size:12px;color:#999;">（应用商店搜索"Chrome"或"Edge"下载）</span></div>';
+    let header = document.querySelector('.header');
+    if (header) {
+        header.parentNode.insertBefore(banner, header);
+    }
+    // 禁用所有岗位点击
+    document.querySelectorAll('.job-item').forEach(function(el) {
+        el.style.pointerEvents = 'none';
+        el.style.opacity = '0.5';
+    });
+}
+
+function pickVoice(voices) {
+    // 优先级：zh-CN 中文女声 > zh-CN 任意 > zh-* > 第一个
+    let preferred = ['zh-CN', 'zh-Hans', 'zh-HK', 'zh-TW', 'zh'];
+    for (let lang of preferred) {
+        for (let v of voices) {
+            if (v.lang && v.lang.startsWith(lang)) {
+                // 优先女声
+                if (v.name.toLowerCase().indexOf('female') >= 0 ||
+                    v.name.indexOf('女') >= 0) {
+                    selectedVoice = v;
+                    voicesReady = true;
+                    return;
+                }
+            }
+        }
+    }
+    // 中文任意
+    for (let lang of preferred) {
+        for (let v of voices) {
+            if (v.lang && v.lang.startsWith(lang)) {
+                selectedVoice = v;
+                voicesReady = true;
+                return;
+            }
+        }
+    }
+    // 无中文语音 → 用第一个兜底
+    if (voices.length > 0) {
+        selectedVoice = voices[0];  // 用第一个兜底
+    }
+    voicesReady = true;
+}
+
+// ===== 构建朗读文本 =====
+function buildSpeakText(item) {
+    let raw = speakTemplate
+        .replace('{company}', item.company || '')
+        .replace('{position}', item.position || '')
+        .replace('{salary}', item.salary || '面议')
+        .replace('{location}', item.location || '')
+        .replace('{body}', item.body || '');
+    return _cleanForTTS(raw);
+}
+
+// ===== TTS 文本清洗：去除所有 Markdown 残留符号 =====
+function _cleanForTTS(text) {
+    if (!text) return text;
+    let cleaned = text;
+    // 去除 Markdown 标题标记 (# ## ### #### 等)
+    cleaned = cleaned.replace(/#{1,6}\s*/g, '');
+    // 去除加粗/斜体标记 (** __ * _)
+    cleaned = cleaned.replace(/\*{1,2}|_/g, '');
+    // 去除管道符 (表格)
+    cleaned = cleaned.replace(/\|/g, ' ');
+    // 去除反引号 (代码)
+    cleaned = cleaned.replace(/`+/g, '');
+    // 去除波浪线
+    cleaned = cleaned.replace(/~+/g, '');
+    // 去除分散的 -  :  标记（但不破坏正常连字符和冒号）
+    cleaned = cleaned.replace(/：/g, ':');
+    // 压缩多余空格
+    cleaned = cleaned.replace(/\s+/g, ' ');
+    // 去除连续连字符
+    cleaned = cleaned.replace(/-{2,}/g, '');
+    return cleaned.trim();
+}
+
+// ===== 朗读单条 =====
+function speakItem(index) {
+    if (index < 0 || index >= totalItems) return;
+
+    currentIndex = index;
+
+    synth.cancel();
+    let item = items[index];
+    let text = buildSpeakText(item);
+
+    let utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'zh-CN';
+    utterance.rate = speechRate;
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+    if (selectedVoice) {
+        utterance.voice = selectedVoice;
+    }
+
+    utterance.onstart = function() {
+        updateUI(index);
+        document.getElementById('nowPlaying').classList.add('active');
+        document.getElementById('nowPlayingText').textContent =
+            (item.company || '') + ' ' + (item.position || '');
+    };
+
+    utterance.onend = function() {
+        readDoneSet.add(index);
+        updateReadDone(index);
+        let next = index + 1;
+        if (next < totalItems && isPlaying) {
+            speakItem(next);
+        } else if (next >= totalItems) {
+            stopPlayback();
+            document.getElementById('floatText').textContent = '✅ 全部朗读完成！';
+            document.getElementById('progressText').textContent = '朗读完成';
+            document.getElementById('progressBar').style.width = '100%';
+            document.getElementById('progressLabel').textContent = totalItems + '/' + totalItems;
+        }
+    };
+
+    utterance.onerror = function(e) {
+        if (e.error !== 'canceled' && e.error !== 'interrupted') {
+            let errMsg = '⚠️ 朗读出错: ' + (e.error || 'unknown');
+            document.getElementById('progressText').textContent = errMsg;
+            document.getElementById('floatText').textContent =
+                errMsg + ' — 可尝试用系统自带浏览器打开';
+            let next = index + 1;
+            if (next < totalItems && isPlaying) {
+                setTimeout(function() { speakItem(next); }, 500);
+            }
+        }
+    };
+
+    currentUtterance = utterance;
+    synth.speak(utterance);
+}
+
+// ===== 播放控制 =====
+function togglePlay() {
+    if (isPlaying) {
+        pausePlayback();
+    } else {
+        startPlayback();
+    }
+}
+
+function startPlayback() {
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    document.getElementById('progressText').textContent = '朗读中...';
+    document.getElementById('floatText').textContent =
+        selectedVoice
+            ? '🔊 朗读中 (' + selectedVoice.name + ') ...'
+            : '🔊 朗读中 (系统默认语音)...';
+    speakItem(currentIndex);
+}
+
+function pausePlayback() {
+    isPlaying = false;
+    synth.cancel();
+    document.getElementById('playIcon').textContent = '🎧';
+    document.getElementById('playBtn').classList.remove('playing');
+    document.getElementById('nowPlaying').classList.remove('active');
+    document.getElementById('floatText').textContent = '⏸️ 已暂停，点击继续';
+    document.getElementById('progressText').textContent = '已暂停';
+}
+
+function stopPlayback() {
+    isPlaying = false;
+    synth.cancel();
+    document.getElementById('playIcon').textContent = '🎧';
+    document.getElementById('playBtn').classList.remove('playing');
+    document.getElementById('nowPlaying').classList.remove('active');
+    document.getElementById('floatText').textContent = '✅ 朗读完成';
+}
+
+function skipNext() {
+    synth.cancel();
+    let next = (currentIndex + 1) % totalItems;
+    currentIndex = next;
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function skipPrev() {
+    synth.cancel();
+    let prev = currentIndex - 1;
+    if (prev < 0) prev = totalItems - 1;
+    currentIndex = prev;
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function jumpTo(index) {
+    synth.cancel();
+    currentIndex = index;
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function setSpeed(val) {
+    speechRate = parseFloat(val);
+    document.getElementById('floatText').textContent =
+        '🎵 朗读速度: ' + val + 'x';
+    setTimeout(function() {
+        if (isPlaying) {
+            document.getElementById('floatText').textContent = '🔊 朗读中...';
+        }
+    }, 1500);
+}
+
+// ===== UI更新 =====
+function updateUI(index) {
+    // 进度条
+    let pct = (index / totalItems) * 100;
+    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent = (index + 1) + '/' + totalItems;
+    document.getElementById('progressText').textContent =
+        '正在朗读第 ' + (index + 1) + ' ' + '条新闻'.replace('个岗位','').replace('条新闻','');
+
+    // 高亮当前
+    document.querySelectorAll('.job-item').forEach(function(el) {
+        el.classList.remove('reading');
+    });
+    let currentEl = document.querySelector('.job-item[data-index="' + index + '"]');
+    if (currentEl) {
+        currentEl.classList.add('reading');
+        currentEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+function updateReadDone(index) {
+    let el = document.querySelector('.job-item[data-index="' + index + '"]');
+    if (el) {
+        el.classList.add('read-done');
+    }
+}
+
+// ===== 启动 =====
+init();
+
+// ===== 移动端保持屏幕唤醒（可选） =====
+if (navigator.wakeLock) {
+    try {
+        navigator.wakeLock.request('screen');
+    } catch(e) {}
+}
+</script>
+</body>
+</html>
