@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>📰 每日要闻（20260819）</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f5f5f5;
+    color: #333;
+    padding-bottom: 80px;
+}
+
+/* ===== 顶部控制栏 ===== */
+.control-bar {
+    position: sticky; top:0; z-index:100;
+    background: linear-gradient(135deg, #1A73E8 0%, #4FC3F7 100%);
+    padding: 12px 16px;
+    box-shadow: 0 2px 12px rgba(26,115,232,0.3);
+}
+.control-row {
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+}
+.control-btn {
+    width: 48px; height: 48px;
+    border: none; border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    font-size: 22px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
+.control-btn:active { transform: scale(0.9); background: rgba(255,255,255,0.35); }
+.control-btn.play-btn {
+    width: 64px; height: 64px;
+    background: #fff;
+    color: #1A73E8;
+    font-size: 28px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+.control-btn.play-btn.playing { color: #FF6B35; }
+
+.speed-select {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 14px;
+    cursor: pointer;
+    -webkit-appearance: none;
+}
+.speed-select option { color: #333; }
+
+/* ===== 进度信息 ===== */
+.progress-row {
+    display: flex; align-items: center; gap: 10px;
+    margin-top: 8px;
+    color: rgba(255,255,255,0.9);
+    font-size: 13px;
+}
+.progress-bar-outer {
+    flex: 1; height: 4px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 2px;
+    overflow: hidden;
+}
+.progress-bar-inner {
+    height: 100%;
+    background: #fff;
+    border-radius: 2px;
+    transition: width 0.3s;
+    width: 0%;
+}
+.progress-text {
+    white-space: nowrap;
+    min-width: 90px;
+    text-align: right;
+}
+
+/* ===== 当前朗读提示 ===== */
+.now-playing {
+    background: #FFF9C4;
+    padding: 8px 16px;
+    font-size: 13px;
+    color: #F57F17;
+    text-align: center;
+    display: none;
+    border-bottom: 2px solid #FFD54F;
+}
+.now-playing.active { display: block; }
+
+/* ===== 标题区 ===== */
+.header {
+    background: #fff;
+    padding: 20px 16px 12px;
+    border-bottom: 1px solid #eee;
+}
+.header h1 { font-size: 18px; color: #1A73E8; margin-bottom: 4px; }
+.header .subtitle { font-size: 13px; color: #888; }
+
+/* ===== 岗位列表 ===== */
+.job-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 14px 16px;
+    background: #fff;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
+.job-item:active { background: #f5f5f5; }
+.job-item.reading {
+    background: #E3F2FD;
+    border-left: 4px solid #1A73E8;
+    padding-left: 12px;
+}
+.job-item.read-done {
+    opacity: 0.6;
+}
+
+.job-index {
+    width: 32px; height: 32px;
+    background: #f0f0f0;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: bold;
+    color: #888;
+    flex-shrink: 0;
+}
+.job-item.reading .job-index {
+    background: #1A73E8;
+    color: #fff;
+}
+.job-item.read-done .job-index {
+    background: #4CAF50;
+    color: #fff;
+}
+
+.job-info { flex:1; min-width:0; }
+.job-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    display: flex; align-items: center; gap: 6px;
+    flex-wrap: wrap;
+}
+.job-detail {
+    font-size: 13px;
+    color: #666;
+    display: flex; flex-wrap: wrap; gap: 8px;
+}
+.position { color: #1A73E8; }
+.salary { color: #FF6B35; font-weight: bold; }
+.location { color: #888; }
+
+.tag {
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    white-space: nowrap;
+}
+.tag-new { background: #E8F5E9; color: #2E7D32; }
+.tag-repeat { background: #FFF3E0; color: #E65100; }
+.tag-update { background: #E3F2FD; color: #1565C0; }
+
+/* ===== 底部浮动条 ===== */
+.float-hint {
+    position: fixed; bottom: 0; left:0; right:0;
+    background: rgba(26,115,232,0.95);
+    color: #fff;
+    text-align: center;
+    padding: 10px 16px;
+    font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px;
+    z-index: 99;
+}
+.float-hint .icon { font-size: 20px; }
+
+/* ===== 状态标记 ===== */
+.status-badge {
+    display: inline-block;
+    background: #4CAF50;
+    color: #fff;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+    0%,100% { opacity:1; }
+    50% { opacity:0.5; }
+}
+</style>
+</head>
+<body>
+
+<!-- 控制栏 -->
+<div class="control-bar">
+    <div class="control-row">
+        <button class="control-btn" onclick="skipPrev()" title="上一条">⏮️</button>
+        <button class="control-btn play-btn" id="playBtn" onclick="togglePlay()" title="播放/暂停">
+            <span id="playIcon">🎧</span>
+        </button>
+        <button class="control-btn" onclick="skipNext()" title="下一条">⏭️</button>
+        <select class="speed-select" id="speedSelect" onchange="setSpeed(this.value)">
+            <option value="0.8">0.8x</option>
+            <option value="1.0" selected>1x</option>
+            <option value="1.2">1.2x</option>
+            <option value="1.5">1.5x</option>
+        </select>
+    </div>
+    <div class="progress-row">
+        <span id="progressLabel">0/21</span>
+        <div class="progress-bar-outer">
+            <div class="progress-bar-inner" id="progressBar"></div>
+        </div>
+        <span class="progress-text" id="progressText">准备就绪</span>
+    </div>
+</div>
+
+<!-- 当前朗读提示 -->
+<div class="now-playing" id="nowPlaying">
+    🔊 正在朗读：<span id="nowPlayingText"></span>
+</div>
+
+<!-- 标题 -->
+<div class="header">
+    <h1>📰 每日要闻（20260819）</h1>
+    <p class="subtitle">21条新闻 | 点🎧按钮浏览器自动朗读</p>
+</div>
+
+<!-- 岗位/新闻列表 -->
+<div id="jobList">
+
+        <div class="job-item" data-index="0" onclick="jumpTo(0)">
+            <div class="job-index">1</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：中新经纬 / 财联社 / 腾讯新闻。摘要：宇树科技8月19日登陆科创板，发行价150.80元/股，市值约610亿元，被誉为"人形机器人第一股"。王兴兴持股市值超180亿元有望成科创板90后首富，美团、红杉、经纬三家外部股东净回报或超115亿元。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="1" onclick="jumpTo(1)">
+            <div class="job-index">2</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">五维度深度分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💼 工作就业：宇树上市意味着人形机器人从概念走向规模化商业化，对硬件工程师、算法工程师、机械结构工程师需求暴增。Gofy机械专业背景+采购经验，如果想从制造业转行到机器人赛道，建议关注具身智能硬件供应链经理岗（顺德伦教产业园正缺这类人才）。。📈 职业发展：人形机器人产业链的崛起正在重塑"机械+电子+...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="2" onclick="jumpTo(2)">
+            <div class="job-index">3</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：佛山日报 / 南方都市报 / 科技日报（20260812）。摘要：8月12日，顺德具身智能精密制造产业园在伦教揭牌，规划总面积约2平方公里，主攻机器人整机、精密结构件、智能配套器件三大方向，已集聚高新技术企业超40家、专精特新企业13家，累计落地项目26个，总投资约131亿元，达产后预计年产值...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="3" onclick="jumpTo(3)">
+            <div class="job-index">4</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">五维度深度分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💼 工作就业：顺德伦教距离佛山三水白坭仅40分钟车程，2万+产业从业人员缺口大。Gofy作为顺德周边供应链从业者，可以重点关注"具身智能硬件制造"方向的供应链管理岗、精密结构件采购岗、机器人BOM优化岗——这些岗位薪资会比传统机械采购高出30%50%。。📈 职业发展：顺德"脑+眼+身"三园分工已成体...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="4" onclick="jumpTo(4)">
+            <div class="job-index">5</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：天眼新闻 / 知知贵阳（20260811）。摘要：贵州电网公司自主研发的全省首套浸没式液冷数据中心装置（算力方舱）在贵安新区建成投用。40英尺标准集装箱舱内布设4台浸没式液冷机柜，使用氟化液、合成油等专用液体直接包裹服务器带走热量。最优PUE值预计不超过1.15，远优于全国平均1.34。预制模...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="5" onclick="jumpTo(5)">
+            <div class="job-index">6</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">五维度深度分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💼 工作就业：液冷数据中心建设催生"液冷系统工程师""冷却液配方师""浸没式运维工程师"等新兴岗位，Gofy的氟化液方向正好卡位。当前深圳/贵州/贵安/和林格尔等算力枢纽都在抢液冷人才，13年经验月薪可达2550K。。📈 职业发展：浸没式液冷是国家"东数西算"工程的核心配套技术，从贵州电网的国字头试...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="6" onclick="jumpTo(6)">
+            <div class="job-index">7</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：中国发展网（20260519）。摘要：京东正式上线3D打印定制服务，聚焦真人定制人偶与宠物定制玩偶两大场景。用户上传清晰照片即可一键生成3D效果图，最快7天收货。采用光敏树脂全彩3D打印工艺。背后的核心供应商是速哇3D摄影（厦门速相科技），市场份额达34%居行业第一。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="7" onclick="jumpTo(7)">
+            <div class="job-index">8</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">五维度深度分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💼 工作就业：京东入场意味着3D打印定制服务进入"主流电商平台"视野，行业即将爆发。相关岗位需求：3D建模师（特别是人像建模）、上色喷涂工、电商运营、新媒体内容创作。Gofy已有的光敏树脂打印+上色能力是稀缺复合技能。。📈 职业发展：当京东、速哇把价格打到999元/人像时，传统线下3D照相馆的溢价空...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="8" onclick="jumpTo(8)">
+            <div class="job-index">9</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：头条号 / 万物云联网（20260819）。摘要：英伟达首次公开13F文件曝光，把近300亿美元投进英特尔（约2.15亿股，占组合近一半），同时重仓光互连（Coherent）、诺基亚、AI云（CoreWeave、Nebius）等关键环节。Jensen Huang的策略是"不是只卖铲子，而是把整...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="9" onclick="jumpTo(9)">
+            <div class="job-index">10</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">五维度深度分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💼 工作就业：AI供应链全链布局意味着"硬件+光通信+电力+数据中心"四类岗位全线紧缺。Gofy作为供应链管理者，如果能在AI硬件BOM管理（GPU、HBM、光模块、液冷板）方向建能力，未来10年都不愁就业。。📈 职业发展：AI超级周期下半场，拼的是"整条链的可控性"。Gofy当前在斯多里（制罐装备...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="10" onclick="jumpTo(10)">
+            <div class="job-index">11</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：南方日报（20260807）/ 佛山新闻网。摘要：8月5日2026佛山新型电力系统装备产业招商大会举行，国家电网、南方电网、东方电气、上海电气、正泰集团等龙头悉数到场，签约投资总额超80亿元。佛山将围绕"源、网、荷、储、算、碳"六大维度释放总投资超1000亿元，直接带动电力装备采购需求超600...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="11" onclick="jumpTo(11)">
+            <div class="job-index">12</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">五维度深度分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💼 工作就业：佛山电力装备千亿集群直接拉动"变压器、储能、电力电子、智能电网"四大领域采购岗位爆发。Gofy作为佛山本地人+制造业采购经验，正是被抢的人才——上海电气、正泰电气、中鹏电气都在佛山扩产。。📈 职业发展：从"制罐装备"到"电力装备"的跨界供应链管理，是Gofy职业升级的优质路径。电力装备...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="12" onclick="jumpTo(12)">
+            <div class="job-index">13</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：南方都市报（20260818）/ 财联社。摘要：百度2026年二季度总营收313亿元，核心AI新业务收入125亿元，占一般性业务50%且连续两季过半。GPU云同比增283%，萝卜快跑覆盖28城、全无人里程超2.4亿公里。李彦宏称近期引进顶级AI人才推动文心跻身顶尖行列。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="13" onclick="jumpTo(13)">
+            <div class="job-index">14</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">五维度深度分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💼 工作就业：百度AI业务过半标志着传统互联网公司向"AI基础设施提供商"转型成功。对供应链从业者意味着"GPU算力采购""AI数据中心建设"成新职业方向。Gofy可以关注百度的"AI供应链"相关岗位（B端销售/采购经理）。。📈 职业发展：百度转型路径说明"传统企业AI化"是确定性趋势。Gofy供应...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="14" onclick="jumpTo(14)">
+            <div class="job-index">15</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：中国经营报（20260818）/ 腾讯新闻。摘要：多家海外AI企业以约600美元/小时价格购买中国人形机器人真机训练数据，较国内5001000元/小时高出近10倍。中美在算法层竞争、在数据/算力/电力层形成协作与互补的新竞争逻辑。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="15" onclick="jumpTo(15)">
+            <div class="job-index">16</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">五维度深度分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💼 工作就业：人形机器人训练数据采集员、标注员、质检员成为新兴岗位。Gofy机械专业可以转型做"机器人真机测试工程师"——这是采集高质量训练数据的关键角色，薪资可观。。📈 职业发展：从"数据消费方"到"数据生产方"的视角切换，是AI时代的核心能力。Gofy可以通过短视频内容（机器人评测、训练数据科普...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="16" onclick="jumpTo(16)">
+            <div class="job-index">17</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📌 核心信号（三大主线）</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. "机器人+AI"主线爆发：宇树上市+顺德具身智能产业园+海外高价采购训练数据，机器人赛道从概念走向规模化商业化，未来5年将持续释放供应链订单。。2. "液冷+AI算力"主线确认：贵州首个液冷算力方舱落地+中金预测市场规模年增273%，液冷是AI时代的"水电煤"基础设施，Gofy的浸没式液冷创业...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="17" onclick="jumpTo(17)">
+            <div class="job-index">18</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🎯 行动建议（按优先级）</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">关注宇树科创板上市首日表现，评估机器人赛道投资热度。更新LinkedIn/猎聘简历，突出"机械+采购+液冷"复合标签，对标顺德具身智能产业园岗位。整理3D打印副业"差异化定位"——避开京东999元价格带，主打高端定制+IP衍生</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="18" onclick="jumpTo(18)">
+            <div class="job-index">19</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">完成浸没式液冷机箱原型机2.0（氟化液方案），制作35个产品演示视频。建立"机器人+供应链"短视频内容矩阵（抖音/小红书），每周23条。对接顺德伦教产业园招商办，争取以"供应链服务商/3D打印服务商"身份入园</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="19" onclick="jumpTo(19)">
+            <div class="job-index">20</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">争取与上海电气、东方电气等三水区链主企业合作，成为其供应链生态合作方。把浸没式液冷项目从个人DIY升级为小批量定制，目标客户：AI开发者/小型智算中心。3D打印副业打造"广府文化IP定制"品牌，争取年内营收突破20万元</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="20" onclick="jumpTo(20)">
+            <div class="job-index">21</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">⚠️ 风险提示</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">股市风险：8月19日纳指跌1.33%，存储/光通信/AI云服务板块集体下挫，AI算力链估值波动加剧，建议控制仓位、分批建仓。政策风险：美国拟逼35国在中美AI竞赛中"二选一"，外贸/跨境业务需关注地缘政治影响。竞争风险：京东+速哇入局3D打印C端定制，行业价格战可能加速，必须尽快建立差异化壁垒。创业...</span>
+                </div>
+            </div>
+        </div>
+</div>
+
+<!-- 底部提示 -->
+<div class="float-hint" id="floatHint">
+    <span class="icon">🎧</span>
+    <span id="floatText">点击顶部播放按钮开始朗读</span>
+</div>
+
+<script>
+// ===== 数据 =====
+const items = [{"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：中新经纬 / 财联社 / 腾讯新闻。摘要：宇树科技8月19日登陆科创板，发行价150.80元/股，市值约610亿元，被誉为\"人形机器人第一股\"。王兴兴持股市值超180亿元有望成科创板90后首富，美团、红杉、经纬三家外部股东净回报或超115亿元。"}, {"company": "五维度深度分析", "position": "", "salary": "", "location": "", "tag": "", "body": "💼 工作就业：宇树上市意味着人形机器人从概念走向规模化商业化，对硬件工程师、算法工程师、机械结构工程师需求暴增。Gofy机械专业背景+采购经验，如果想从制造业转行到机器人赛道，建议关注具身智能硬件供应链经理岗（顺德伦教产业园正缺这类人才）。。📈 职业发展：人形机器人产业链的崛起正在重塑\"机械+电子+算法\"的复合型人才需求曲线。供应链管理者如果能补足机器人BOM管理、伺服电机/谐波减速器/激光雷达等核心零部件成本控制能力，未来5年职业天花板会从500万年薪级别跃迁到千万级。。🏭 行业发展：宇树上市标志\"机器人+AI\"赛道进入放量元年，对机械/钣金/精密结构件/铸造等上游供应链是确定性利好。佛山顺德伦教具身智能精密制造产业园已集聚高新技术企业超40家，专精特新13家——供应链订单会持续溢出。。🚀 创业机会：Gofy正在探索液冷+3D打印两个方向，可以借助机器人赛道寻找B端切入点：① 为机器人厂商提供\"非标结构件\"小批量定制（3D打印优势）；② 浸没式液冷可切入机器人控制柜散热（机器人电机+算力板同样发热严重）。。💰 投资机会：科创板打新关注宇树首日表现；中长期可关注人形机器人产业链上游\"五指灵巧手+谐波减速器+伺服电机\"三大卡脖子环节的国产替代标的；佛山本地的埃斯顿、拓斯达、汇川技术等可作为供应链行业观察标的。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：佛山日报 / 南方都市报 / 科技日报（2026-08-12）。摘要：8月12日，顺德具身智能精密制造产业园在伦教揭牌，规划总面积约2平方公里，主攻机器人整机、精密结构件、智能配套器件三大方向，已集聚高新技术企业超40家、专精特新企业13家，累计落地项目26个，总投资约131亿元，达产后预计年产值约140亿元。"}, {"company": "五维度深度分析", "position": "", "salary": "", "location": "", "tag": "", "body": "💼 工作就业：顺德伦教距离佛山三水白坭仅40分钟车程，2万+产业从业人员缺口大。Gofy作为顺德周边供应链从业者，可以重点关注\"具身智能硬件制造\"方向的供应链管理岗、精密结构件采购岗、机器人BOM优化岗——这些岗位薪资会比传统机械采购高出30%-50%。。📈 职业发展：顺德\"脑+眼+身\"三园分工已成体系（大良=算法大脑、容桂=视觉感知、伦教=精密制造），这是Gofy供应链能力的\"天时地利\"——机械采购背景+精密制造经验，正好对接\"身体\"产业园的硬件需求。建议深耕精密结构件CNC、压铸、注塑的供应商管理体系。。🏭 行业发展：顺德是全国最大工业机器人生产基地（年产量占全国6%），具身智能产业园落地意味着传统精密制造业向智能化升级的拐点已经到来。8000+规上企业的数字化转型会释放海量\"非标自动化产线\"采购需求。。🚀 创业机会：Gofy可以以\"顺德具身智能精密制造产业园\"为目标客户群，提供：① 非标自动化设备采购外包服务；② 精密结构件3D打印打样（小批量+急件+异形件，这是光敏树脂打印机的优势场景）；③ 液冷方案接入机器人控制柜的工程化试点。。💰 投资机会：关注顺德本地机器人产业链上市公司（如新宝股份、科达制造、伊之密）的供应链订单变化；同时可关注伦教产业园的招商引资动态——链主企业（银星智能、艾凯、日钢）的产业链上下游是天然投资标的池。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：天眼新闻 / 知知贵阳（2026-08-11）。摘要：贵州电网公司自主研发的全省首套浸没式液冷数据中心装置（算力方舱）在贵安新区建成投用。40英尺标准集装箱舱内布设4台浸没式液冷机柜，使用氟化液、合成油等专用液体直接包裹服务器带走热量。最优PUE值预计不超过1.15，远优于全国平均1.34。预制模块化建设工期从18-24个月压缩至3个月，初期投资节约40%-50%。"}, {"company": "五维度深度分析", "position": "", "salary": "", "location": "", "tag": "", "body": "💼 工作就业：液冷数据中心建设催生\"液冷系统工程师\"\"冷却液配方师\"\"浸没式运维工程师\"等新兴岗位，Gofy的氟化液方向正好卡位。当前深圳/贵州/贵安/和林格尔等算力枢纽都在抢液冷人才，1-3年经验月薪可达25-50K。。📈 职业发展：浸没式液冷是国家\"东数西算\"工程的核心配套技术，从贵州电网的国字头试点可以看出——这是\"国家队\"押注的方向。Gofy如果在浸没式氟化液方案上持续深耕，未来可以切入数据中心运营商的供应链体系（B端客户单价高、复购稳）。。🏭 行业发展：中金预测2026年全球智算中心液冷市场规模将达1147亿元，同比增长273%。冷板式液冷是当下主流，浸没式液冷是超高功率密度AI集群的未来——氟化液方案目前主要被3M、科慕等国外企业垄断，国产替代空间巨大。。🚀 创业机会：Gofy\"个人民用浸没式液冷主机/机箱\"创业方向恰好踩中行业风口。建议：① 优先做\"小型化液冷工作站\"原型机（针对AI开发者个人用户）；② 与高校实验室/算力中心合作做\"氟化液配方+机箱一体化方案\"；③ 个人GPU液冷市场教育成本高，但单价利润高（5000-30000元/台）。。💰 投资机会：关注液冷赛道上市公司：康盛股份（冷板+浸没双线，15万片/年产能）、英维克、佳力图、飞龙股份、申菱股份；冷却液环节关注新宙邦（氟化液）、巨化股份、三美股份。板块近期波动较大，建议分批建仓。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：中国发展网（2026-05-19）。摘要：京东正式上线3D打印定制服务，聚焦真人定制人偶与宠物定制玩偶两大场景。用户上传清晰照片即可一键生成3D效果图，最快7天收货。采用光敏树脂全彩3D打印工艺。背后的核心供应商是速哇3D摄影（厦门速相科技），市场份额达34%居行业第一。"}, {"company": "五维度深度分析", "position": "", "salary": "", "location": "", "tag": "", "body": "💼 工作就业：京东入场意味着3D打印定制服务进入\"主流电商平台\"视野，行业即将爆发。相关岗位需求：3D建模师（特别是人像建模）、上色喷涂工、电商运营、新媒体内容创作。Gofy已有的光敏树脂打印+上色能力是稀缺复合技能。。📈 职业发展：当京东、速哇把价格打到999元/人像时，传统线下3D照相馆的溢价空间会被压缩。但\"高端定制+特殊场景\"（婚礼手办、宠物雕像、IP衍生）依然有溢价空间——Gofy需要从\"标品走量\"升级到\"内容+服务+定制化\"。。🏭 行业发展：3D打印定制行业2026年呈现\"AI工具平民化+电商平台巨头化\"两大趋势。MIT MechStyle、Meshy AI Creative Lab、Hitem3D Sparc3D等AI建模工具让建模效率从\"周\"压缩到\"秒\"，从建模到打印的全流程成本进一步降低。Gofy必须尽早用AI工具替代手工建模才能保住竞争力。。🚀 创业机会：① 与电商平台差异化竞争，主打\"潮汕/广府文化IP\"（如醒狮、宗祠、祠堂牌坊），切入文创定制；② 做\"高端礼品定制\"（万元级商务礼品、明星IP衍生），避开京东999元价格带；③ 与婚庆影楼/景区/博物馆谈长期合作（B端单量大、客单价高）；④ 短视频内容创作（3D打印过程展示+成品效果），流量精准。。💰 投资机会：嘉立创（已上市）、光韵达（3D打印服务）、金太阳（3D打印耗材）等可作为行业观察标的。但3D打印定制服务的核心壁垒是\"流量+服务\"而非硬件，建议关注应用层品牌而非设备厂。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：头条号 / 万物云联网（2026-08-19）。摘要：英伟达首次公开13F文件曝光，把近300亿美元投进英特尔（约2.15亿股，占组合近一半），同时重仓光互连（Coherent）、诺基亚、AI云（CoreWeave、Nebius）等关键环节。Jensen Huang的策略是\"不是只卖铲子，而是把整条AI供应链都握在手里\"。"}, {"company": "五维度深度分析", "position": "", "salary": "", "location": "", "tag": "", "body": "💼 工作就业：AI供应链全链布局意味着\"硬件+光通信+电力+数据中心\"四类岗位全线紧缺。Gofy作为供应链管理者，如果能在AI硬件BOM管理（GPU、HBM、光模块、液冷板）方向建能力，未来10年都不愁就业。。📈 职业发展：AI超级周期下半场，拼的是\"整条链的可控性\"。Gofy当前在斯多里（制罐装备）做供应链经验可以迁移到\"AI服务器供应链\"——精密机械+电气+电子+液冷的跨领域采购能力，正是AI硬件供应链最稀缺的。。🏭 行业发展：光互连成为新瓶颈，Coherent与诺基亚被提前锁定。Coherent数据中心与通信业务已占总营收近八成，公司预计到2030年共封装光学（CPO）、热管理和光开关等增量市场将超过200亿美元。这意味着上游精密光学元件、特种光纤、光通信模块供应链订单确定性强。。🚀 创业机会：Gofy液冷创业项目可考虑\"AI算力柜内液冷模块\"切入（B端单价高），而非执着于C端个人机箱；3D打印副业可考虑\"光通信模块外壳定制\"非标件供应；直播副业可做\"AI算力产业链\"内容（行业分析+技术科普），流量精准。。💰 投资机会：英伟达持仓曝光带动相关概念股波动。直接相关：英特尔、Coherent（光通信）、诺基亚（AI-RAN）、CoreWeave（AI云租户）、Nebius（AI算力）。A股映射：剑桥科技（光模块）、中际旭创（光模块）、新易盛、天孚通信、华工科技。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：南方日报（2026-08-07）/ 佛山新闻网。摘要：8月5日2026佛山新型电力系统装备产业招商大会举行，国家电网、南方电网、东方电气、上海电气、正泰集团等龙头悉数到场，签约投资总额超80亿元。佛山将围绕\"源、网、荷、储、算、碳\"六大维度释放总投资超1000亿元，直接带动电力装备采购需求超600亿元。本地配套率达75%，电力设备企业超5000家。"}, {"company": "五维度深度分析", "position": "", "salary": "", "location": "", "tag": "", "body": "💼 工作就业：佛山电力装备千亿集群直接拉动\"变压器、储能、电力电子、智能电网\"四大领域采购岗位爆发。Gofy作为佛山本地人+制造业采购经验，正是被抢的人才——上海电气、正泰电气、中鹏电气都在佛山扩产。。📈 职业发展：从\"制罐装备\"到\"电力装备\"的跨界供应链管理，是Gofy职业升级的优质路径。电力装备的特点是\"项目制+长周期+高客单价\"，供应链管理的复杂度更高，相应的薪酬天花板也更高（总监级50-100万年薪）。。🏭 行业发展：佛山\"三箭齐发\"产业战略中，新型电力系统装备被摆在\"战略性新兴产业首要位置\"。上海电气输配电（华南）新型电力装备产业园选址三水聚龙湾（与Gofy白坭镇同属三水区），一期86亩、8亿元投资、2028年投产——本地供应链订单红利近在眼前。。🚀 创业机会：① 围绕电力装备提供\"非标零件+3D打印打样\"配套；② 浸没式液冷切入储能电池热管理（电池散热是储能行业刚需）；③ 与三水聚龙湾产业园谈\"创业孵化+供应链服务\"合作。。💰 投资机会：关注佛山本地电力装备龙头：东方电气（A股+H股）、上海电气（A股+H股）、正泰电器、特变电工、思源电气、亨通光电、中鹏电气（新三板）。储能赛道：宁德时代、亿纬锂能、派能科技。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：南方都市报（2026-08-18）/ 财联社。摘要：百度2026年二季度总营收313亿元，核心AI新业务收入125亿元，占一般性业务50%且连续两季过半。GPU云同比增283%，萝卜快跑覆盖28城、全无人里程超2.4亿公里。李彦宏称近期引进顶级AI人才推动文心跻身顶尖行列。"}, {"company": "五维度深度分析", "position": "", "salary": "", "location": "", "tag": "", "body": "💼 工作就业：百度AI业务过半标志着传统互联网公司向\"AI基础设施提供商\"转型成功。对供应链从业者意味着\"GPU算力采购\"\"AI数据中心建设\"成新职业方向。Gofy可以关注百度的\"AI供应链\"相关岗位（B端销售/采购经理）。。📈 职业发展：百度转型路径说明\"传统企业AI化\"是确定性趋势。Gofy供应链经验可以平移到AI企业的硬件采购体系——AI服务器、AI工作站、数据中心硬件的BOM管理与传统制造业有共通性。。🏭 行业发展：百度萝卜快跑28城+全无人里程2.4亿公里，说明自动驾驶已经从测试走向规模化运营。这将带动激光雷达、毫米波雷达、车规级芯片、域控制器供应链需求——Gofy当前机械+采购背景可切入\"车规级零部件供应商管理\"。。🚀 创业机会：① \"AI应用层咨询\"副业（帮中小企业用AI工具优化采购流程）；② 内容创作：AI+供应链相关科普内容（抖音/小红书）；③ 直播副业可尝试\"AI工具测评+供应链干货\"组合内容。。💰 投资机会：百度港股可作为AI转型观察标的；自动驾驶产业链：禾赛科技（激光雷达）、速腾聚创、地平线（车规芯片）、德赛西威（域控）；AI算力云：百度智能云、阿里云、腾讯云相关供应链标的。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：中国经营报（2026-08-18）/ 腾讯新闻。摘要：多家海外AI企业以约600美元/小时价格购买中国人形机器人真机训练数据，较国内500-1000元/小时高出近10倍。中美在算法层竞争、在数据/算力/电力层形成协作与互补的新竞争逻辑。"}, {"company": "五维度深度分析", "position": "", "salary": "", "location": "", "tag": "", "body": "💼 工作就业：人形机器人训练数据采集员、标注员、质检员成为新兴岗位。Gofy机械专业可以转型做\"机器人真机测试工程师\"——这是采集高质量训练数据的关键角色，薪资可观。。📈 职业发展：从\"数据消费方\"到\"数据生产方\"的视角切换，是AI时代的核心能力。Gofy可以通过短视频内容（机器人评测、训练数据科普）建立行业影响力，未来可转型为\"机器人+AI数据\"领域顾问。。🏭 行业发展：训练数据是AI模型\"粮食\"，海外高价采购中国数据说明中国在\"具身智能真机数据\"领域具备稀缺优势。这将带动\"机器人测试场地+数据采集服务+标注中心\"产业链崛起。。🚀 创业机会：① 在三水/顺德建立\"机器人测试+数据采集\"小型工作站（与产业园合作）；② 短视频内容方向：机器人训练过程展示+AI数据分析；③ 与海外AI企业谈\"小批量定制数据\"出口业务（注意合规）。。💰 投资机会：关注AI数据标注产业链：海天瑞声、博彦科技、荣联科技；机器人训练数据采集装备：奥普特、凌云光；同时关注\"数据资产入表\"相关A股标的。"}, {"company": "📌 核心信号（三大主线）", "position": "", "salary": "", "location": "", "tag": "", "body": "1. \"机器人+AI\"主线爆发：宇树上市+顺德具身智能产业园+海外高价采购训练数据，机器人赛道从概念走向规模化商业化，未来5年将持续释放供应链订单。。2. \"液冷+AI算力\"主线确认：贵州首个液冷算力方舱落地+中金预测市场规模年增273%，液冷是AI时代的\"水电煤\"基础设施，Gofy的浸没式液冷创业方向正踩中风口。。3. \"佛山本地+电力装备\"主线：佛山千亿电力装备集群三年内成型，上海电气落子三水聚龙湾（与白坭同区），Gofy应把握本地产业升级红利。"}, {"company": "🎯 行动建议（按优先级）", "position": "", "salary": "", "location": "", "tag": "", "body": "关注宇树科创板上市首日表现，评估机器人赛道投资热度。更新LinkedIn/猎聘简历，突出\"机械+采购+液冷\"复合标签，对标顺德具身智能产业园岗位。整理3D打印副业\"差异化定位\"——避开京东999元价格带，主打高端定制+IP衍生"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "完成浸没式液冷机箱原型机2.0（氟化液方案），制作3-5个产品演示视频。建立\"机器人+供应链\"短视频内容矩阵（抖音/小红书），每周2-3条。对接顺德伦教产业园招商办，争取以\"供应链服务商/3D打印服务商\"身份入园"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "争取与上海电气、东方电气等三水区链主企业合作，成为其供应链生态合作方。把浸没式液冷项目从个人DIY升级为小批量定制，目标客户：AI开发者/小型智算中心。3D打印副业打造\"广府文化IP定制\"品牌，争取年内营收突破20万元"}, {"company": "⚠️ 风险提示", "position": "", "salary": "", "location": "", "tag": "", "body": "股市风险：8月19日纳指跌1.33%，存储/光通信/AI云服务板块集体下挫，AI算力链估值波动加剧，建议控制仓位、分批建仓。政策风险：美国拟逼35国在中美AI竞赛中\"二选一\"，外贸/跨境业务需关注地缘政治影响。竞争风险：京东+速哇入局3D打印C端定制，行业价格战可能加速，必须尽快建立差异化壁垒。创业风险：液冷创业仍处于早期验证阶段，个人DIY市场规模有限，需尽早验证B端商业可行性"}];
+const totalItems = 21;
+const speakTemplate = "{company}。详细内容：{body}。";
+
+// ===== 状态 =====
+let currentIndex = 0;
+let isPlaying = false;
+let speechRate = 1.0;
+let readDoneSet = new Set();
+let synth = window.speechSynthesis;
+let currentUtterance = null;
+let selectedVoice = null;
+let voicesReady = false;
+
+// ===== 浏览器检测 =====
+function isQQBrowser() {
+    let ua = navigator.userAgent || '';
+    return /MQQBrowser|QQ\//i.test(ua);
+}
+function isUCBrowser() {
+    let ua = navigator.userAgent || '';
+    return /UCBrowser|UCWEB/i.test(ua);
+}
+function isWeChat() {
+    let ua = navigator.userAgent || '';
+    return /MicroMessenger/i.test(ua);
+}
+function isUnsupportedBrowser() {
+    return isQQBrowser() || isUCBrowser() || isWeChat();
+}
+
+// ===== 初始化 =====
+function init() {
+    // 浏览器检测：不支持的直接提示换浏览器
+    if (isUnsupportedBrowser()) {
+        let browserName = isQQBrowser() ? 'QQ浏览器' : (isUCBrowser() ? 'UC浏览器' : '微信内置浏览器');
+        showBrowserWarning(browserName);
+        return;
+    }
+
+    if (!synth) {
+        showBrowserWarning('当前浏览器');
+        return;
+    }
+
+    // Chrome/Edge: voices 通过异步事件加载
+    let voices = synth.getVoices();
+    if (voices && voices.length > 0) {
+        pickVoice(voices);
+    }
+
+    // 监听语音列表加载（关键！Android Chrome 需要等事件）
+    synth.onvoiceschanged = function() {
+        voices = synth.getVoices();
+        if (voices && voices.length > 0 && !voicesReady) {
+            pickVoice(voices);
+            document.getElementById('floatText').textContent =
+                '✅ 语音引擎就绪 (' + voices.length + '个) — 点🎧开始朗读';
+            document.getElementById('progressText').textContent = '就绪 ✓';
+        }
+    };
+
+    // 超时兜底：2秒后强制尝试
+    setTimeout(function() {
+        if (!voicesReady) {
+            voices = synth.getVoices();
+            if (voices && voices.length > 0) {
+                pickVoice(voices);
+            }
+            if (selectedVoice) {
+                document.getElementById('floatText').textContent =
+                    '✅ 语音引擎: ' + selectedVoice.name;
+                document.getElementById('progressText').textContent = '就绪 ✓';
+            } else {
+                document.getElementById('floatText').textContent =
+                    '⚠️ 未找到中文语音，请用系统自带 Chrome/Edge 打开';
+                document.getElementById('progressText').textContent = '无中文语音 ⚠️';
+            }
+            voicesReady = true;
+        }
+    }, 2500);
+}
+
+function showBrowserWarning(browserName) {
+    // 隐藏控制栏播放按钮
+    document.getElementById('playBtn').style.opacity = '0.3';
+    document.getElementById('playBtn').style.pointerEvents = 'none';
+    // 底部显示换浏览器提示
+    document.getElementById('floatHint').style.background = 'rgba(211,47,47,0.95)';
+    document.getElementById('floatText').innerHTML =
+        '❌ ' + browserName + '不支持语音朗读<br><small>👉 请用 <b>Chrome</b> 或 <b>Edge</b> 浏览器打开</small>';
+    document.getElementById('progressText').textContent = '❌ 浏览器不支持';
+    // 页面顶部插入醒目提示横幅
+    let banner = document.createElement('div');
+    banner.style.cssText = 'background:#FFEBEE;border-bottom:2px solid #EF5350;padding:16px;text-align:center;';
+    banner.innerHTML =
+        '<div style="font-size:40px;margin-bottom:8px;">🚫</div>' +
+        '<div style="font-size:15px;font-weight:bold;color:#C62828;margin-bottom:6px;">' +
+        browserName + ' 不支持语音朗读</div>' +
+        '<div style="font-size:14px;color:#555;line-height:1.6;">' +
+        '请用 <b style="color:#1A73E8;">Chrome</b> 或 <b style="color:#0078D4;">Edge</b> 浏览器打开即可朗读<br>' +
+        '<span style="font-size:12px;color:#999;">（应用商店搜索"Chrome"或"Edge"下载）</span></div>';
+    let header = document.querySelector('.header');
+    if (header) {
+        header.parentNode.insertBefore(banner, header);
+    }
+    // 禁用所有岗位点击
+    document.querySelectorAll('.job-item').forEach(function(el) {
+        el.style.pointerEvents = 'none';
+        el.style.opacity = '0.5';
+    });
+}
+
+function pickVoice(voices) {
+    // 优先级：zh-CN 中文女声 > zh-CN 任意 > zh-* > 第一个
+    let preferred = ['zh-CN', 'zh-Hans', 'zh-HK', 'zh-TW', 'zh'];
+    for (let lang of preferred) {
+        for (let v of voices) {
+            if (v.lang && v.lang.startsWith(lang)) {
+                // 优先女声
+                if (v.name.toLowerCase().indexOf('female') >= 0 ||
+                    v.name.indexOf('女') >= 0) {
+                    selectedVoice = v;
+                    voicesReady = true;
+                    return;
+                }
+            }
+        }
+    }
+    // 中文任意
+    for (let lang of preferred) {
+        for (let v of voices) {
+            if (v.lang && v.lang.startsWith(lang)) {
+                selectedVoice = v;
+                voicesReady = true;
+                return;
+            }
+        }
+    }
+    // 无中文语音 → 用第一个兜底
+    if (voices.length > 0) {
+        selectedVoice = voices[0];  // 用第一个兜底
+    }
+    voicesReady = true;
+}
+
+// ===== 构建朗读文本 =====
+function buildSpeakText(item) {
+    let raw = speakTemplate
+        .replace('{company}', item.company || '')
+        .replace('{position}', item.position || '')
+        .replace('{salary}', item.salary || '面议')
+        .replace('{location}', item.location || '')
+        .replace('{body}', item.body || '');
+    return _cleanForTTS(raw);
+}
+
+// ===== TTS 文本清洗：去除所有 Markdown 残留符号 =====
+function _cleanForTTS(text) {
+    if (!text) return text;
+    let cleaned = text;
+    // 去除 Markdown 标题标记 (# ## ### #### 等)
+    cleaned = cleaned.replace(/#{1,6}\s*/g, '');
+    // 去除加粗/斜体标记 (** __ * _)
+    cleaned = cleaned.replace(/\*{1,2}|_/g, '');
+    // 去除管道符 (表格)
+    cleaned = cleaned.replace(/\|/g, ' ');
+    // 去除反引号 (代码)
+    cleaned = cleaned.replace(/`+/g, '');
+    // 去除波浪线
+    cleaned = cleaned.replace(/~+/g, '');
+    // 去除分散的 -  :  标记（但不破坏正常连字符和冒号）
+    cleaned = cleaned.replace(/：/g, ':');
+    // 压缩多余空格
+    cleaned = cleaned.replace(/\s+/g, ' ');
+    // 去除连续连字符
+    cleaned = cleaned.replace(/-{2,}/g, '');
+    return cleaned.trim();
+}
+
+// ===== 朗读单条 =====
+function speakItem(index) {
+    if (index < 0 || index >= totalItems) return;
+
+    currentIndex = index;
+
+    synth.cancel();
+    let item = items[index];
+    let text = buildSpeakText(item);
+
+    let utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'zh-CN';
+    utterance.rate = speechRate;
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+    if (selectedVoice) {
+        utterance.voice = selectedVoice;
+    }
+
+    utterance.onstart = function() {
+        updateUI(index);
+        document.getElementById('nowPlaying').classList.add('active');
+        document.getElementById('nowPlayingText').textContent =
+            (item.company || '') + ' ' + (item.position || '');
+    };
+
+    utterance.onend = function() {
+        readDoneSet.add(index);
+        updateReadDone(index);
+        let next = index + 1;
+        if (next < totalItems && isPlaying) {
+            speakItem(next);
+        } else if (next >= totalItems) {
+            stopPlayback();
+            document.getElementById('floatText').textContent = '✅ 全部朗读完成！';
+            document.getElementById('progressText').textContent = '朗读完成';
+            document.getElementById('progressBar').style.width = '100%';
+            document.getElementById('progressLabel').textContent = totalItems + '/' + totalItems;
+        }
+    };
+
+    utterance.onerror = function(e) {
+        if (e.error !== 'canceled' && e.error !== 'interrupted') {
+            let errMsg = '⚠️ 朗读出错: ' + (e.error || 'unknown');
+            document.getElementById('progressText').textContent = errMsg;
+            document.getElementById('floatText').textContent =
+                errMsg + ' — 可尝试用系统自带浏览器打开';
+            let next = index + 1;
+            if (next < totalItems && isPlaying) {
+                setTimeout(function() { speakItem(next); }, 500);
+            }
+        }
+    };
+
+    currentUtterance = utterance;
+    synth.speak(utterance);
+}
+
+// ===== 播放控制 =====
+function togglePlay() {
+    if (isPlaying) {
+        pausePlayback();
+    } else {
+        startPlayback();
+    }
+}
+
+function startPlayback() {
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    document.getElementById('progressText').textContent = '朗读中...';
+    document.getElementById('floatText').textContent =
+        selectedVoice
+            ? '🔊 朗读中 (' + selectedVoice.name + ') ...'
+            : '🔊 朗读中 (系统默认语音)...';
+    speakItem(currentIndex);
+}
+
+function pausePlayback() {
+    isPlaying = false;
+    synth.cancel();
+    document.getElementById('playIcon').textContent = '🎧';
+    document.getElementById('playBtn').classList.remove('playing');
+    document.getElementById('nowPlaying').classList.remove('active');
+    document.getElementById('floatText').textContent = '⏸️ 已暂停，点击继续';
+    document.getElementById('progressText').textContent = '已暂停';
+}
+
+function stopPlayback() {
+    isPlaying = false;
+    synth.cancel();
+    document.getElementById('playIcon').textContent = '🎧';
+    document.getElementById('playBtn').classList.remove('playing');
+    document.getElementById('nowPlaying').classList.remove('active');
+    document.getElementById('floatText').textContent = '✅ 朗读完成';
+}
+
+function skipNext() {
+    synth.cancel();
+    let next = (currentIndex + 1) % totalItems;
+    currentIndex = next;
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function skipPrev() {
+    synth.cancel();
+    let prev = currentIndex - 1;
+    if (prev < 0) prev = totalItems - 1;
+    currentIndex = prev;
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function jumpTo(index) {
+    synth.cancel();
+    currentIndex = index;
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function setSpeed(val) {
+    speechRate = parseFloat(val);
+    document.getElementById('floatText').textContent =
+        '🎵 朗读速度: ' + val + 'x';
+    setTimeout(function() {
+        if (isPlaying) {
+            document.getElementById('floatText').textContent = '🔊 朗读中...';
+        }
+    }, 1500);
+}
+
+// ===== UI更新 =====
+function updateUI(index) {
+    // 进度条
+    let pct = (index / totalItems) * 100;
+    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent = (index + 1) + '/' + totalItems;
+    document.getElementById('progressText').textContent =
+        '正在朗读第 ' + (index + 1) + ' ' + '条新闻'.replace('个岗位','').replace('条新闻','');
+
+    // 高亮当前
+    document.querySelectorAll('.job-item').forEach(function(el) {
+        el.classList.remove('reading');
+    });
+    let currentEl = document.querySelector('.job-item[data-index="' + index + '"]');
+    if (currentEl) {
+        currentEl.classList.add('reading');
+        currentEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+function updateReadDone(index) {
+    let el = document.querySelector('.job-item[data-index="' + index + '"]');
+    if (el) {
+        el.classList.add('read-done');
+    }
+}
+
+// ===== 启动 =====
+init();
+
+// ===== 移动端保持屏幕唤醒（可选） =====
+if (navigator.wakeLock) {
+    try {
+        navigator.wakeLock.request('screen');
+    } catch(e) {}
+}
+</script>
+</body>
+</html>
