@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>📰 每日要闻（20260903）</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f5f5f5;
+    color: #333;
+    padding-bottom: 80px;
+}
+
+/* ===== 顶部控制栏 ===== */
+.control-bar {
+    position: sticky; top:0; z-index:100;
+    background: linear-gradient(135deg, #1A73E8 0%, #4FC3F7 100%);
+    padding: 12px 16px;
+    box-shadow: 0 2px 12px rgba(26,115,232,0.3);
+}
+.control-row {
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+}
+.control-btn {
+    width: 48px; height: 48px;
+    border: none; border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    font-size: 22px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
+.control-btn:active { transform: scale(0.9); background: rgba(255,255,255,0.35); }
+.control-btn.play-btn {
+    width: 64px; height: 64px;
+    background: #fff;
+    color: #1A73E8;
+    font-size: 28px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+.control-btn.play-btn.playing { color: #FF6B35; }
+
+.speed-select {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 14px;
+    cursor: pointer;
+    -webkit-appearance: none;
+}
+.speed-select option { color: #333; }
+
+/* ===== 进度信息 ===== */
+.progress-row {
+    display: flex; align-items: center; gap: 10px;
+    margin-top: 8px;
+    color: rgba(255,255,255,0.9);
+    font-size: 13px;
+}
+.progress-bar-outer {
+    flex: 1; height: 4px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 2px;
+    overflow: hidden;
+}
+.progress-bar-inner {
+    height: 100%;
+    background: #fff;
+    border-radius: 2px;
+    transition: width 0.3s;
+    width: 0%;
+}
+.progress-text {
+    white-space: nowrap;
+    min-width: 90px;
+    text-align: right;
+}
+
+/* ===== 当前朗读提示 ===== */
+.now-playing {
+    background: #FFF9C4;
+    padding: 8px 16px;
+    font-size: 13px;
+    color: #F57F17;
+    text-align: center;
+    display: none;
+    border-bottom: 2px solid #FFD54F;
+}
+.now-playing.active { display: block; }
+
+/* ===== 标题区 ===== */
+.header {
+    background: #fff;
+    padding: 20px 16px 12px;
+    border-bottom: 1px solid #eee;
+}
+.header h1 { font-size: 18px; color: #1A73E8; margin-bottom: 4px; }
+.header .subtitle { font-size: 13px; color: #888; }
+
+/* ===== 岗位列表 ===== */
+.job-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 14px 16px;
+    background: #fff;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
+.job-item:active { background: #f5f5f5; }
+.job-item.reading {
+    background: #E3F2FD;
+    border-left: 4px solid #1A73E8;
+    padding-left: 12px;
+}
+.job-item.read-done {
+    opacity: 0.6;
+}
+
+.job-index {
+    width: 32px; height: 32px;
+    background: #f0f0f0;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: bold;
+    color: #888;
+    flex-shrink: 0;
+}
+.job-item.reading .job-index {
+    background: #1A73E8;
+    color: #fff;
+}
+.job-item.read-done .job-index {
+    background: #4CAF50;
+    color: #fff;
+}
+
+.job-info { flex:1; min-width:0; }
+.job-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    display: flex; align-items: center; gap: 6px;
+    flex-wrap: wrap;
+}
+.job-detail {
+    font-size: 13px;
+    color: #666;
+    display: flex; flex-wrap: wrap; gap: 8px;
+}
+.position { color: #1A73E8; }
+.salary { color: #FF6B35; font-weight: bold; }
+.location { color: #888; }
+
+.tag {
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    white-space: nowrap;
+}
+.tag-new { background: #E8F5E9; color: #2E7D32; }
+.tag-repeat { background: #FFF3E0; color: #E65100; }
+.tag-update { background: #E3F2FD; color: #1565C0; }
+
+/* ===== 底部浮动条 ===== */
+.float-hint {
+    position: fixed; bottom: 0; left:0; right:0;
+    background: rgba(26,115,232,0.95);
+    color: #fff;
+    text-align: center;
+    padding: 10px 16px;
+    font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px;
+    z-index: 99;
+}
+.float-hint .icon { font-size: 20px; }
+
+/* ===== 状态标记 ===== */
+.status-badge {
+    display: inline-block;
+    background: #4CAF50;
+    color: #fff;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+    0%,100% { opacity:1; }
+    50% { opacity:0.5; }
+}
+</style>
+</head>
+<body>
+
+<!-- 控制栏 -->
+<div class="control-bar">
+    <div class="control-row">
+        <button class="control-btn" onclick="skipPrev()" title="上一条">⏮️</button>
+        <button class="control-btn play-btn" id="playBtn" onclick="togglePlay()" title="播放/暂停">
+            <span id="playIcon">🎧</span>
+        </button>
+        <button class="control-btn" onclick="skipNext()" title="下一条">⏭️</button>
+        <select class="speed-select" id="speedSelect" onchange="setSpeed(this.value)">
+            <option value="0.8">0.8x</option>
+            <option value="1.0" selected>1x</option>
+            <option value="1.2">1.2x</option>
+            <option value="1.5">1.5x</option>
+        </select>
+    </div>
+    <div class="progress-row">
+        <span id="progressLabel">0/61</span>
+        <div class="progress-bar-outer">
+            <div class="progress-bar-inner" id="progressBar"></div>
+        </div>
+        <span class="progress-text" id="progressText">准备就绪</span>
+    </div>
+</div>
+
+<!-- 当前朗读提示 -->
+<div class="now-playing" id="nowPlaying">
+    🔊 正在朗读：<span id="nowPlayingText"></span>
+</div>
+
+<!-- 标题 -->
+<div class="header">
+    <h1>📰 每日要闻（20260903）</h1>
+    <p class="subtitle">61条新闻 | 点🎧按钮浏览器自动朗读</p>
+</div>
+
+<!-- 岗位/新闻列表 -->
+<div id="jobList">
+
+        <div class="job-item" data-index="0" onclick="jumpTo(0)">
+            <div class="job-index">1</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：国家能源局 / 乙九说时政。日期：20260903</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="1" onclick="jumpTo(1)">
+            <div class="job-index">2</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：国家能源局数据显示，截至7月底全国光伏发电装机达12.86亿千瓦，首次超越煤电（12.85亿千瓦）成为我国第一大电源，占全国发电总装机31.5%。这标志着中国能源结构历史性转变，新能源正式超越传统能源成为装机主力。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="2" onclick="jumpTo(2)">
+            <div class="job-index">3</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">五维度分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💼 工作就业：光伏产业链覆盖硅料、组件、逆变器、支架等环节，佛山及周边有大量光伏配套制造企业。作为供应链管理者，新能源装备制造的采购需求正在爆发，相关岗位需求持续增长，尤其是光伏设备供应链管理、储能系统集成等方向。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="3" onclick="jumpTo(3)">
+            <div class="job-index">4</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">📈 职业发展：光伏+储能赛道正处于高速增长期，供应链管理人才在此领域极其稀缺。具备新能源装备制造采购经验的候选人，在佛山/广州市场的竞争力显著提升。建议关注光伏逆变器的半导体元器件采购、储能系统的BMS（电池管理系统）供应链等细分领域。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="4" onclick="jumpTo(4)">
+            <div class="job-index">5</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🏭 行业发展：光伏首超煤电意味着新能源装备制造将进入规模化、标准化阶段。佛山"十五五"规划明确布局新型储能、新能源装备制造，本地光伏配套企业（如支架、接线盒、逆变器外壳等五金/钣金件）将迎来订单放量。对机械/钣金加工行业是直接利好。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="5" onclick="jumpTo(5)">
+            <div class="job-index">6</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🚀 创业机会：光伏装机爆发带动配套设备需求，液冷散热技术在光伏逆变器、储能电池热管理领域有直接应用空间。Gofy的浸没式液冷技术方案可探索向储能电池热管理方向延伸——储能电站的液冷散热是刚需场景，且市场规模远大于个人PC液冷。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="6" onclick="jumpTo(6)">
+            <div class="job-index">7</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💰 投资机会：光伏板块短期面临产能过剩压力，但储能逆变器、光伏银浆、钙钛矿电池（免征消费税）等细分赛道值得关注。关注光伏设备制造龙头及储能系统集成商，佛山本地新能源装备企业可能有政策红利。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="7" onclick="jumpTo(7)">
+            <div class="job-index">8</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：新浪财经 / 腾讯新闻。日期：20260903</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="8" onclick="jumpTo(8)">
+            <div class="job-index">9</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：被称为"人形机器人第一股"的宇树科技在科创板上市后第11个交易日股价腰斩，跌破550元/股。此前挂牌首日市值一度达610亿元，如今大幅回调，反映市场对人形机器人商业化落地节奏的分歧加大。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="9" onclick="jumpTo(9)">
+            <div class="job-index">10</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">五维度分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💼 工作就业：宇树科技股价腰斩不影响机器人行业整体景气度，但说明资本市场的短期预期需要回归理性。对于求职者而言，机器人企业的供应链管理岗位依然稀缺且高薪，但需甄别企业的实际订单和现金流状况，避免进入"PPT造机器人"的公司。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="10" onclick="jumpTo(10)">
+            <div class="job-index">11</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">📈 职业发展：人形机器人产业链涉及精密减速器、伺服电机、控制器等核心零部件，这些正是佛山机械制造的优势领域。具备精密机加工、铸造件采购经验的供应链管理者，在机器人零部件供应商管理方面有天然优势，可作为职业转型的突破口。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="11" onclick="jumpTo(11)">
+            <div class="job-index">12</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🏭 行业发展：股价回调是估值回归而非行业衰退。国家发改委明确表态发展机器人产业要因地制宜、杜绝盲目跟风，意味着政策将更注重产业化落地而非概念炒作。佛山作为制造业大市，机器人集成应用市场广阔，本地精密加工企业有机会切入机器人零部件供应链。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="12" onclick="jumpTo(12)">
+            <div class="job-index">13</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🚀 创业机会：3D打印在机器人原型件、小批量结构件制造中有天然优势——人形机器人迭代速度快，传统开模成本高，3D打印可快速验证设计。Gofy的3D打印中心可探索向机器人创业团队提供快速原型制造服务，这是一个高附加值且持续增长的客户群体。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="13" onclick="jumpTo(13)">
+            <div class="job-index">14</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💰 投资机会：宇树科技股价腰斩可能是短期超跌机会，但需警惕人形机器人商业化时间线不确定性。建议关注上游核心零部件（减速器、伺服电机、力传感器）供应商而非整机厂——零部件企业受益于行业增长且风险更低。注意佛山本地精密加工企业中可能已有机器人产业链供应商。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="14" onclick="jumpTo(14)">
+            <div class="job-index">15</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：财政部、海关总署、税务总局2026年第20号公告。日期：20260901起施行</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="15" onclick="jumpTo(15)">
+            <div class="job-index">16</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：9月1日起，无汞原电池、氢镍蓄电池、锂原电池、锂离子蓄电池、全钒液流电池按2%税率征收消费税（2027年9月起升至4%）。钠离子电池、固态电池、燃料电池及钙钛矿/叠层/砷化镓光伏电池在20262028年免征消费税。这一政策直接影响佛山新能源、储能电池、光伏配套制造企业。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="16" onclick="jumpTo(16)">
+            <div class="job-index">17</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">五维度分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💼 工作就业：消费税新政直接影响企业成本结构，供应链管理者需要重新评估电池类物料的采购成本和供应商报价。具备税务合规意识的供应链人才将更受青睐——能将税收政策纳入TCO模型进行采购决策的管理者，是企业的核心价值所在。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="17" onclick="jumpTo(17)">
+            <div class="job-index">18</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">📈 职业发展：电池消费税分阶段实施（2%→4%），意味着企业需要提前规划供应链策略。作为供应链管理者，若能主导"应税电池vs免税电池"的物料替代方案（如锂离子→钠离子），将显著提升个人在企业中的战略价值。这正是从"执行型采购"向"战略型供应链"转型的关键能力。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="18" onclick="jumpTo(18)">
+            <div class="job-index">19</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🏭 行业发展：佛山大量电池配套制造企业需重点关注：应税电池（锂离子）成本上升24%，而免征的新型电池（钠离子、固态、燃料电池）获得政策红利。这将加速电池技术路线向钠离子、固态电池迁移，传统锂电池材料供应商面临转型压力。佛山的储能设备制造企业需重新核算BOM成本。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="19" onclick="jumpTo(19)">
+            <div class="job-index">20</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🚀 创业机会：免征消费税的钠离子电池、固态电池是明确的政策风口。Gofy的液冷项目若涉及电池热管理，应优先考虑钠离子/固态电池方案——不仅享受免税红利，且固态电池的热管理需求更高（散热要求更严苛），液冷技术的应用场景更广。3D打印方面，固态电池封装结构件的小批量制造也是潜在市场。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="20" onclick="jumpTo(20)">
+            <div class="job-index">21</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💰 投资机会：钠离子电池、固态电池、燃料电池产业链是明确的政策受益方向，20262028年免税窗口期是布局窗口。关注钠离子电池正极材料（如普鲁士蓝类似物）、固态电池电解质、燃料电池催化剂等上游材料企业。光伏领域，钙钛矿电池免征消费税且技术突破在即，是高弹性投资方向。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="21" onclick="jumpTo(21)">
+            <div class="job-index">22</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：21世纪经济报道 / 新华社 / 腾讯新闻。日期：2026090203</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="22" onclick="jumpTo(22)">
+            <div class="job-index">23</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：美军对伊朗霍尔木兹海峡沿岸设施发动新一轮打击，伊朗革命卫队向约旦美军基地发射重型弹道导弹作为报复。冲突升级导致布伦特原油一度突破97美元/桶（涨5.2%），美国原油突破92美元。美军对伊海上封锁已使86艘商船改道，全球能源供应链面临严峻冲击。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="23" onclick="jumpTo(23)">
+            <div class="job-index">24</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">五维度分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💼 工作就业：油价飙升直接推高制造业物流成本和原材料成本（石化衍生品、金属冶炼能源成本等）。供应链管理者需要立即启动成本压力测试，评估供应商的涨价传导能力和替代方案。当前就业市场中，具备大宗商品风险管理和供应链弹性设计能力的候选人极具竞争力。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="24" onclick="jumpTo(24)">
+            <div class="job-index">25</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">📈 职业发展：地缘冲突对供应链的冲击是检验管理者能力的试金石。能在危机中快速搭建替代物流通道、锁定原材料价格、制定应急预案的供应链管理者，是企业的关键人才。建议将此次油价冲击作为案例，完善个人在供应链风险管理方面的经验积累和方法论。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="25" onclick="jumpTo(25)">
+            <div class="job-index">26</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🏭 行业发展：霍尔木兹海峡是全球石油运输咽喉，86艘商船改道意味着全球海运成本上升、交期延长。佛山制造业高度依赖进口原材料（如特种钢材、有色金属、化工原料），油价上涨将推高整体制造成本。机械加工、铸造等高能耗行业受冲击最大，需加快节能改造和供应链本地化。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="26" onclick="jumpTo(26)">
+            <div class="job-index">27</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🚀 创业机会：油价飙升利好新能源替代逻辑——光伏首超煤电的新闻恰逢其时。液冷散热技术在数据中心节能降耗方面有直接价值，高油价环境下企业更有动力投资节能技术。3D打印方面，本地化制造可减少对海运进口件的依赖，"分布式制造"概念在油价高企时更具经济性。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="27" onclick="jumpTo(27)">
+            <div class="job-index">28</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💰 投资机会：短期油价高位宽幅震荡，能源股（石油开采、油服）直接受益。但中长期看，每次油价飙升都是新能源加速替代的催化剂——光伏、储能、新能源汽车板块中期逻辑加强。关注军工/国防板块（地缘冲突升级直接利好）及黄金避险资产（荷兰央行转移86吨黄金已信号明确）。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="28" onclick="jumpTo(28)">
+            <div class="job-index">29</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：汽车行业关注 / 乘联会。日期：20260901</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="29" onclick="jumpTo(29)">
+            <div class="job-index">30</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：比亚迪公布8月新能源汽车销量44.03万辆，其中出口18.95万辆，18月累计262.18万辆。上汽集团前8个月销量274.1万辆居行业首位，其中新能源116.3万辆同比增30.2%、海外101.6万辆同比增52.9%。8月多家主流车企新能源批售量创历年同期最佳。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="30" onclick="jumpTo(30)">
+            <div class="job-index">31</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">五维度分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💼 工作就业：新能源汽车出口高速增长（比亚迪出口占比43%），意味着汽车供应链正在从"国内内卷"转向"全球竞争"。具备国际化采购经验、熟悉海外供应商管理和国际贸易合规的供应链人才极度稀缺。佛山作为汽车零部件制造重镇，相关岗位需求持续旺盛。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="31" onclick="jumpTo(31)">
+            <div class="job-index">32</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">📈 职业发展：汽车出海对供应链管理提出全新要求——海外供应商开发、全球物流规划、关税合规、属地化采购等。Gofy有外资企业（美资/英资）工作经验，英语流利且熟悉国际贸易，在汽车出海供应链管理方向有显著竞争优势。建议重点关注新能源汽车出海企业的供应链总监/经理岗位。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="32" onclick="jumpTo(32)">
+            <div class="job-index">33</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🏭 行业发展：比亚迪单月44万辆的销量规模对供应链的拉动效应巨大——每个零部件供应商都在扩产。佛山的汽车零部件制造企业（冲压件、压铸件、精密机加工件）直接受益。同时，三部门发布汽车行业境外竞争合规指引，要求车企境外定价以成本为基础，标志着中国汽车出海进入合规化新阶段。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="33" onclick="jumpTo(33)">
+            <div class="job-index">34</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🚀 创业机会：新能源汽车出口爆发带动汽车后市场服务需求——海外维修配件、改装件、定制件的供应链存在巨大缺口。3D打印在汽车定制件、小批量配件制造中有直接应用场景。Gofy可探索"汽车定制配件3D打印+跨境电商"模式，面向海外车主提供个性化定制服务。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="34" onclick="jumpTo(34)">
+            <div class="job-index">35</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💰 投资机会：新能源汽车出口链是最确定的增长赛道。关注比亚迪供应链核心标的（尤其是佛山/广东本地零部件供应商）、汽车出海物流服务商、以及海外充电桩/换电站建设企业。上汽海外销量增52.9%也值得关注其供应链合作伙伴。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="35" onclick="jumpTo(35)">
+            <div class="job-index">36</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：商务部、工信部、市场监管总局 / 经济观察报。日期：20260901</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="36" onclick="jumpTo(36)">
+            <div class="job-index">37</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：商务部、工信部、市场监管总局9月1日联合印发《汽车行业境外竞争行为与合规建设指引》，要求车企境外定价以成本为基础、避免多频次大幅价格波动。比亚迪、奇瑞等已表态落实，标志中国汽车出海从"野蛮生长"迈入"合规高质量发展"阶段。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="37" onclick="jumpTo(37)">
+            <div class="job-index">38</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">五维度分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💼 工作就业：合规指引的出台意味着汽车企业需要建立专业的境外合规团队，供应链管理中的价格合规、反垄断合规成为新需求。具备国际贸易合规经验的供应链管理者将迎来职业新机遇——企业需要既懂采购成本核算又懂境外法规的复合型人才。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="38" onclick="jumpTo(38)">
+            <div class="job-index">39</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">📈 职业发展：Gofy拥有17年供应链管理经验和内审员资格证，在成本核算和质量体系方面有扎实基础。若能补充国际贸易合规知识（如欧盟反补贴法规、美国反倾销规则等），将极大提升在汽车出海企业中的竞争力。建议关注汽车企业"供应链合规经理/总监"等新兴岗位。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="39" onclick="jumpTo(39)">
+            <div class="job-index">40</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🏭 行业发展：合规指引将重塑汽车出海的供应链定价模式——从"低价冲量"转向"成本定价+合理利润"。这对佛山的汽车零部件供应商意味着：海外客户的价格压力可能缓解（不再一味压价），但合规要求提高（需提供成本明细、接受审计）。具备完善成本核算体系的供应商将胜出。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="40" onclick="jumpTo(40)">
+            <div class="job-index">41</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🚀 创业机会：汽车出海合规咨询是一个新兴的蓝海市场。很多中小型零部件企业缺乏合规能力，需要第三方提供成本核算体系建设、合规审计准备等服务。Gofy的供应链管理咨询副业可向"汽车出海合规供应链咨询"方向延伸，这是一个高客单价且持续增长的咨询赛道。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="41" onclick="jumpTo(41)">
+            <div class="job-index">42</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💰 投资机会：合规指引利好已建立完善合规体系的头部车企（比亚迪、奇瑞已表态落实），中小车企面临合规成本上升压力。投资逻辑从"看销量增速"转向"看合规能力+利润率"。关注汽车合规咨询/法律服务相关的企业，以及能帮助零部件企业建立合规体系的SaaS/咨询服务商。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="42" onclick="jumpTo(42)">
+            <div class="job-index">43</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：央广网。日期：20260901</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="43" onclick="jumpTo(43)">
+            <div class="job-index">44</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：佛山将新型电力系统装备产业列为十大战略性新兴产业之首。高明区富湾湖能源电力设备产业园规划面积1.88万亩，已集聚211家企业，覆盖变电设备、储能集成、电气成套、检验检测全链条。2026招商大会吸引300多家企业参加，西拓电气、国博电气等重点项目签约落地，千亿级应用场景持续释放。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="44" onclick="jumpTo(44)">
+            <div class="job-index">45</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">五维度分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💼 工作就业：佛山将新型电力系统装备列为"十大战新产业之首"，政策力度极大。高明产业园211家企业集聚意味着大量供应链管理岗位需求——变电设备、储能集成、电气成套等领域的采购经理/供应链经理岗位将持续增加。Gofy身处佛山三水，地理上与高明相邻，通勤便利，是理想的就业方向。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="45" onclick="jumpTo(45)">
+            <div class="job-index">46</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">📈 职业发展：电力设备制造业的供应链管理与Gofy的机械专业背景高度匹配——变压器、开关柜、储能系统等均涉及大量机加工件、钣金件、铸造件采购。17年机械+采购经验在此领域可直接复用。建议关注园区内头部企业（如安恒智能、佛山照明、天亿电气等）的供应链管理岗位。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="46" onclick="jumpTo(46)">
+            <div class="job-index">47</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🏭 行业发展：佛山新型电力系统装备产业从"零散集聚"走向"千亿集群"，产业链上下游协同效应将显著增强。本地精密加工、铸造、钣金企业有机会切入电力设备供应链。广州新机场、轨道交通等基建项目带来的电力设备需求激增，为佛山制造业提供了千亿级增量市场。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="47" onclick="jumpTo(47)">
+            <div class="job-index">48</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🚀 创业机会：电力设备产业园的千亿级规模意味着配套服务需求巨大——设备定制件制造、维修配件供应、检测工装夹具等都是3D打印的应用场景。液冷方面，电力设备（尤其是大功率变压器、储能系统）的散热需求与液冷技术直接相关，Gofy可探索向电力设备热管理方向延伸液冷技术应用。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="48" onclick="jumpTo(48)">
+            <div class="job-index">49</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💰 投资机会：佛山新型电力系统装备产业是明确的政策驱动赛道。关注园区内已签约落地的重点企业（西拓电气固态变压器、国博电气智造基地），以及上游核心材料/零部件供应商。储能集成和固态变压器是技术壁垒最高、增长潜力最大的细分方向。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="49" onclick="jumpTo(49)">
+            <div class="job-index">50</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">来源：东方财富 / 美联储褐皮书。日期：20260903</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="50" onclick="jumpTo(50)">
+            <div class="job-index">51</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">摘要：美联储8月经济形势报告《褐皮书》显示，美国经济仍在温和扩张，但增长越来越依赖AI数据中心等少数项目。通胀压力依然顽固，居民端"K型分化"加剧——高收入群体消费稳健，低收入群体消费收缩。11个辖区中8个涨价速度不变、3个放缓，仅1个加快。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="51" onclick="jumpTo(51)">
+            <div class="job-index">52</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">五维度分析</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💼 工作就业：美国经济依赖AI数据中心说明AI基础设施建设仍是全球增长引擎。这对供应链管理者意味着：AI硬件（服务器、GPU、液冷设备、电源系统）的采购需求持续旺盛。具备AI硬件供应链经验的人才在全球市场都有竞争力，佛山/深圳的AI硬件制造企业正在大量招聘供应链管理人才。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="52" onclick="jumpTo(52)">
+            <div class="job-index">53</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">📈 职业发展：AI数据中心的建设热潮直接利好液冷散热赛道——数据中心功耗密度持续攀升，传统风冷已无法满足散热需求，液冷成为必然选择。Gofy的浸没式液冷项目正处于这个全球性的技术浪潮中。建议将职业发展方向与AI基础设施供应链管理结合，这是一个510年的确定性增长赛道。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="53" onclick="jumpTo(53)">
+            <div class="job-index">54</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🏭 行业发展：美国经济"K型分化"意味着消费市场分层加剧，制造业需同时服务高端和性价比市场。AI数据中心拉动的不只是芯片，还有配套的精密结构件、散热系统、电源管理系统等——这些都是佛山机械制造的优势领域。本地企业若能切入AI硬件供应链，将获得高于传统制造业的利润率。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="54" onclick="jumpTo(54)">
+            <div class="job-index">55</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🚀 创业机会：褐皮书明确AI数据中心是美国经济的主要增长引擎，这为Gofy的液冷项目提供了最强有力的市场背书。浸没式液冷技术在数据中心领域已有成熟应用（如微软、阿里巴巴），Gofy可从"个人PC液冷"向"小型数据中心/边缘计算节点液冷"方向拓展——B端市场更大、客单价更高、技术迁移成本低。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="55" onclick="jumpTo(55)">
+            <div class="job-index">56</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">💰 投资机会：AI数据中心是美国经济核心增长点，相关供应链是确定性投资方向。关注：液冷散热（直接关联Gofy创业赛道）、AI电源管理（PSU/UPS）、数据中心精密结构件、先进封装（CoWoS/HBM）等细分赛道。美联储褐皮书显示通胀放缓趋势，9月降息预期增强，科技成长股有望受益。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="56" onclick="jumpTo(56)">
+            <div class="job-index">57</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🎯 行动建议</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 液冷创业方向调整：电池消费税新政（固态/钠离子免税）+ AI数据中心需求爆发 = 液冷散热应优先探索"储能电池热管理"和"小型数据中心/边缘计算液冷"两个B端方向，市场空间远大于个人PC液冷。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="57" onclick="jumpTo(57)">
+            <div class="job-index">58</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">2. 求职关注重点：佛山高明能源电力设备产业园211家企业是近期重点求职方向，新型电力系统装备被列为佛山"十大战新产业之首"，供应链管理岗位需求旺盛且与Gofy机械背景高度匹配。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="58" onclick="jumpTo(58)">
+            <div class="job-index">59</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3. 供应链合规能力建设：汽车行业境外竞争合规指引发布，"供应链合规"成为新兴高薪方向。建议补充国际贸易合规知识，将供应链管理咨询副业向"汽车出海合规咨询"延伸。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="59" onclick="jumpTo(59)">
+            <div class="job-index">60</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">4. 投资观察：钠离子电池/固态电池（免税红利）、AI液冷散热（数据中心刚需）、佛山新型电力装备（政策驱动）是三大中期确定性方向。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="60" onclick="jumpTo(60)">
+            <div class="job-index">61</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5. 3D打印副业拓展：人形机器人原型件、汽车出海定制配件、电力设备维修工装是三个高附加值3D打印应用场景，可探索定向获客。</span>
+                </div>
+            </div>
+        </div>
+</div>
+
+<!-- 底部提示 -->
+<div class="float-hint" id="floatHint">
+    <span class="icon">🎧</span>
+    <span id="floatText">点击顶部播放按钮开始朗读</span>
+</div>
+
+<script>
+// ===== 数据 =====
+const items = [{"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：国家能源局 / 乙九说时政。日期：2026-09-03"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：国家能源局数据显示，截至7月底全国光伏发电装机达12.86亿千瓦，首次超越煤电（12.85亿千瓦）成为我国第一大电源，占全国发电总装机31.5%。这标志着中国能源结构历史性转变，新能源正式超越传统能源成为装机主力。"}, {"company": "五维度分析", "position": "", "salary": "", "location": "", "tag": "", "body": "💼 工作就业：光伏产业链覆盖硅料、组件、逆变器、支架等环节，佛山及周边有大量光伏配套制造企业。作为供应链管理者，新能源装备制造的采购需求正在爆发，相关岗位需求持续增长，尤其是光伏设备供应链管理、储能系统集成等方向。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "📈 职业发展：光伏+储能赛道正处于高速增长期，供应链管理人才在此领域极其稀缺。具备新能源装备制造采购经验的候选人，在佛山/广州市场的竞争力显著提升。建议关注光伏逆变器的半导体元器件采购、储能系统的BMS（电池管理系统）供应链等细分领域。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🏭 行业发展：光伏首超煤电意味着新能源装备制造将进入规模化、标准化阶段。佛山\"十五五\"规划明确布局新型储能、新能源装备制造，本地光伏配套企业（如支架、接线盒、逆变器外壳等五金/钣金件）将迎来订单放量。对机械/钣金加工行业是直接利好。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🚀 创业机会：光伏装机爆发带动配套设备需求，液冷散热技术在光伏逆变器、储能电池热管理领域有直接应用空间。Gofy的浸没式液冷技术方案可探索向储能电池热管理方向延伸——储能电站的液冷散热是刚需场景，且市场规模远大于个人PC液冷。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💰 投资机会：光伏板块短期面临产能过剩压力，但储能逆变器、光伏银浆、钙钛矿电池（免征消费税）等细分赛道值得关注。关注光伏设备制造龙头及储能系统集成商，佛山本地新能源装备企业可能有政策红利。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：新浪财经 / 腾讯新闻。日期：2026-09-03"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：被称为\"人形机器人第一股\"的宇树科技在科创板上市后第11个交易日股价腰斩，跌破550元/股。此前挂牌首日市值一度达610亿元，如今大幅回调，反映市场对人形机器人商业化落地节奏的分歧加大。"}, {"company": "五维度分析", "position": "", "salary": "", "location": "", "tag": "", "body": "💼 工作就业：宇树科技股价腰斩不影响机器人行业整体景气度，但说明资本市场的短期预期需要回归理性。对于求职者而言，机器人企业的供应链管理岗位依然稀缺且高薪，但需甄别企业的实际订单和现金流状况，避免进入\"PPT造机器人\"的公司。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "📈 职业发展：人形机器人产业链涉及精密减速器、伺服电机、控制器等核心零部件，这些正是佛山机械制造的优势领域。具备精密机加工、铸造件采购经验的供应链管理者，在机器人零部件供应商管理方面有天然优势，可作为职业转型的突破口。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🏭 行业发展：股价回调是估值回归而非行业衰退。国家发改委明确表态发展机器人产业要因地制宜、杜绝盲目跟风，意味着政策将更注重产业化落地而非概念炒作。佛山作为制造业大市，机器人集成应用市场广阔，本地精密加工企业有机会切入机器人零部件供应链。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🚀 创业机会：3D打印在机器人原型件、小批量结构件制造中有天然优势——人形机器人迭代速度快，传统开模成本高，3D打印可快速验证设计。Gofy的3D打印中心可探索向机器人创业团队提供快速原型制造服务，这是一个高附加值且持续增长的客户群体。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💰 投资机会：宇树科技股价腰斩可能是短期超跌机会，但需警惕人形机器人商业化时间线不确定性。建议关注上游核心零部件（减速器、伺服电机、力传感器）供应商而非整机厂——零部件企业受益于行业增长且风险更低。注意佛山本地精密加工企业中可能已有机器人产业链供应商。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：财政部、海关总署、税务总局2026年第20号公告。日期：2026-09-01起施行"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：9月1日起，无汞原电池、氢镍蓄电池、锂原电池、锂离子蓄电池、全钒液流电池按2%税率征收消费税（2027年9月起升至4%）。钠离子电池、固态电池、燃料电池及钙钛矿/叠层/砷化镓光伏电池在2026-2028年免征消费税。这一政策直接影响佛山新能源、储能电池、光伏配套制造企业。"}, {"company": "五维度分析", "position": "", "salary": "", "location": "", "tag": "", "body": "💼 工作就业：消费税新政直接影响企业成本结构，供应链管理者需要重新评估电池类物料的采购成本和供应商报价。具备税务合规意识的供应链人才将更受青睐——能将税收政策纳入TCO模型进行采购决策的管理者，是企业的核心价值所在。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "📈 职业发展：电池消费税分阶段实施（2%→4%），意味着企业需要提前规划供应链策略。作为供应链管理者，若能主导\"应税电池vs免税电池\"的物料替代方案（如锂离子→钠离子），将显著提升个人在企业中的战略价值。这正是从\"执行型采购\"向\"战略型供应链\"转型的关键能力。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🏭 行业发展：佛山大量电池配套制造企业需重点关注：应税电池（锂离子）成本上升2-4%，而免征的新型电池（钠离子、固态、燃料电池）获得政策红利。这将加速电池技术路线向钠离子、固态电池迁移，传统锂电池材料供应商面临转型压力。佛山的储能设备制造企业需重新核算BOM成本。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🚀 创业机会：免征消费税的钠离子电池、固态电池是明确的政策风口。Gofy的液冷项目若涉及电池热管理，应优先考虑钠离子/固态电池方案——不仅享受免税红利，且固态电池的热管理需求更高（散热要求更严苛），液冷技术的应用场景更广。3D打印方面，固态电池封装结构件的小批量制造也是潜在市场。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💰 投资机会：钠离子电池、固态电池、燃料电池产业链是明确的政策受益方向，2026-2028年免税窗口期是布局窗口。关注钠离子电池正极材料（如普鲁士蓝类似物）、固态电池电解质、燃料电池催化剂等上游材料企业。光伏领域，钙钛矿电池免征消费税且技术突破在即，是高弹性投资方向。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：21世纪经济报道 / 新华社 / 腾讯新闻。日期：2026-09-02~03"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：美军对伊朗霍尔木兹海峡沿岸设施发动新一轮打击，伊朗革命卫队向约旦美军基地发射重型弹道导弹作为报复。冲突升级导致布伦特原油一度突破97美元/桶（涨5.2%），美国原油突破92美元。美军对伊海上封锁已使86艘商船改道，全球能源供应链面临严峻冲击。"}, {"company": "五维度分析", "position": "", "salary": "", "location": "", "tag": "", "body": "💼 工作就业：油价飙升直接推高制造业物流成本和原材料成本（石化衍生品、金属冶炼能源成本等）。供应链管理者需要立即启动成本压力测试，评估供应商的涨价传导能力和替代方案。当前就业市场中，具备大宗商品风险管理和供应链弹性设计能力的候选人极具竞争力。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "📈 职业发展：地缘冲突对供应链的冲击是检验管理者能力的试金石。能在危机中快速搭建替代物流通道、锁定原材料价格、制定应急预案的供应链管理者，是企业的关键人才。建议将此次油价冲击作为案例，完善个人在供应链风险管理方面的经验积累和方法论。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🏭 行业发展：霍尔木兹海峡是全球石油运输咽喉，86艘商船改道意味着全球海运成本上升、交期延长。佛山制造业高度依赖进口原材料（如特种钢材、有色金属、化工原料），油价上涨将推高整体制造成本。机械加工、铸造等高能耗行业受冲击最大，需加快节能改造和供应链本地化。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🚀 创业机会：油价飙升利好新能源替代逻辑——光伏首超煤电的新闻恰逢其时。液冷散热技术在数据中心节能降耗方面有直接价值，高油价环境下企业更有动力投资节能技术。3D打印方面，本地化制造可减少对海运进口件的依赖，\"分布式制造\"概念在油价高企时更具经济性。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💰 投资机会：短期油价高位宽幅震荡，能源股（石油开采、油服）直接受益。但中长期看，每次油价飙升都是新能源加速替代的催化剂——光伏、储能、新能源汽车板块中期逻辑加强。关注军工/国防板块（地缘冲突升级直接利好）及黄金避险资产（荷兰央行转移86吨黄金已信号明确）。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：汽车行业关注 / 乘联会。日期：2026-09-01"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：比亚迪公布8月新能源汽车销量44.03万辆，其中出口18.95万辆，1-8月累计262.18万辆。上汽集团前8个月销量274.1万辆居行业首位，其中新能源116.3万辆同比增30.2%、海外101.6万辆同比增52.9%。8月多家主流车企新能源批售量创历年同期最佳。"}, {"company": "五维度分析", "position": "", "salary": "", "location": "", "tag": "", "body": "💼 工作就业：新能源汽车出口高速增长（比亚迪出口占比43%），意味着汽车供应链正在从\"国内内卷\"转向\"全球竞争\"。具备国际化采购经验、熟悉海外供应商管理和国际贸易合规的供应链人才极度稀缺。佛山作为汽车零部件制造重镇，相关岗位需求持续旺盛。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "📈 职业发展：汽车出海对供应链管理提出全新要求——海外供应商开发、全球物流规划、关税合规、属地化采购等。Gofy有外资企业（美资/英资）工作经验，英语流利且熟悉国际贸易，在汽车出海供应链管理方向有显著竞争优势。建议重点关注新能源汽车出海企业的供应链总监/经理岗位。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🏭 行业发展：比亚迪单月44万辆的销量规模对供应链的拉动效应巨大——每个零部件供应商都在扩产。佛山的汽车零部件制造企业（冲压件、压铸件、精密机加工件）直接受益。同时，三部门发布汽车行业境外竞争合规指引，要求车企境外定价以成本为基础，标志着中国汽车出海进入合规化新阶段。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🚀 创业机会：新能源汽车出口爆发带动汽车后市场服务需求——海外维修配件、改装件、定制件的供应链存在巨大缺口。3D打印在汽车定制件、小批量配件制造中有直接应用场景。Gofy可探索\"汽车定制配件3D打印+跨境电商\"模式，面向海外车主提供个性化定制服务。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💰 投资机会：新能源汽车出口链是最确定的增长赛道。关注比亚迪供应链核心标的（尤其是佛山/广东本地零部件供应商）、汽车出海物流服务商、以及海外充电桩/换电站建设企业。上汽海外销量增52.9%也值得关注其供应链合作伙伴。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：商务部、工信部、市场监管总局 / 经济观察报。日期：2026-09-01"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：商务部、工信部、市场监管总局9月1日联合印发《汽车行业境外竞争行为与合规建设指引》，要求车企境外定价以成本为基础、避免多频次大幅价格波动。比亚迪、奇瑞等已表态落实，标志中国汽车出海从\"野蛮生长\"迈入\"合规高质量发展\"阶段。"}, {"company": "五维度分析", "position": "", "salary": "", "location": "", "tag": "", "body": "💼 工作就业：合规指引的出台意味着汽车企业需要建立专业的境外合规团队，供应链管理中的价格合规、反垄断合规成为新需求。具备国际贸易合规经验的供应链管理者将迎来职业新机遇——企业需要既懂采购成本核算又懂境外法规的复合型人才。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "📈 职业发展：Gofy拥有17年供应链管理经验和内审员资格证，在成本核算和质量体系方面有扎实基础。若能补充国际贸易合规知识（如欧盟反补贴法规、美国反倾销规则等），将极大提升在汽车出海企业中的竞争力。建议关注汽车企业\"供应链合规经理/总监\"等新兴岗位。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🏭 行业发展：合规指引将重塑汽车出海的供应链定价模式——从\"低价冲量\"转向\"成本定价+合理利润\"。这对佛山的汽车零部件供应商意味着：海外客户的价格压力可能缓解（不再一味压价），但合规要求提高（需提供成本明细、接受审计）。具备完善成本核算体系的供应商将胜出。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🚀 创业机会：汽车出海合规咨询是一个新兴的蓝海市场。很多中小型零部件企业缺乏合规能力，需要第三方提供成本核算体系建设、合规审计准备等服务。Gofy的供应链管理咨询副业可向\"汽车出海合规供应链咨询\"方向延伸，这是一个高客单价且持续增长的咨询赛道。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💰 投资机会：合规指引利好已建立完善合规体系的头部车企（比亚迪、奇瑞已表态落实），中小车企面临合规成本上升压力。投资逻辑从\"看销量增速\"转向\"看合规能力+利润率\"。关注汽车合规咨询/法律服务相关的企业，以及能帮助零部件企业建立合规体系的SaaS/咨询服务商。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：央广网。日期：2026-09-01"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：佛山将新型电力系统装备产业列为十大战略性新兴产业之首。高明区富湾湖能源电力设备产业园规划面积1.88万亩，已集聚211家企业，覆盖变电设备、储能集成、电气成套、检验检测全链条。2026招商大会吸引300多家企业参加，西拓电气、国博电气等重点项目签约落地，千亿级应用场景持续释放。"}, {"company": "五维度分析", "position": "", "salary": "", "location": "", "tag": "", "body": "💼 工作就业：佛山将新型电力系统装备列为\"十大战新产业之首\"，政策力度极大。高明产业园211家企业集聚意味着大量供应链管理岗位需求——变电设备、储能集成、电气成套等领域的采购经理/供应链经理岗位将持续增加。Gofy身处佛山三水，地理上与高明相邻，通勤便利，是理想的就业方向。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "📈 职业发展：电力设备制造业的供应链管理与Gofy的机械专业背景高度匹配——变压器、开关柜、储能系统等均涉及大量机加工件、钣金件、铸造件采购。17年机械+采购经验在此领域可直接复用。建议关注园区内头部企业（如安恒智能、佛山照明、天亿电气等）的供应链管理岗位。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🏭 行业发展：佛山新型电力系统装备产业从\"零散集聚\"走向\"千亿集群\"，产业链上下游协同效应将显著增强。本地精密加工、铸造、钣金企业有机会切入电力设备供应链。广州新机场、轨道交通等基建项目带来的电力设备需求激增，为佛山制造业提供了千亿级增量市场。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🚀 创业机会：电力设备产业园的千亿级规模意味着配套服务需求巨大——设备定制件制造、维修配件供应、检测工装夹具等都是3D打印的应用场景。液冷方面，电力设备（尤其是大功率变压器、储能系统）的散热需求与液冷技术直接相关，Gofy可探索向电力设备热管理方向延伸液冷技术应用。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💰 投资机会：佛山新型电力系统装备产业是明确的政策驱动赛道。关注园区内已签约落地的重点企业（西拓电气固态变压器、国博电气智造基地），以及上游核心材料/零部件供应商。储能集成和固态变压器是技术壁垒最高、增长潜力最大的细分方向。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "来源：东方财富 / 美联储褐皮书。日期：2026-09-03"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "摘要：美联储8月经济形势报告《褐皮书》显示，美国经济仍在温和扩张，但增长越来越依赖AI数据中心等少数项目。通胀压力依然顽固，居民端\"K型分化\"加剧——高收入群体消费稳健，低收入群体消费收缩。11个辖区中8个涨价速度不变、3个放缓，仅1个加快。"}, {"company": "五维度分析", "position": "", "salary": "", "location": "", "tag": "", "body": "💼 工作就业：美国经济依赖AI数据中心说明AI基础设施建设仍是全球增长引擎。这对供应链管理者意味着：AI硬件（服务器、GPU、液冷设备、电源系统）的采购需求持续旺盛。具备AI硬件供应链经验的人才在全球市场都有竞争力，佛山/深圳的AI硬件制造企业正在大量招聘供应链管理人才。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "📈 职业发展：AI数据中心的建设热潮直接利好液冷散热赛道——数据中心功耗密度持续攀升，传统风冷已无法满足散热需求，液冷成为必然选择。Gofy的浸没式液冷项目正处于这个全球性的技术浪潮中。建议将职业发展方向与AI基础设施供应链管理结合，这是一个5-10年的确定性增长赛道。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🏭 行业发展：美国经济\"K型分化\"意味着消费市场分层加剧，制造业需同时服务高端和性价比市场。AI数据中心拉动的不只是芯片，还有配套的精密结构件、散热系统、电源管理系统等——这些都是佛山机械制造的优势领域。本地企业若能切入AI硬件供应链，将获得高于传统制造业的利润率。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🚀 创业机会：褐皮书明确AI数据中心是美国经济的主要增长引擎，这为Gofy的液冷项目提供了最强有力的市场背书。浸没式液冷技术在数据中心领域已有成熟应用（如微软、阿里巴巴），Gofy可从\"个人PC液冷\"向\"小型数据中心/边缘计算节点液冷\"方向拓展——B端市场更大、客单价更高、技术迁移成本低。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "💰 投资机会：AI数据中心是美国经济核心增长点，相关供应链是确定性投资方向。关注：液冷散热（直接关联Gofy创业赛道）、AI电源管理（PSU/UPS）、数据中心精密结构件、先进封装（CoWoS/HBM）等细分赛道。美联储褐皮书显示通胀放缓趋势，9月降息预期增强，科技成长股有望受益。"}, {"company": "🎯 行动建议", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 液冷创业方向调整：电池消费税新政（固态/钠离子免税）+ AI数据中心需求爆发 = 液冷散热应优先探索\"储能电池热管理\"和\"小型数据中心/边缘计算液冷\"两个B端方向，市场空间远大于个人PC液冷。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "2. 求职关注重点：佛山高明能源电力设备产业园211家企业是近期重点求职方向，新型电力系统装备被列为佛山\"十大战新产业之首\"，供应链管理岗位需求旺盛且与Gofy机械背景高度匹配。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "3. 供应链合规能力建设：汽车行业境外竞争合规指引发布，\"供应链合规\"成为新兴高薪方向。建议补充国际贸易合规知识，将供应链管理咨询副业向\"汽车出海合规咨询\"延伸。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "4. 投资观察：钠离子电池/固态电池（免税红利）、AI液冷散热（数据中心刚需）、佛山新型电力装备（政策驱动）是三大中期确定性方向。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "5. 3D打印副业拓展：人形机器人原型件、汽车出海定制配件、电力设备维修工装是三个高附加值3D打印应用场景，可探索定向获客。"}];
+const totalItems = 61;
+const speakTemplate = "{company}。详细内容：{body}。";
+
+// ===== 状态 =====
+let currentIndex = 0;
+let isPlaying = false;
+let speechRate = 1.0;
+let readDoneSet = new Set();
+let synth = window.speechSynthesis;
+let currentUtterance = null;
+let selectedVoice = null;
+let voicesReady = false;
+
+// ===== 浏览器检测 =====
+function isQQBrowser() {
+    let ua = navigator.userAgent || '';
+    return /MQQBrowser|QQ\//i.test(ua);
+}
+function isUCBrowser() {
+    let ua = navigator.userAgent || '';
+    return /UCBrowser|UCWEB/i.test(ua);
+}
+function isWeChat() {
+    let ua = navigator.userAgent || '';
+    return /MicroMessenger/i.test(ua);
+}
+function isUnsupportedBrowser() {
+    return isQQBrowser() || isUCBrowser() || isWeChat();
+}
+
+// ===== 初始化 =====
+function init() {
+    // 浏览器检测：不支持的直接提示换浏览器
+    if (isUnsupportedBrowser()) {
+        let browserName = isQQBrowser() ? 'QQ浏览器' : (isUCBrowser() ? 'UC浏览器' : '微信内置浏览器');
+        showBrowserWarning(browserName);
+        return;
+    }
+
+    if (!synth) {
+        showBrowserWarning('当前浏览器');
+        return;
+    }
+
+    // Chrome/Edge: voices 通过异步事件加载
+    let voices = synth.getVoices();
+    if (voices && voices.length > 0) {
+        pickVoice(voices);
+    }
+
+    // 监听语音列表加载（关键！Android Chrome 需要等事件）
+    synth.onvoiceschanged = function() {
+        voices = synth.getVoices();
+        if (voices && voices.length > 0 && !voicesReady) {
+            pickVoice(voices);
+            document.getElementById('floatText').textContent =
+                '✅ 语音引擎就绪 (' + voices.length + '个) — 点🎧开始朗读';
+            document.getElementById('progressText').textContent = '就绪 ✓';
+        }
+    };
+
+    // 超时兜底：2秒后强制尝试
+    setTimeout(function() {
+        if (!voicesReady) {
+            voices = synth.getVoices();
+            if (voices && voices.length > 0) {
+                pickVoice(voices);
+            }
+            if (selectedVoice) {
+                document.getElementById('floatText').textContent =
+                    '✅ 语音引擎: ' + selectedVoice.name;
+                document.getElementById('progressText').textContent = '就绪 ✓';
+            } else {
+                document.getElementById('floatText').textContent =
+                    '⚠️ 未找到中文语音，请用系统自带 Chrome/Edge 打开';
+                document.getElementById('progressText').textContent = '无中文语音 ⚠️';
+            }
+            voicesReady = true;
+        }
+    }, 2500);
+}
+
+function showBrowserWarning(browserName) {
+    // 隐藏控制栏播放按钮
+    document.getElementById('playBtn').style.opacity = '0.3';
+    document.getElementById('playBtn').style.pointerEvents = 'none';
+    // 底部显示换浏览器提示
+    document.getElementById('floatHint').style.background = 'rgba(211,47,47,0.95)';
+    document.getElementById('floatText').innerHTML =
+        '❌ ' + browserName + '不支持语音朗读<br><small>👉 请用 <b>Chrome</b> 或 <b>Edge</b> 浏览器打开</small>';
+    document.getElementById('progressText').textContent = '❌ 浏览器不支持';
+    // 页面顶部插入醒目提示横幅
+    let banner = document.createElement('div');
+    banner.style.cssText = 'background:#FFEBEE;border-bottom:2px solid #EF5350;padding:16px;text-align:center;';
+    banner.innerHTML =
+        '<div style="font-size:40px;margin-bottom:8px;">🚫</div>' +
+        '<div style="font-size:15px;font-weight:bold;color:#C62828;margin-bottom:6px;">' +
+        browserName + ' 不支持语音朗读</div>' +
+        '<div style="font-size:14px;color:#555;line-height:1.6;">' +
+        '请用 <b style="color:#1A73E8;">Chrome</b> 或 <b style="color:#0078D4;">Edge</b> 浏览器打开即可朗读<br>' +
+        '<span style="font-size:12px;color:#999;">（应用商店搜索"Chrome"或"Edge"下载）</span></div>';
+    let header = document.querySelector('.header');
+    if (header) {
+        header.parentNode.insertBefore(banner, header);
+    }
+    // 禁用所有岗位点击
+    document.querySelectorAll('.job-item').forEach(function(el) {
+        el.style.pointerEvents = 'none';
+        el.style.opacity = '0.5';
+    });
+}
+
+function pickVoice(voices) {
+    // 优先级：zh-CN 中文女声 > zh-CN 任意 > zh-* > 第一个
+    let preferred = ['zh-CN', 'zh-Hans', 'zh-HK', 'zh-TW', 'zh'];
+    for (let lang of preferred) {
+        for (let v of voices) {
+            if (v.lang && v.lang.startsWith(lang)) {
+                // 优先女声
+                if (v.name.toLowerCase().indexOf('female') >= 0 ||
+                    v.name.indexOf('女') >= 0) {
+                    selectedVoice = v;
+                    voicesReady = true;
+                    return;
+                }
+            }
+        }
+    }
+    // 中文任意
+    for (let lang of preferred) {
+        for (let v of voices) {
+            if (v.lang && v.lang.startsWith(lang)) {
+                selectedVoice = v;
+                voicesReady = true;
+                return;
+            }
+        }
+    }
+    // 无中文语音 → 用第一个兜底
+    if (voices.length > 0) {
+        selectedVoice = voices[0];  // 用第一个兜底
+    }
+    voicesReady = true;
+}
+
+// ===== 构建朗读文本 =====
+function buildSpeakText(item) {
+    let raw = speakTemplate
+        .replace('{company}', item.company || '')
+        .replace('{position}', item.position || '')
+        .replace('{salary}', item.salary || '面议')
+        .replace('{location}', item.location || '')
+        .replace('{body}', item.body || '');
+    return _cleanForTTS(raw);
+}
+
+// ===== TTS 文本清洗：去除所有 Markdown 残留符号 =====
+function _cleanForTTS(text) {
+    if (!text) return text;
+    let cleaned = text;
+    // 去除 Markdown 标题标记 (# ## ### #### 等)
+    cleaned = cleaned.replace(/#{1,6}\s*/g, '');
+    // 去除加粗/斜体标记 (** __ * _)
+    cleaned = cleaned.replace(/\*{1,2}|_/g, '');
+    // 去除管道符 (表格)
+    cleaned = cleaned.replace(/\|/g, ' ');
+    // 去除反引号 (代码)
+    cleaned = cleaned.replace(/`+/g, '');
+    // 去除波浪线
+    cleaned = cleaned.replace(/~+/g, '');
+    // 去除分散的 -  :  标记（但不破坏正常连字符和冒号）
+    cleaned = cleaned.replace(/：/g, ':');
+    // 压缩多余空格
+    cleaned = cleaned.replace(/\s+/g, ' ');
+    // 去除连续连字符
+    cleaned = cleaned.replace(/-{2,}/g, '');
+    return cleaned.trim();
+}
+
+// ===== 朗读单条 =====
+function speakItem(index) {
+    if (index < 0 || index >= totalItems) return;
+
+    currentIndex = index;
+
+    synth.cancel();
+    let item = items[index];
+    let text = buildSpeakText(item);
+
+    let utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'zh-CN';
+    utterance.rate = speechRate;
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+    if (selectedVoice) {
+        utterance.voice = selectedVoice;
+    }
+
+    utterance.onstart = function() {
+        updateUI(index);
+        document.getElementById('nowPlaying').classList.add('active');
+        document.getElementById('nowPlayingText').textContent =
+            (item.company || '') + ' ' + (item.position || '');
+    };
+
+    utterance.onend = function() {
+        readDoneSet.add(index);
+        updateReadDone(index);
+        let next = index + 1;
+        if (next < totalItems && isPlaying) {
+            speakItem(next);
+        } else if (next >= totalItems) {
+            stopPlayback();
+            document.getElementById('floatText').textContent = '✅ 全部朗读完成！';
+            document.getElementById('progressText').textContent = '朗读完成';
+            document.getElementById('progressBar').style.width = '100%';
+            document.getElementById('progressLabel').textContent = totalItems + '/' + totalItems;
+        }
+    };
+
+    utterance.onerror = function(e) {
+        if (e.error !== 'canceled' && e.error !== 'interrupted') {
+            let errMsg = '⚠️ 朗读出错: ' + (e.error || 'unknown');
+            document.getElementById('progressText').textContent = errMsg;
+            document.getElementById('floatText').textContent =
+                errMsg + ' — 可尝试用系统自带浏览器打开';
+            let next = index + 1;
+            if (next < totalItems && isPlaying) {
+                setTimeout(function() { speakItem(next); }, 500);
+            }
+        }
+    };
+
+    currentUtterance = utterance;
+    synth.speak(utterance);
+}
+
+// ===== 播放控制 =====
+function togglePlay() {
+    if (isPlaying) {
+        pausePlayback();
+    } else {
+        startPlayback();
+    }
+}
+
+function startPlayback() {
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    document.getElementById('progressText').textContent = '朗读中...';
+    document.getElementById('floatText').textContent =
+        selectedVoice
+            ? '🔊 朗读中 (' + selectedVoice.name + ') ...'
+            : '🔊 朗读中 (系统默认语音)...';
+    speakItem(currentIndex);
+}
+
+function pausePlayback() {
+    isPlaying = false;
+    synth.cancel();
+    document.getElementById('playIcon').textContent = '🎧';
+    document.getElementById('playBtn').classList.remove('playing');
+    document.getElementById('nowPlaying').classList.remove('active');
+    document.getElementById('floatText').textContent = '⏸️ 已暂停，点击继续';
+    document.getElementById('progressText').textContent = '已暂停';
+}
+
+function stopPlayback() {
+    isPlaying = false;
+    synth.cancel();
+    document.getElementById('playIcon').textContent = '🎧';
+    document.getElementById('playBtn').classList.remove('playing');
+    document.getElementById('nowPlaying').classList.remove('active');
+    document.getElementById('floatText').textContent = '✅ 朗读完成';
+}
+
+function skipNext() {
+    synth.cancel();
+    let next = (currentIndex + 1) % totalItems;
+    currentIndex = next;
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function skipPrev() {
+    synth.cancel();
+    let prev = currentIndex - 1;
+    if (prev < 0) prev = totalItems - 1;
+    currentIndex = prev;
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function jumpTo(index) {
+    synth.cancel();
+    currentIndex = index;
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function setSpeed(val) {
+    speechRate = parseFloat(val);
+    document.getElementById('floatText').textContent =
+        '🎵 朗读速度: ' + val + 'x';
+    setTimeout(function() {
+        if (isPlaying) {
+            document.getElementById('floatText').textContent = '🔊 朗读中...';
+        }
+    }, 1500);
+}
+
+// ===== UI更新 =====
+function updateUI(index) {
+    // 进度条
+    let pct = (index / totalItems) * 100;
+    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent = (index + 1) + '/' + totalItems;
+    document.getElementById('progressText').textContent =
+        '正在朗读第 ' + (index + 1) + ' ' + '条新闻'.replace('个岗位','').replace('条新闻','');
+
+    // 高亮当前
+    document.querySelectorAll('.job-item').forEach(function(el) {
+        el.classList.remove('reading');
+    });
+    let currentEl = document.querySelector('.job-item[data-index="' + index + '"]');
+    if (currentEl) {
+        currentEl.classList.add('reading');
+        currentEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+function updateReadDone(index) {
+    let el = document.querySelector('.job-item[data-index="' + index + '"]');
+    if (el) {
+        el.classList.add('read-done');
+    }
+}
+
+// ===== 启动 =====
+init();
+
+// ===== 移动端保持屏幕唤醒（可选） =====
+if (navigator.wakeLock) {
+    try {
+        navigator.wakeLock.request('screen');
+    } catch(e) {}
+}
+</script>
+</body>
+</html>
