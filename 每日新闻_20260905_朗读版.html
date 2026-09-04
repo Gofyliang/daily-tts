@@ -1,0 +1,1378 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>📰 每日要闻（20260905）</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f5f5f5;
+    color: #333;
+    padding-bottom: 80px;
+}
+
+/* ===== 顶部控制栏 ===== */
+.control-bar {
+    position: sticky; top:0; z-index:100;
+    background: linear-gradient(135deg, #1A73E8 0%, #4FC3F7 100%);
+    padding: 12px 16px;
+    box-shadow: 0 2px 12px rgba(26,115,232,0.3);
+}
+.control-row {
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+}
+.control-btn {
+    width: 48px; height: 48px;
+    border: none; border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    font-size: 22px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
+.control-btn:active { transform: scale(0.9); background: rgba(255,255,255,0.35); }
+.control-btn.play-btn {
+    width: 64px; height: 64px;
+    background: #fff;
+    color: #1A73E8;
+    font-size: 28px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+.control-btn.play-btn.playing { color: #FF6B35; }
+
+.speed-select {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 14px;
+    cursor: pointer;
+    -webkit-appearance: none;
+}
+.speed-select option { color: #333; }
+
+/* ===== 进度信息 ===== */
+.progress-row {
+    display: flex; align-items: center; gap: 10px;
+    margin-top: 8px;
+    color: rgba(255,255,255,0.9);
+    font-size: 13px;
+}
+.progress-bar-outer {
+    flex: 1; height: 4px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 2px;
+    overflow: hidden;
+}
+.progress-bar-inner {
+    height: 100%;
+    background: #fff;
+    border-radius: 2px;
+    transition: width 0.3s;
+    width: 0%;
+}
+.progress-text {
+    white-space: nowrap;
+    min-width: 90px;
+    text-align: right;
+}
+
+/* ===== 当前朗读提示 ===== */
+.now-playing {
+    background: #FFF9C4;
+    padding: 8px 16px;
+    font-size: 13px;
+    color: #F57F17;
+    text-align: center;
+    display: none;
+    border-bottom: 2px solid #FFD54F;
+}
+.now-playing.active { display: block; }
+
+/* ===== 标题区 ===== */
+.header {
+    background: #fff;
+    padding: 20px 16px 12px;
+    border-bottom: 1px solid #eee;
+}
+.header h1 { font-size: 18px; color: #1A73E8; margin-bottom: 4px; }
+.header .subtitle { font-size: 13px; color: #888; }
+
+/* ===== 岗位列表 ===== */
+.job-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 14px 16px;
+    background: #fff;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
+.job-item:active { background: #f5f5f5; }
+.job-item.reading {
+    background: #E3F2FD;
+    border-left: 4px solid #1A73E8;
+    padding-left: 12px;
+}
+.job-item.read-done {
+    opacity: 0.6;
+}
+
+.job-index {
+    width: 32px; height: 32px;
+    background: #f0f0f0;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: bold;
+    color: #888;
+    flex-shrink: 0;
+}
+.job-item.reading .job-index {
+    background: #1A73E8;
+    color: #fff;
+}
+.job-item.read-done .job-index {
+    background: #4CAF50;
+    color: #fff;
+}
+
+.job-info { flex:1; min-width:0; }
+.job-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    display: flex; align-items: center; gap: 6px;
+    flex-wrap: wrap;
+}
+.job-detail {
+    font-size: 13px;
+    color: #666;
+    display: flex; flex-wrap: wrap; gap: 8px;
+}
+.position { color: #1A73E8; }
+.salary { color: #FF6B35; font-weight: bold; }
+.location { color: #888; }
+
+.tag {
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    white-space: nowrap;
+}
+.tag-new { background: #E8F5E9; color: #2E7D32; }
+.tag-repeat { background: #FFF3E0; color: #E65100; }
+.tag-update { background: #E3F2FD; color: #1565C0; }
+
+/* ===== 底部浮动条 ===== */
+.float-hint {
+    position: fixed; bottom: 0; left:0; right:0;
+    background: rgba(26,115,232,0.95);
+    color: #fff;
+    text-align: center;
+    padding: 10px 16px;
+    font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px;
+    z-index: 99;
+}
+.float-hint .icon { font-size: 20px; }
+
+/* ===== 状态标记 ===== */
+.status-badge {
+    display: inline-block;
+    background: #4CAF50;
+    color: #fff;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+    0%,100% { opacity:1; }
+    50% { opacity:0.5; }
+}
+</style>
+</head>
+<body>
+
+<!-- 控制栏 -->
+<div class="control-bar">
+    <div class="control-row">
+        <button class="control-btn" onclick="skipPrev()" title="上一条">⏮️</button>
+        <button class="control-btn play-btn" id="playBtn" onclick="togglePlay()" title="播放/暂停">
+            <span id="playIcon">🎧</span>
+        </button>
+        <button class="control-btn" onclick="skipNext()" title="下一条">⏭️</button>
+        <select class="speed-select" id="speedSelect" onchange="setSpeed(this.value)">
+            <option value="0.8">0.8x</option>
+            <option value="1.0" selected>1x</option>
+            <option value="1.2">1.2x</option>
+            <option value="1.5">1.5x</option>
+        </select>
+    </div>
+    <div class="progress-row">
+        <span id="progressLabel">0/70</span>
+        <div class="progress-bar-outer">
+            <div class="progress-bar-inner" id="progressBar"></div>
+        </div>
+        <span class="progress-text" id="progressText">准备就绪</span>
+    </div>
+</div>
+
+<!-- 当前朗读提示 -->
+<div class="now-playing" id="nowPlaying">
+    🔊 正在朗读：<span id="nowPlayingText"></span>
+</div>
+
+<!-- 标题 -->
+<div class="header">
+    <h1>📰 每日要闻（20260905）</h1>
+    <p class="subtitle">70条新闻 | 点🎧按钮浏览器自动朗读</p>
+</div>
+
+<!-- 岗位/新闻列表 -->
+<div id="jobList">
+
+        <div class="job-item" data-index="0" onclick="jumpTo(0)">
+            <div class="job-index">1</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📌 要闻 1｜AI催热液冷产业：2026液冷市场规模将破260亿，三季度进入"批量交付"拐点</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">📅 时间：20260903 / 🏢 来源：证券日报 / 浙商证券研报。📝 摘要：9月3日液冷服务器板块强势走强，金富科技、金帝股份等多股涨停。浙商证券判断2026年三季度成为国内液冷产业从"试点验证"走向"批量交付"的关键拐点。集邦咨询预测2026年液冷在AI芯片领域渗透率升至53%。2025年中国...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="1" onclick="jumpTo(1)">
+            <div class="job-index">2</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🔍 5维度深度分析</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="2" onclick="jumpTo(2)">
+            <div class="job-index">3</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 💼 工作就业。液冷产业链进入批量交付期，供应链、制造、测试、运维岗位需求将明显增加。佛山顺德有申菱环境、英维克等液冷龙头布局，对Gofy供应链背景是直接利好。可重点关注申菱环境、申菱股份、康盛股份、英维克等公司的"采购经理/供应商管理岗"，部分岗位接受顺德/佛山本地。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="3" onclick="jumpTo(3)">
+            <div class="job-index">4</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">2. 📈 职业发展。液冷赛道即将进入"35年快速放量期"，是供应链管理者从传统机械行业切入高科技硬件的优质跳板。掌握"冷板/浸没式/CDU/TMU"等技术术语、熟悉氟化液配方与密封件供应商、对接服务器OEM的供应链人员将明显溢价。建议系统学习液冷产业链图谱（芯片→服务器→数据中心→运营商）。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="4" onclick="jumpTo(4)">
+            <div class="job-index">5</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3. 🏭 行业发展。液冷从"可选配置"变成"AI基础设施标配"，标志着数据中心散热正式进入"液冷时代"。这对机械/铸造/密封件/精密加工行业是历史性增量——冷板、机柜、CDU、TMU、浸没罐等核心部件都涉及高精度机加工、CNC、钣金、密封、连接器，恰好是Gofy熟悉的制造工艺领域。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="5" onclick="jumpTo(5)">
+            <div class="job-index">6</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">4. 🚀 创业机会。这是Gofy核心创业项目的最强政策信号！液冷从"试点"进入"批量"意味着：（a）个人玩家/小公司做浸没式整机的窗口收窄，建议转向"浸没式机箱整机+定制液冷解决方案"细分赛道，主打中小型AI工作站/实验室；（b）可开发"浸没式液冷mini机柜"面向AI初创团队、设计师工作流；（c）...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="6" onclick="jumpTo(6)">
+            <div class="job-index">7</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5. 💰 投资机会。重点关注A股液冷板块：英维克（002837）数据中心温控龙头、申菱环境（顺德本地+5G/液冷双线）、高澜股份（冷板+浸没+储能液冷全覆盖）、曙光数创（浸没式液冷龙头）。中长期可定投"储能电池ETF"（与液冷高度重合）。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="7" onclick="jumpTo(7)">
+            <div class="job-index">8</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📌 要闻 2｜微软Azure宣布2027年全球新建数据中心100%采用全液冷架构</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">📅 时间：20260904 / 🏢 来源：网易财经 / 微软Azure官宣。📝 摘要：微软Azure在全球算力生态峰会上正式宣布，2027年之后全球所有新建大型数据中心100%采用全液冷架构。预计可将整体数据中心PUE降至1.12以下，年制冷能耗可降低超60亿千瓦时。这是头部大厂首次给出"100%液...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="8" onclick="jumpTo(8)">
+            <div class="job-index">9</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🔍 5维度深度分析</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="9" onclick="jumpTo(9)">
+            <div class="job-index">10</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 💼 工作就业。微软系（含Azure中国生态合作伙伴、世纪互联、微软在华合资工厂）预计将在2026Q42027启动大规模液冷机房招标。Gofy可重点监控"微软世纪互联微软云生态合作伙伴"的供应链招聘信息，特别是顺德/深圳/东莞周边的服务器代工厂。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="10" onclick="jumpTo(10)">
+            <div class="job-index">11</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">2. 📈 职业发展。液冷供应链专家将成为大厂"必抢人才"。建议在简历/自我介绍中沉淀以下技术资产：（a）熟悉CDU/TMU/二次侧冷却系统；（b）了解服务器OEM（浪潮/华为/中科曙光）液冷方案；（c）掌握液冷材料供应商图谱（氟化液/冷板铝材/密封件/EPDM）。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="11" onclick="jumpTo(11)">
+            <div class="job-index">12</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3. 🏭 行业发展。"100%液冷"是行业分水岭。传统风冷数据中心公司将面临23年内改造/退役压力，液冷板块整体进入"5年牛市"。对机械行业而言，冷板、CDU、浸没罐、机柜外壳、密封件都迎来大批量CNC/铸造订单。佛山顺德/南海的精密加工集群将受益。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="12" onclick="jumpTo(12)">
+            <div class="job-index">13</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">4. 🚀 创业机会。中国液冷产业链迎来国产替代窗口：微软Azure亚太节点大量在中国/东南亚扩容，国内液冷厂商（含顺德申菱、英维克、高澜、曙光数创）正在抢单。Gofy可考虑"个人级/小团队级浸没式机箱"作为细分市场补充，不做服务器机房级（竞争不过上市公司），专注做"AI创业团队+3D打印师+个人开发...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="13" onclick="jumpTo(13)">
+            <div class="job-index">14</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5. 💰 投资机会。中长期定投液冷赛道ETF（目前已有相关主题基金），重点个股：浪潮信息（All in液冷战略）、英维克、申菱环境、高澜股份、曙光数创。此外关注液冷材料供应商：新宙邦（氟化液）、巨化股份（制冷剂延伸氟化液）。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="14" onclick="jumpTo(14)">
+            <div class="job-index">15</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📌 要闻 3｜英伟达Rubin GPU功耗高达2300瓦，AIDC液冷与HVDC需求预期差最大</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">📅 时间：20260903 / 🏢 来源：财闻 / 集邦咨询。📝 摘要：英伟达Rubin单颗GPU功耗高达2300瓦，较前代产品接近翻倍。高功耗直接推升液冷、HVDC（高压直流）、SST（固态变压器）等配套需求。这些此前被市场低估的细分环节，成为本轮AI算力行情中"预期差最大、机会最多"的方向，资金...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="15" onclick="jumpTo(15)">
+            <div class="job-index">16</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🔍 5维度深度分析</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="16" onclick="jumpTo(16)">
+            <div class="job-index">17</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 💼 工作就业。Rubin量产将带动"高功率冷板""液冷整柜""HVDC电源"等高难度部件供应链需求，结构件/精密加工/PACK级采购岗位需求增加。佛山、深圳、东莞周边的服务器电源、液冷ODM工厂（如新朋股份泰国基地、英维克、申菱）将密集招聘采购/项目经理。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="17" onclick="jumpTo(17)">
+            <div class="job-index">18</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">2. 📈 职业发展。Rubin功耗接近翻倍，意味着供应商必须从"代工思维"升级为"协同研发思维"，采购经理将深度参与早期BOM成本协同、散热方案选型、功耗预算谈判。建议Gofy系统学习"芯片—服务器—机柜—机房"四级功耗预算模型，提升技术深度。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="18" onclick="jumpTo(18)">
+            <div class="job-index">19</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3. 🏭 行业发展。Rubin量产是散热与供电"分水岭"：从风冷主流正式切换到"全液冷+高压直流"。冷板、CDU、浸没罐、机柜、HVDC电源、SST变压器、储能电池7大细分赛道同步爆发。机械行业（精密机加工、铸造、钣金、密封）将收到大批量订单。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="19" onclick="jumpTo(19)">
+            <div class="job-index">20</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">4. 🚀 创业机会。高功耗单机催生"分布式液冷"新场景：边缘计算盒子、小型AI推理站、个人AI工作站。这是Gofy浸没式液冷创业项目的精准产品定位！建议产品路线：35kW小机箱浸没式整机（覆盖一台4090或单颗国产AI推理卡），主打3D打印师、AI开发者、短视频创作者，差异化避开数据中心机房级红海。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="20" onclick="jumpTo(20)">
+            <div class="job-index">21</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5. 💰 投资机会。核心标的：英维克（002837）液冷温控龙头、麦格米特（002851）HVDC电源平台公司、盛弘股份（300693）储能+HVDC双线。中长线关注服务器整机ODM和电源HVDC国产替代链。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="21" onclick="jumpTo(21)">
+            <div class="job-index">22</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📌 要闻 4｜工信部印发《人工智能中小企业创业支持计划（2026-2028年）》：3年培育"小巨人"2000家</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">📅 时间：20260904 / 🏢 来源：工信部 / 同花顺财经早餐。📝 摘要：工信部办公厅正式印发《人工智能中小企业创业支持计划（20262028年）》，明确3年内在行业应用、数据服务、智能算力等重点领域新培育科技和创新型中小企业1万家以上、专精特新"小巨人"突破2000家。配套建设10个科技型企...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="22" onclick="jumpTo(22)">
+            <div class="job-index">23</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🔍 5维度深度分析</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="23" onclick="jumpTo(23)">
+            <div class="job-index">24</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 💼 工作就业。AI创业扶持计划直接利好"AI+产业"应用岗。Gofy可在佛山/广州本地关注"AI+供应链""AI+制造业"应用岗位，例如AI Agent公司在工业品采购、供应商尽调、合同审查等场景的"领域专家+AI训导师"复合岗位，年薪4080万。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="24" onclick="jumpTo(24)">
+            <div class="job-index">25</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">2. 📈 职业发展。政策窗口期3年，是Gofy从"传统制造业采购经理"切入"AI+供应链"赛道的黄金期。建议今年内完成至少一项AI应用落地：例如用AI Agent整理供应商档案、做SOP自动生成、做询价单智能匹配。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="25" onclick="jumpTo(25)">
+            <div class="job-index">26</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3. 🏭 行业发展。"1万家AI中小企业、2000家小巨人"意味着AI应用将下沉到产业链各环节。工业AI、AI Agent、行业垂直大模型、工业SaaS将迎来大爆发。这是供应链行业从"信息化"走向"智能化"的明确时点。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="26" onclick="jumpTo(26)">
+            <div class="job-index">27</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">4. 🚀 创业机会。Gofy具备"AI+液冷+3D打印+供应链"四个技术栈，可直接对标扶持政策：。方向A：AI+供应链SaaS，给中小制造业做智能采购助手。方向B：AI+液冷行业内容，做"AI工作站DIY"系列短视频，引流硬件销售。方向C：3D打印AI建模，给中小品牌做"AI一键建模"服务。强烈建议...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="27" onclick="jumpTo(27)">
+            <div class="job-index">28</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5. 💰 投资机会。"AI+小巨人"受益板块：SaaS、行业AI Agent、工业互联网平台。可关注A股AI应用端龙头：金山办公、科大讯飞、用友网络、金蝶国际、汉得信息。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="28" onclick="jumpTo(28)">
+            <div class="job-index">29</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📌 要闻 5｜广东AI产业"链式"滚雪球：大厂带小厂，中小企业变"链主"</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">📅 时间：20260904 / 🏢 来源：21世纪经济报道（南方财经）。📝 摘要：第32次APEC中小企业部长会议在广东省广州市举办，会议聚焦"科技创新""数智赋能""普惠发展"。广东正在将"链式改造"打法升级为"链式协同"，让"链主"企业在技术、场景、数据三个维度上向外释放能量，中小企业在细分赛道...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="29" onclick="jumpTo(29)">
+            <div class="job-index">30</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🔍 5维度深度分析</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="30" onclick="jumpTo(30)">
+            <div class="job-index">31</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 💼 工作就业。广东AI"链主"模式预示大量"细分赛道采购+项目协调"岗位开放。佛山顺德、东莞、深圳市周边AI+制造企业密集招聘"商务BD+采购经理"复合岗。Gofy可在boss直聘/猎聘重点关注"AI行业运营经理""AI产业链项目协调"类岗位。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="31" onclick="jumpTo(31)">
+            <div class="job-index">32</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">2. 📈 职业发展。"链式协同"模式意味着未来最稀缺的是"懂行业+懂技术+懂采购"的复合型人才。Gofy的"机械+采购+液冷+3D打印"背景恰好契合。建议在领英/脉脉上明确打标签："机械+供应链+液冷+3D打印+AI应用"，强化个人IP。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="32" onclick="jumpTo(32)">
+            <div class="job-index">33</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3. 🏭 行业发展。广东是中国制造业链主最密集的省份，深圳东莞广州佛山中山走廊已经形成"大厂带小厂"的协同生态。对Gofy的实战意义：（a）液冷/3D打印/AI供应链方向的小批量试产对接更便利；（b）找代工厂、做首件、量产都比外地快3倍以上。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="33" onclick="jumpTo(33)">
+            <div class="job-index">34</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">4. 🚀 创业机会。黑格科技的案例对Gofy的"缩微人像3D打印中心"项目有直接借鉴：。与阿里云/腾讯云合作 → 接入"AI 3D建模"云渲染API。通过大平台流量 → 引流到自有小程序。Kickstarter众筹 → 出海验证。建议年内对标黑格科技做一次Kickstarter众筹，主打"AI人像+...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="34" onclick="jumpTo(34)">
+            <div class="job-index">35</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5. 💰 投资机会。广东AI"链主"概念股：佳都科技（600728）智慧交通链主、黑格科技（未上市）3D打印独角兽、广电运通、远光软件等。可关注"广东AI概念指数"或"大湾区AI ETF"。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="35" onclick="jumpTo(35)">
+            <div class="job-index">36</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📌 要闻 6｜顺德发起《湾区具身智能产业集聚发展倡议》：两年内落地100个机器人真实场景</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">📅 时间：20260902 / 🏢 来源：佛山日报。📝 摘要：9月2日，2026人工智能+未来产业创新大会（顺德分会场）暨顺德智能机器人应用大会在潭洲国际会展中心举行。顺德揭牌新一代信息通信技术产业园；从大良到杏坛10个镇街挂牌十大战略性新兴产业园，形成"大脑—眼睛—身体—躯干—神经"全产业链；成立...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="36" onclick="jumpTo(36)">
+            <div class="job-index">37</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🔍 5维度深度分析</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="37" onclick="jumpTo(37)">
+            <div class="job-index">38</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 💼 工作就业。顺德具身智能产业链将是20262028年招聘最密集赛道之一。机器人产业链涉及减速器、伺服电机、控制器、传感器、灵巧手、激光雷达等部件，几乎每一项都需要机械/采购/供应链人才。Gofy在LinkedIn上可主动联系越疆科技、利事丰、隆深、嘉腾等顺德机器人企业HR。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="38" onclick="jumpTo(38)">
+            <div class="job-index">39</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">2. 📈 职业发展。顺德"具身智能发展局"是中国首个县区级具身智能主管机构，意味着顺德将成为国家级具身智能产业标杆。Gofy作为佛山本地人，有"地理+行业+供应链"三重组合优势，建议20262027年密集参与顺德机器人产业链活动，主动积累产业资源。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="39" onclick="jumpTo(39)">
+            <div class="job-index">40</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3. 🏭 行业发展。顺德从"家电+家具"传统制造业升级为"6G底座+具身智能"高科技集群，是传统制造业城市"产业升维"样板。"智能机器人100计划"和6G产业园结合，将带来大量5G+AI+机器人融合型硬件订单，对精密机加工、PCB、SMT、机加工、3D打印都是强需求。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="40" onclick="jumpTo(40)">
+            <div class="job-index">41</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">4. 🚀 创业机会。Gofy的"液冷+3D打印"双重能力可对接机器人产业链：。方向A：机器人液冷模组（电机/控制器/电池冷却）。方向B：机器人灵巧手/外壳3D打印+后处理（小批量定制）。方向C：机器人培训/演示场景搭建（结合音视频和直播能力）。建议找时间参加顺德机器人产业链对接会，对接利事丰/嘉腾/...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="41" onclick="jumpTo(41)">
+            <div class="job-index">42</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5. 💰 投资机会。具身智能概念股：越疆科技（HK）、优必选（HK）、绿的谐波（688017）（减速器）、双环传动、鸣志电器（伺服电机）。可关注"机器人ETF"。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="42" onclick="jumpTo(42)">
+            <div class="job-index">43</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📌 要闻 7｜特斯拉Cybercab活动未达预期：股价回落近6%，NHTSA启动认证合规调查</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">📅 时间：20260905 / 🏢 来源：科技财经日报 / 财联社 / 新浪财经。📝 摘要：特斯拉周四在奥斯汀举办受限Cybercab活动，未公开直播且关键定价与监管问题未解，NHTSA同日启动认证合规调查。周五特斯拉股价下跌近6%，市值蒸发超6700亿元。富国银行直言发布"未达预期"。Cyberc...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="43" onclick="jumpTo(43)">
+            <div class="job-index">44</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🔍 5维度深度分析</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="44" onclick="jumpTo(44)">
+            <div class="job-index">45</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 💼 工作就业。Cybercab未达预期对国内自动驾驶行业短期降温，但中长期推动"端到端大模型""车云一体""车规级激光雷达"研发岗需求。比亚迪、小鹏、华为车BU、小马智行、文远知行等公司20262027将持续招聘"自动驾驶供应链经理""车规级质量经理（SQE）""PPAP工程师"等岗位。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="45" onclick="jumpTo(45)">
+            <div class="job-index">46</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">2. 📈 职业发展。自动驾驶赛道已从"造车新势力"演变为"传统车企+大模型+车BU"三足鼎立，对供应链人才的要求从"价格谈判"升级到"车规级认证、PPAP、ASILD质量体系、IATF 16949"。Gofy的机械+采购背景+17年经验正是车企供应链部门最需要的中坚力量，建议今年考取"ASQCMQO...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="46" onclick="jumpTo(46)">
+            <div class="job-index">47</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3. 🏭 行业发展。Cybercab的"未达预期"实际意义重大：Robotaxi商业化路径仍未跑通，全球自动驾驶进入"回归理性"阶段。对佛山顺德/南海的智能装备、汽车零部件企业，反而是个好消息——主机厂会更愿意与有总成能力、PPAP经验、海外出货经验的传统供应商合作，而非盲目追新势力。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="47" onclick="jumpTo(47)">
+            <div class="job-index">48</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">4. 🚀 创业机会。Cybercab延期给了车规级改装件市场一个时间窗口：高端车规级改装件、车规级测试设备、车规级冷却模组、车规级3D打印定制件（仪表盘/外壳/座椅件）。Gofy可研究"车规级3D打印小批量定制"，对接Robotaxi运营公司做样品。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="48" onclick="jumpTo(48)">
+            <div class="job-index">49</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5. 💰 投资机会。特斯拉股价回落给整个智能驾驶板块带来短期回调压力。但中长期看好激光雷达、车规芯片、域控制器、车规级MCU等核心环节。关注个股：禾赛科技（H）、速腾聚创（H）、地平线（H）、黑芝麻智能（H）。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="49" onclick="jumpTo(49)">
+            <div class="job-index">50</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📌 要闻 8｜中央网信办等七部门联合发文：明确支持液冷散热，要求2025-2030算力设施绿电使用比例提升</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">📅 时间：20260904 / 🏢 来源：央行/网信办 / 同花顺财经早餐。📝 摘要：中央网信办等七部门联合印发《促进数字化绿色化协同转型发展实施方案（2026—2030年）》。方案提出到2030年推动数字化、绿色化协同转型，提升算力设施、5G基站等领域用能效率。方案明确要求强化算力设施绿色设计，支...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="50" onclick="jumpTo(50)">
+            <div class="job-index">51</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">🔍 5维度深度分析</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="51" onclick="jumpTo(51)">
+            <div class="job-index">52</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">1. 💼 工作就业。政策明确支持液冷散热将在政府/国企/事业单位数据中心招标中直接体现"加分项"，佛山顺德周边的申菱环境、英维克本地团队、和Gofy熟悉的精密机加工产业链将迎来订单红利。供应链岗位需求上升，特别是"绿色供应链""低碳采购"专项岗。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="52" onclick="jumpTo(52)">
+            <div class="job-index">53</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">2. 📈 职业发展。"双化协同"是未来5年的国家战略级方向。Gofy可在简历/自我包装中加入"绿色供应链/低碳采购/碳足迹核算"相关能力标签，考取"碳排放管理员""ESG分析师"证书，对接"碳关税CBAM"合规咨询岗位（欧盟已对液冷设备免税，更需专业人才）。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="53" onclick="jumpTo(53)">
+            <div class="job-index">54</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">3. 🏭 行业发展。"政策+资本+订单"三浪叠加，液冷行业从"产能不足"走向"产能过剩"再走向"集中度提升"的过程，大概率在未来3年完成。中小液冷企业将被整合，能存活下来的是有客户绑定（微软/英伟达/华为生态）和有核心技术（CDU/TMU/浸没式）的企业。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="54" onclick="jumpTo(54)">
+            <div class="job-index">55</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">4. 🚀 创业机会。中央七部门发文的信号意义重大：液冷是国家级"双化协同"政策核心落地点。Gofy的浸没式液冷个人级产品路线，天然契合"绿色化、分布式、低功耗、家庭可及"的政策大方向。可在直播/短视频内容中明确打"政策风口"标签，强化信任。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="55" onclick="jumpTo(55)">
+            <div class="job-index">56</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">5. 💰 投资机会。"数字化绿色化"主题基金、双碳ETF、新能源ETF。可关注新宙邦（氟化液）、巨化股份（制冷剂衍生）、东方电气（燃气轮机+液冷源侧）。长期看，液冷板块将与储能板块深度联动。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="56" onclick="jumpTo(56)">
+            <div class="job-index">57</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🔖 速览1｜OpenAI发布GPT-6 Astra：单任务成本-57%、耗时-47%，总裁称"欢迎进入AGI时代"</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">OpenAI于9月3日推出迄今最智能模型GPT6，9月4日开放测试。AI算力需求进一步爆发，A股/港股AI板块或将迎来新一轮催化。Gofy观察：AI Agent时代终于到来，2026Q4是AI应用层集中爆发期。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="57" onclick="jumpTo(57)">
+            <div class="job-index">58</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🔖 速览2｜3家AI服务同时宕机：ChatGPT、Claude、Grok全球故障，可能与Cloudflare有关</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">Cloudflare作为基础设施层故障引发全员宕机，提醒我们AI应用层"过度依赖单一云"的脆弱性。对Gofy的启示：液冷创业项目须设计"多云/边缘计算"备份方案，避免单点故障。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="58" onclick="jumpTo(58)">
+            <div class="job-index">59</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🔖 速览3｜英伟达129亿美元收购Hugging Face：最大AI开源平台被收编</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">英伟达同时洽谈向Thinking Machines Lab投资25亿美元、向Nscale投资20亿美元。AI产业"基础设施+开源生态"全面整合，Gofy液冷创业项目可关注Thinking Machines、Nscale等AI实验室客户。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="59" onclick="jumpTo(59)">
+            <div class="job-index">60</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">🔖 速览4｜深圳前海"亚太媒体高端论坛·科技创新成果展"9月5日开幕，呈现"3天量产""55语言同传耳机""具身智能"等黑科技</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">深圳前海具身智能、AI硬件、具身Media成为新焦点。Gofy副业"直播间搭建+音视频技术服务"对应的客户群正在向具身智能+AI硬件方向扩展。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="60" onclick="jumpTo(60)">
+            <div class="job-index">61</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📍 动态1｜南海把"对接会"做深做细：航空航天链主企业落地南海，引入本地配套</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">南海区招商局9月1日举办航空航天项目供需对接会，与某北航背景企业深度对接轻量化金属零部件落地。该企业希望与佛山钢管协会、铝业、激光加工、汽车制造企业合作。对Gofy意义：航空航天轻量化结构件供应链机会，钣金、铝业、激光加工、特种钢管领域，是供应链从业者对接热点。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="61" onclick="jumpTo(61)">
+            <div class="job-index">62</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📍 动态2｜顺德新港与科达制造签署战略合作协议：制造业出海新通道</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">顺德新港与科达制造（海外占比65%）签订战略合作，提供"港口+制造+物流+报关"协同生态。顺德新港成为大湾区制造业出海重要支点。对Gofy意义：制造出海供应链岗位、跨境物流协同岗位密集招聘，可关注顺德新港+恒瞬物流+佛山口岸报关的招聘。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="62" onclick="jumpTo(62)">
+            <div class="job-index">63</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📍 动态3｜小米玄戒O3柏林首秀：卢伟冰提出"AI下半场是物理AI"，全球活跃设备近20亿台</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">小米9月4日在柏林IFA发布玄戒O3芯片、人形机器人CyberOne、小米18 Fold。对Gofy意义：物理AI/具身智能/AI硬件供应链将持续放量，供应链人才跨领域流通加速。</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="63" onclick="jumpTo(63)">
+            <div class="job-index">64</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">📊 今日主线逻辑</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">政策双轮驱动（中央网信办"数字化绿色化"方案 + 工信部"AI中小企业创业支持计划"）+ 产业拐点确认（液冷三季度批量交付 + 微软Azure 2027 100%液冷）+ AI算力硬件升级（英伟达Rubin功耗翻倍 + OpenAI GPT6 ASTRA + 英伟达收购Hugging Face）→ ...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="64" onclick="jumpTo(64)">
+            <div class="job-index">65</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">✅ 给Gofy的3条具体行动建议</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">产品定位：以"个人级/小型化浸没式整机"切入，差异化避开数据中心机房级红海。目标客户：AI初创团队、3D打印师、短视频创作者、设计师。验证动作：本月内完成一台样机制作 + 一段视频录制，用"1000元DIY浸没式机箱"内容引流。政策对接：申报"专精特新""AI中小企业"双扶持，享受税收减免</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="65" onclick="jumpTo(65)">
+            <div class="job-index">66</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">求职方向：重点关注3类岗位——（a）顺德/南海液冷公司（申菱/英维克）的供应链/采购岗；（b）具身智能机器人产业链的商务BD；（c）AI+制造业应用岗。简历更新：本周内突出"机械+供应链+液冷+3D打印"复合背景，添加"碳排放/双化协同"能力标签。证书规划：Q4考取"ASQCMQOE""碳排放管理员...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="66" onclick="jumpTo(66)">
+            <div class="job-index">67</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">方向A：直播间搭建/音视频技术服务（深圳前海科技创新成果展客户）。方向B：缩微人像3D打印中心（对标黑格科技Kickstarter案例启动）。方向C：AI+短视频内容（"具身智能+液冷DIY"垂直内容输出，引流硬件销售）</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="67" onclick="jumpTo(67)">
+            <div class="job-index">68</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company">💡 长期跟踪热点</span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">液冷渗透率季度数据：每季度关注集邦咨询、赛迪顾问发布数据。微软Azure中国合作伙伴动态：世纪互联、微软云合作伙伴。广东"链式协同"政策落地：广东省工信厅、佛山/顺德/南海工信局公告。中央网信办"双化协同"实施方案：各地方政府落地方案。顺德"智能机器人100计划"进展：顺德区经促局</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="68" onclick="jumpTo(68)">
+            <div class="job-index">69</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">⚠️ 市场风险：标普已罕见警告AI基建7万亿美元资本开支黑洞，关注AI泡沫风险。⚠️ 政策风险：中美关系波动影响供应链出海与液冷材料进口（氟化液部分依赖）。⚠️ 行业风险：液冷赛道产能扩张过快，部分中小厂商将面临价格战。⚠️ 个股风险：Tesla/苹果/NHTSA对Cybercab的合规调查或继续发...</span>
+                </div>
+            </div>
+        </div>
+        <div class="job-item" data-index="69" onclick="jumpTo(69)">
+            <div class="job-index">70</div>
+            <div class="job-info">
+                <div class="job-title">
+                    <span class="company"></span>
+                </div>
+                <div class="job-detail">
+                    <span class="position" style="font-size:13px;color:#555;line-height:1.5;">本日报由AI智能助手自动整理，仅供个人研究参考，不构成任何投资建议。。整理时间：20260905 06:15（北京时间） 📅</span>
+                </div>
+            </div>
+        </div>
+</div>
+
+<!-- 底部提示 -->
+<div class="float-hint" id="floatHint">
+    <span class="icon">🎧</span>
+    <span id="floatText">点击顶部播放按钮开始朗读</span>
+</div>
+
+<script>
+// ===== 数据 =====
+const items = [{"company": "📌 要闻 1｜AI催热液冷产业：2026液冷市场规模将破260亿，三季度进入\"批量交付\"拐点", "position": "", "salary": "", "location": "", "tag": "", "body": "📅 时间：2026-09-03 / 🏢 来源：证券日报 / 浙商证券研报。📝 摘要：9月3日液冷服务器板块强势走强，金富科技、金帝股份等多股涨停。浙商证券判断2026年三季度成为国内液冷产业从\"试点验证\"走向\"批量交付\"的关键拐点。集邦咨询预测2026年液冷在AI芯片领域渗透率升至53%。2025年中国液冷数据中心市场规模159.8亿元，同比增长45.2%。冷板式为主流，浸没式聚焦超高功率机柜场景。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🔍 5维度深度分析"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 💼 工作就业。液冷产业链进入批量交付期，供应链、制造、测试、运维岗位需求将明显增加。佛山顺德有申菱环境、英维克等液冷龙头布局，对Gofy供应链背景是直接利好。可重点关注申菱环境、申菱股份、康盛股份、英维克等公司的\"采购经理/供应商管理岗\"，部分岗位接受顺德/佛山本地。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "2. 📈 职业发展。液冷赛道即将进入\"3-5年快速放量期\"，是供应链管理者从传统机械行业切入高科技硬件的优质跳板。掌握\"冷板/浸没式/CDU/TMU\"等技术术语、熟悉氟化液配方与密封件供应商、对接服务器OEM的供应链人员将明显溢价。建议系统学习液冷产业链图谱（芯片→服务器→数据中心→运营商）。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "3. 🏭 行业发展。液冷从\"可选配置\"变成\"AI基础设施标配\"，标志着数据中心散热正式进入\"液冷时代\"。这对机械/铸造/密封件/精密加工行业是历史性增量——冷板、机柜、CDU、TMU、浸没罐等核心部件都涉及高精度机加工、CNC、钣金、密封、连接器，恰好是Gofy熟悉的制造工艺领域。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "4. 🚀 创业机会。这是Gofy核心创业项目的最强政策信号！液冷从\"试点\"进入\"批量\"意味着：（a）个人玩家/小公司做浸没式整机的窗口收窄，建议转向\"浸没式机箱整机+定制液冷解决方案\"细分赛道，主打中小型AI工作站/实验室；（b）可开发\"浸没式液冷mini机柜\"面向AI初创团队、设计师工作流；（c）短视频+直播做\"1000元DIY浸没式机箱\"内容引流，配合套件电商。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "5. 💰 投资机会。重点关注A股液冷板块：英维克（002837）数据中心温控龙头、申菱环境（顺德本地+5G/液冷双线）、高澜股份（冷板+浸没+储能液冷全覆盖）、曙光数创（浸没式液冷龙头）。中长期可定投\"储能电池ETF\"（与液冷高度重合）。"}, {"company": "📌 要闻 2｜微软Azure宣布2027年全球新建数据中心100%采用全液冷架构", "position": "", "salary": "", "location": "", "tag": "", "body": "📅 时间：2026-09-04 / 🏢 来源：网易财经 / 微软Azure官宣。📝 摘要：微软Azure在全球算力生态峰会上正式宣布，2027年之后全球所有新建大型数据中心100%采用全液冷架构。预计可将整体数据中心PUE降至1.12以下，年制冷能耗可降低超60亿千瓦时。这是头部大厂首次给出\"100%液冷\"明确时间表，意味着传统风冷机房建设模式将被淘汰。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🔍 5维度深度分析"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 💼 工作就业。微软系（含Azure中国生态合作伙伴、世纪互联、微软在华合资工厂）预计将在2026Q4-2027启动大规模液冷机房招标。Gofy可重点监控\"微软-世纪互联-微软云生态合作伙伴\"的供应链招聘信息，特别是顺德/深圳/东莞周边的服务器代工厂。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "2. 📈 职业发展。液冷供应链专家将成为大厂\"必抢人才\"。建议在简历/自我介绍中沉淀以下技术资产：（a）熟悉CDU/TMU/二次侧冷却系统；（b）了解服务器OEM（浪潮/华为/中科曙光）液冷方案；（c）掌握液冷材料供应商图谱（氟化液/冷板铝材/密封件/EPDM）。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "3. 🏭 行业发展。\"100%液冷\"是行业分水岭。传统风冷数据中心公司将面临2-3年内改造/退役压力，液冷板块整体进入\"5年牛市\"。对机械行业而言，冷板、CDU、浸没罐、机柜外壳、密封件都迎来大批量CNC/铸造订单。佛山顺德/南海的精密加工集群将受益。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "4. 🚀 创业机会。中国液冷产业链迎来国产替代窗口：微软Azure亚太节点大量在中国/东南亚扩容，国内液冷厂商（含顺德申菱、英维克、高澜、曙光数创）正在抢单。Gofy可考虑\"个人级/小团队级浸没式机箱\"作为细分市场补充，不做服务器机房级（竞争不过上市公司），专注做\"AI创业团队+3D打印师+个人开发者\"的小型化浸没式整机和DIY套件。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "5. 💰 投资机会。中长期定投液冷赛道ETF（目前已有相关主题基金），重点个股：浪潮信息（All in液冷战略）、英维克、申菱环境、高澜股份、曙光数创。此外关注液冷材料供应商：新宙邦（氟化液）、巨化股份（制冷剂延伸氟化液）。"}, {"company": "📌 要闻 3｜英伟达Rubin GPU功耗高达2300瓦，AIDC液冷与HVDC需求预期差最大", "position": "", "salary": "", "location": "", "tag": "", "body": "📅 时间：2026-09-03 / 🏢 来源：财闻 / 集邦咨询。📝 摘要：英伟达Rubin单颗GPU功耗高达2300瓦，较前代产品接近翻倍。高功耗直接推升液冷、HVDC（高压直流）、SST（固态变压器）等配套需求。这些此前被市场低估的细分环节，成为本轮AI算力行情中\"预期差最大、机会最多\"的方向，资金已集中流入。核心受益标的：英维克、麦格米特、盛弘股份、宁德时代等。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🔍 5维度深度分析"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 💼 工作就业。Rubin量产将带动\"高功率冷板\"\"液冷整柜\"\"HVDC电源\"等高难度部件供应链需求，结构件/精密加工/PACK级采购岗位需求增加。佛山、深圳、东莞周边的服务器电源、液冷ODM工厂（如新朋股份泰国基地、英维克、申菱）将密集招聘采购/项目经理。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "2. 📈 职业发展。Rubin功耗接近翻倍，意味着供应商必须从\"代工思维\"升级为\"协同研发思维\"，采购经理将深度参与早期BOM成本协同、散热方案选型、功耗预算谈判。建议Gofy系统学习\"芯片—服务器—机柜—机房\"四级功耗预算模型，提升技术深度。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "3. 🏭 行业发展。Rubin量产是散热与供电\"分水岭\"：从风冷主流正式切换到\"全液冷+高压直流\"。冷板、CDU、浸没罐、机柜、HVDC电源、SST变压器、储能电池7大细分赛道同步爆发。机械行业（精密机加工、铸造、钣金、密封）将收到大批量订单。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "4. 🚀 创业机会。高功耗单机催生\"分布式液冷\"新场景：边缘计算盒子、小型AI推理站、个人AI工作站。这是Gofy浸没式液冷创业项目的精准产品定位！建议产品路线：3-5kW小机箱浸没式整机（覆盖一台4090或单颗国产AI推理卡），主打3D打印师、AI开发者、短视频创作者，差异化避开数据中心机房级红海。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "5. 💰 投资机会。核心标的：英维克（002837）液冷温控龙头、麦格米特（002851）HVDC电源平台公司、盛弘股份（300693）储能+HVDC双线。中长线关注服务器整机ODM和电源HVDC国产替代链。"}, {"company": "📌 要闻 4｜工信部印发《人工智能中小企业创业支持计划（2026-2028年）》：3年培育\"小巨人\"2000家", "position": "", "salary": "", "location": "", "tag": "", "body": "📅 时间：2026-09-04 / 🏢 来源：工信部 / 同花顺财经早餐。📝 摘要：工信部办公厅正式印发《人工智能中小企业创业支持计划（2026-2028年）》，明确3年内在行业应用、数据服务、智能算力等重点领域新培育科技和创新型中小企业1万家以上、专精特新\"小巨人\"突破2000家。配套建设10个科技型企业孵化器、10个国家中小企业公共服务示范平台、10个国家级中小企业特色产业集群。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🔍 5维度深度分析"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 💼 工作就业。AI创业扶持计划直接利好\"AI+产业\"应用岗。Gofy可在佛山/广州本地关注\"AI+供应链\"\"AI+制造业\"应用岗位，例如AI Agent公司在工业品采购、供应商尽调、合同审查等场景的\"领域专家+AI训导师\"复合岗位，年薪40-80万。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "2. 📈 职业发展。政策窗口期3年，是Gofy从\"传统制造业采购经理\"切入\"AI+供应链\"赛道的黄金期。建议今年内完成至少一项AI应用落地：例如用AI Agent整理供应商档案、做SOP自动生成、做询价单智能匹配。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "3. 🏭 行业发展。\"1万家AI中小企业、2000家小巨人\"意味着AI应用将下沉到产业链各环节。工业AI、AI Agent、行业垂直大模型、工业SaaS将迎来大爆发。这是供应链行业从\"信息化\"走向\"智能化\"的明确时点。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "4. 🚀 创业机会。Gofy具备\"AI+液冷+3D打印+供应链\"四个技术栈，可直接对标扶持政策：。方向A：AI+供应链SaaS，给中小制造业做智能采购助手。方向B：AI+液冷行业内容，做\"AI工作站DIY\"系列短视频，引流硬件销售。方向C：3D打印AI建模，给中小品牌做\"AI一键建模\"服务。强烈建议申请\"专精特新\"认定，能享受税收减免+融资便利+政府采购优先。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "5. 💰 投资机会。\"AI+小巨人\"受益板块：SaaS、行业AI Agent、工业互联网平台。可关注A股AI应用端龙头：金山办公、科大讯飞、用友网络、金蝶国际、汉得信息。"}, {"company": "📌 要闻 5｜广东AI产业\"链式\"滚雪球：大厂带小厂，中小企业变\"链主\"", "position": "", "salary": "", "location": "", "tag": "", "body": "📅 时间：2026-09-04 / 🏢 来源：21世纪经济报道（南方财经）。📝 摘要：第32次APEC中小企业部长会议在广东省广州市举办，会议聚焦\"科技创新\"\"数智赋能\"\"普惠发展\"。广东正在将\"链式改造\"打法升级为\"链式协同\"，让\"链主\"企业在技术、场景、数据三个维度上向外释放能量，中小企业在细分赛道里成为新\"链主\"。案例：黑格科技（全彩3D打印机）依托阿里云合作，今夏Kickstarter首日众筹722万美元。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🔍 5维度深度分析"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 💼 工作就业。广东AI\"链主\"模式预示大量\"细分赛道采购+项目协调\"岗位开放。佛山顺德、东莞、深圳市周边AI+制造企业密集招聘\"商务BD+采购经理\"复合岗。Gofy可在boss直聘/猎聘重点关注\"AI行业运营经理\"\"AI产业链项目协调\"类岗位。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "2. 📈 职业发展。\"链式协同\"模式意味着未来最稀缺的是\"懂行业+懂技术+懂采购\"的复合型人才。Gofy的\"机械+采购+液冷+3D打印\"背景恰好契合。建议在领英/脉脉上明确打标签：\"机械+供应链+液冷+3D打印+AI应用\"，强化个人IP。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "3. 🏭 行业发展。广东是中国制造业链主最密集的省份，深圳-东莞-广州-佛山-中山走廊已经形成\"大厂带小厂\"的协同生态。对Gofy的实战意义：（a）液冷/3D打印/AI供应链方向的小批量试产对接更便利；（b）找代工厂、做首件、量产都比外地快3倍以上。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "4. 🚀 创业机会。黑格科技的案例对Gofy的\"缩微人像3D打印中心\"项目有直接借鉴：。与阿里云/腾讯云合作 → 接入\"AI 3D建模\"云渲染API。通过大平台流量 → 引流到自有小程序。Kickstarter众筹 → 出海验证。建议年内对标黑格科技做一次Kickstarter众筹，主打\"AI人像+全彩打印+轻量级交付\"。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "5. 💰 投资机会。广东AI\"链主\"概念股：佳都科技（600728）智慧交通链主、黑格科技（未上市）3D打印独角兽、广电运通、远光软件等。可关注\"广东AI概念指数\"或\"大湾区AI ETF\"。"}, {"company": "📌 要闻 6｜顺德发起《湾区具身智能产业集聚发展倡议》：两年内落地100个机器人真实场景", "position": "", "salary": "", "location": "", "tag": "", "body": "📅 时间：2026-09-02 / 🏢 来源：佛山日报。📝 摘要：9月2日，2026人工智能+未来产业创新大会（顺德分会场）暨顺德智能机器人应用大会在潭洲国际会展中心举行。顺德揭牌新一代信息通信技术产业园；从大良到杏坛10个镇街挂牌十大战略性新兴产业园，形成\"大脑—眼睛—身体—躯干—神经\"全产业链；成立全国首个具身智能发展局；启动\"智能机器人100计划\"，两年内落地100+真实应用场景。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🔍 5维度深度分析"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 💼 工作就业。顺德具身智能产业链将是2026-2028年招聘最密集赛道之一。机器人产业链涉及减速器、伺服电机、控制器、传感器、灵巧手、激光雷达等部件，几乎每一项都需要机械/采购/供应链人才。Gofy在LinkedIn上可主动联系越疆科技、利事丰、隆深、嘉腾等顺德机器人企业HR。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "2. 📈 职业发展。顺德\"具身智能发展局\"是中国首个县区级具身智能主管机构，意味着顺德将成为国家级具身智能产业标杆。Gofy作为佛山本地人，有\"地理+行业+供应链\"三重组合优势，建议2026-2027年密集参与顺德机器人产业链活动，主动积累产业资源。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "3. 🏭 行业发展。顺德从\"家电+家具\"传统制造业升级为\"6G底座+具身智能\"高科技集群，是传统制造业城市\"产业升维\"样板。\"智能机器人100计划\"和6G产业园结合，将带来大量5G+AI+机器人融合型硬件订单，对精密机加工、PCB、SMT、机加工、3D打印都是强需求。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "4. 🚀 创业机会。Gofy的\"液冷+3D打印\"双重能力可对接机器人产业链：。方向A：机器人液冷模组（电机/控制器/电池冷却）。方向B：机器人灵巧手/外壳3D打印+后处理（小批量定制）。方向C：机器人培训/演示场景搭建（结合音视频和直播能力）。建议找时间参加顺德机器人产业链对接会，对接利事丰/嘉腾/隆深/越疆科技需求。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "5. 💰 投资机会。具身智能概念股：越疆科技（HK）、优必选（HK）、绿的谐波（688017）（减速器）、双环传动、鸣志电器（伺服电机）。可关注\"机器人ETF\"。"}, {"company": "📌 要闻 7｜特斯拉Cybercab活动未达预期：股价回落近6%，NHTSA启动认证合规调查", "position": "", "salary": "", "location": "", "tag": "", "body": "📅 时间：2026-09-05 / 🏢 来源：科技财经日报 / 财联社 / 新浪财经。📝 摘要：特斯拉周四在奥斯汀举办受限Cybercab活动，未公开直播且关键定价与监管问题未解，NHTSA同日启动认证合规调查。周五特斯拉股价下跌近6%，市值蒸发超6700亿元。富国银行直言发布\"未达预期\"。Cybercab将于9月中旬在北京、上海等多个城市公开展出，迎来中国首秀，但仅用于展示，不涉及上市销售或网约车商业运营。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🔍 5维度深度分析"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 💼 工作就业。Cybercab未达预期对国内自动驾驶行业短期降温，但中长期推动\"端到端大模型\"\"车云一体\"\"车规级激光雷达\"研发岗需求。比亚迪、小鹏、华为车BU、小马智行、文远知行等公司2026-2027将持续招聘\"自动驾驶供应链经理\"\"车规级质量经理（SQE）\"\"PPAP工程师\"等岗位。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "2. 📈 职业发展。自动驾驶赛道已从\"造车新势力\"演变为\"传统车企+大模型+车BU\"三足鼎立，对供应链人才的要求从\"价格谈判\"升级到\"车规级认证、PPAP、ASIL-D质量体系、IATF 16949\"。Gofy的机械+采购背景+17年经验正是车企供应链部门最需要的中坚力量，建议今年考取\"ASQ-CMQOE\"或\"IATF内审员\"证书。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "3. 🏭 行业发展。Cybercab的\"未达预期\"实际意义重大：Robotaxi商业化路径仍未跑通，全球自动驾驶进入\"回归理性\"阶段。对佛山顺德/南海的智能装备、汽车零部件企业，反而是个好消息——主机厂会更愿意与有总成能力、PPAP经验、海外出货经验的传统供应商合作，而非盲目追新势力。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "4. 🚀 创业机会。Cybercab延期给了车规级改装件市场一个时间窗口：高端车规级改装件、车规级测试设备、车规级冷却模组、车规级3D打印定制件（仪表盘/外壳/座椅件）。Gofy可研究\"车规级3D打印小批量定制\"，对接Robotaxi运营公司做样品。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "5. 💰 投资机会。特斯拉股价回落给整个智能驾驶板块带来短期回调压力。但中长期看好激光雷达、车规芯片、域控制器、车规级MCU等核心环节。关注个股：禾赛科技（H）、速腾聚创（H）、地平线（H）、黑芝麻智能（H）。"}, {"company": "📌 要闻 8｜中央网信办等七部门联合发文：明确支持液冷散热，要求2025-2030算力设施绿电使用比例提升", "position": "", "salary": "", "location": "", "tag": "", "body": "📅 时间：2026-09-04 / 🏢 来源：央行/网信办 / 同花顺财经早餐。📝 摘要：中央网信办等七部门联合印发《促进数字化绿色化协同转型发展实施方案（2026—2030年）》。方案提出到2030年推动数字化、绿色化协同转型，提升算力设施、5G基站等领域用能效率。方案明确要求强化算力设施绿色设计，支持液冷散热、余热回收、低功耗芯片等技术应用，推动算力与电力协同发展，提高算力设施绿电使用比例。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "🔍 5维度深度分析"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "1. 💼 工作就业。政策明确支持液冷散热将在政府/国企/事业单位数据中心招标中直接体现\"加分项\"，佛山顺德周边的申菱环境、英维克本地团队、和Gofy熟悉的精密机加工产业链将迎来订单红利。供应链岗位需求上升，特别是\"绿色供应链\"\"低碳采购\"专项岗。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "2. 📈 职业发展。\"双化协同\"是未来5年的国家战略级方向。Gofy可在简历/自我包装中加入\"绿色供应链/低碳采购/碳足迹核算\"相关能力标签，考取\"碳排放管理员\"\"ESG分析师\"证书，对接\"碳关税CBAM\"合规咨询岗位（欧盟已对液冷设备免税，更需专业人才）。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "3. 🏭 行业发展。\"政策+资本+订单\"三浪叠加，液冷行业从\"产能不足\"走向\"产能过剩\"再走向\"集中度提升\"的过程，大概率在未来3年完成。中小液冷企业将被整合，能存活下来的是有客户绑定（微软/英伟达/华为生态）和有核心技术（CDU/TMU/浸没式）的企业。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "4. 🚀 创业机会。中央七部门发文的信号意义重大：液冷是国家级\"双化协同\"政策核心落地点。Gofy的浸没式液冷个人级产品路线，天然契合\"绿色化、分布式、低功耗、家庭可及\"的政策大方向。可在直播/短视频内容中明确打\"政策风口\"标签，强化信任。"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "5. 💰 投资机会。\"数字化绿色化\"主题基金、双碳ETF、新能源ETF。可关注新宙邦（氟化液）、巨化股份（制冷剂衍生）、东方电气（燃气轮机+液冷源侧）。长期看，液冷板块将与储能板块深度联动。"}, {"company": "🔖 速览1｜OpenAI发布GPT-6 Astra：单任务成本-57%、耗时-47%，总裁称\"欢迎进入AGI时代\"", "position": "", "salary": "", "location": "", "tag": "", "body": "OpenAI于9月3日推出迄今最智能模型GPT-6，9月4日开放测试。AI算力需求进一步爆发，A股/港股AI板块或将迎来新一轮催化。Gofy观察：AI Agent时代终于到来，2026Q4是AI应用层集中爆发期。"}, {"company": "🔖 速览2｜3家AI服务同时宕机：ChatGPT、Claude、Grok全球故障，可能与Cloudflare有关", "position": "", "salary": "", "location": "", "tag": "", "body": "Cloudflare作为基础设施层故障引发全员宕机，提醒我们AI应用层\"过度依赖单一云\"的脆弱性。对Gofy的启示：液冷创业项目须设计\"多云/边缘计算\"备份方案，避免单点故障。"}, {"company": "🔖 速览3｜英伟达129亿美元收购Hugging Face：最大AI开源平台被收编", "position": "", "salary": "", "location": "", "tag": "", "body": "英伟达同时洽谈向Thinking Machines Lab投资25亿美元、向Nscale投资20亿美元。AI产业\"基础设施+开源生态\"全面整合，Gofy液冷创业项目可关注Thinking Machines、Nscale等AI实验室客户。"}, {"company": "🔖 速览4｜深圳前海\"亚太媒体高端论坛·科技创新成果展\"9月5日开幕，呈现\"3天量产\"\"55语言同传耳机\"\"具身智能\"等黑科技", "position": "", "salary": "", "location": "", "tag": "", "body": "深圳前海具身智能、AI硬件、具身Media成为新焦点。Gofy副业\"直播间搭建+音视频技术服务\"对应的客户群正在向具身智能+AI硬件方向扩展。"}, {"company": "📍 动态1｜南海把\"对接会\"做深做细：航空航天链主企业落地南海，引入本地配套", "position": "", "salary": "", "location": "", "tag": "", "body": "南海区招商局9月1日举办航空航天项目供需对接会，与某北航背景企业深度对接轻量化金属零部件落地。该企业希望与佛山钢管协会、铝业、激光加工、汽车制造企业合作。对Gofy意义：航空航天轻量化结构件供应链机会，钣金、铝业、激光加工、特种钢管领域，是供应链从业者对接热点。"}, {"company": "📍 动态2｜顺德新港与科达制造签署战略合作协议：制造业出海新通道", "position": "", "salary": "", "location": "", "tag": "", "body": "顺德新港与科达制造（海外占比65%）签订战略合作，提供\"港口+制造+物流+报关\"协同生态。顺德新港成为大湾区制造业出海重要支点。对Gofy意义：制造出海供应链岗位、跨境物流协同岗位密集招聘，可关注顺德新港+恒瞬物流+佛山口岸报关的招聘。"}, {"company": "📍 动态3｜小米玄戒O3柏林首秀：卢伟冰提出\"AI下半场是物理AI\"，全球活跃设备近20亿台", "position": "", "salary": "", "location": "", "tag": "", "body": "小米9月4日在柏林IFA发布玄戒O3芯片、人形机器人CyberOne、小米18 Fold。对Gofy意义：物理AI/具身智能/AI硬件供应链将持续放量，供应链人才跨领域流通加速。"}, {"company": "📊 今日主线逻辑", "position": "", "salary": "", "location": "", "tag": "", "body": "政策双轮驱动（中央网信办\"数字化绿色化\"方案 + 工信部\"AI中小企业创业支持计划\"）+ 产业拐点确认（液冷三季度批量交付 + 微软Azure 2027 100%液冷）+ AI算力硬件升级（英伟达Rubin功耗翻倍 + OpenAI GPT-6 ASTRA + 英伟达收购Hugging Face）→ 广东AI+液冷+机器人产业链全面受益。"}, {"company": "✅ 给Gofy的3条具体行动建议", "position": "", "salary": "", "location": "", "tag": "", "body": "产品定位：以\"个人级/小型化浸没式整机\"切入，差异化避开数据中心机房级红海。目标客户：AI初创团队、3D打印师、短视频创作者、设计师。验证动作：本月内完成一台样机制作 + 一段视频录制，用\"1000元DIY浸没式机箱\"内容引流。政策对接：申报\"专精特新\"\"AI中小企业\"双扶持，享受税收减免"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "求职方向：重点关注3类岗位——（a）顺德/南海液冷公司（申菱/英维克）的供应链/采购岗；（b）具身智能机器人产业链的商务BD；（c）AI+制造业应用岗。简历更新：本周内突出\"机械+供应链+液冷+3D打印\"复合背景，添加\"碳排放/双化协同\"能力标签。证书规划：Q4考取\"ASQ-CMQOE\"\"碳排放管理员\"或\"IATF 16949内审员\""}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "方向A：直播间搭建/音视频技术服务（深圳前海科技创新成果展客户）。方向B：缩微人像3D打印中心（对标黑格科技Kickstarter案例启动）。方向C：AI+短视频内容（\"具身智能+液冷DIY\"垂直内容输出，引流硬件销售）"}, {"company": "💡 长期跟踪热点", "position": "", "salary": "", "location": "", "tag": "", "body": "液冷渗透率季度数据：每季度关注集邦咨询、赛迪顾问发布数据。微软Azure中国合作伙伴动态：世纪互联、微软云合作伙伴。广东\"链式协同\"政策落地：广东省工信厅、佛山/顺德/南海工信局公告。中央网信办\"双化协同\"实施方案：各地方政府落地方案。顺德\"智能机器人100计划\"进展：顺德区经促局"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "⚠️ 市场风险：标普已罕见警告AI基建7万亿美元资本开支黑洞，关注AI泡沫风险。⚠️ 政策风险：中美关系波动影响供应链出海与液冷材料进口（氟化液部分依赖）。⚠️ 行业风险：液冷赛道产能扩张过快，部分中小厂商将面临价格战。⚠️ 个股风险：Tesla/苹果/NHTSA对Cybercab的合规调查或继续发酵。⚠️ 极端天气：厄尔尼诺已确认将持续至2027年，注意暴雨台风影响制造业物流"}, {"company": "", "position": "", "salary": "", "location": "", "tag": "", "body": "_本日报由AI智能助手自动整理，仅供个人研究参考，不构成任何投资建议。_。_整理时间：2026-09-05 06:15（北京时间）_ 📅"}];
+const totalItems = 70;
+const speakTemplate = "{company}。详细内容：{body}。";
+
+// ===== 状态 =====
+let currentIndex = 0;
+let isPlaying = false;
+let speechRate = 1.0;
+let readDoneSet = new Set();
+let synth = window.speechSynthesis;
+let currentUtterance = null;
+let selectedVoice = null;
+let voicesReady = false;
+
+// ===== 浏览器检测 =====
+function isQQBrowser() {
+    let ua = navigator.userAgent || '';
+    return /MQQBrowser|QQ\//i.test(ua);
+}
+function isUCBrowser() {
+    let ua = navigator.userAgent || '';
+    return /UCBrowser|UCWEB/i.test(ua);
+}
+function isWeChat() {
+    let ua = navigator.userAgent || '';
+    return /MicroMessenger/i.test(ua);
+}
+function isUnsupportedBrowser() {
+    return isQQBrowser() || isUCBrowser() || isWeChat();
+}
+
+// ===== 初始化 =====
+function init() {
+    // 浏览器检测：不支持的直接提示换浏览器
+    if (isUnsupportedBrowser()) {
+        let browserName = isQQBrowser() ? 'QQ浏览器' : (isUCBrowser() ? 'UC浏览器' : '微信内置浏览器');
+        showBrowserWarning(browserName);
+        return;
+    }
+
+    if (!synth) {
+        showBrowserWarning('当前浏览器');
+        return;
+    }
+
+    // Chrome/Edge: voices 通过异步事件加载
+    let voices = synth.getVoices();
+    if (voices && voices.length > 0) {
+        pickVoice(voices);
+    }
+
+    // 监听语音列表加载（关键！Android Chrome 需要等事件）
+    synth.onvoiceschanged = function() {
+        voices = synth.getVoices();
+        if (voices && voices.length > 0 && !voicesReady) {
+            pickVoice(voices);
+            document.getElementById('floatText').textContent =
+                '✅ 语音引擎就绪 (' + voices.length + '个) — 点🎧开始朗读';
+            document.getElementById('progressText').textContent = '就绪 ✓';
+        }
+    };
+
+    // 超时兜底：2秒后强制尝试
+    setTimeout(function() {
+        if (!voicesReady) {
+            voices = synth.getVoices();
+            if (voices && voices.length > 0) {
+                pickVoice(voices);
+            }
+            if (selectedVoice) {
+                document.getElementById('floatText').textContent =
+                    '✅ 语音引擎: ' + selectedVoice.name;
+                document.getElementById('progressText').textContent = '就绪 ✓';
+            } else {
+                document.getElementById('floatText').textContent =
+                    '⚠️ 未找到中文语音，请用系统自带 Chrome/Edge 打开';
+                document.getElementById('progressText').textContent = '无中文语音 ⚠️';
+            }
+            voicesReady = true;
+        }
+    }, 2500);
+}
+
+function showBrowserWarning(browserName) {
+    // 隐藏控制栏播放按钮
+    document.getElementById('playBtn').style.opacity = '0.3';
+    document.getElementById('playBtn').style.pointerEvents = 'none';
+    // 底部显示换浏览器提示
+    document.getElementById('floatHint').style.background = 'rgba(211,47,47,0.95)';
+    document.getElementById('floatText').innerHTML =
+        '❌ ' + browserName + '不支持语音朗读<br><small>👉 请用 <b>Chrome</b> 或 <b>Edge</b> 浏览器打开</small>';
+    document.getElementById('progressText').textContent = '❌ 浏览器不支持';
+    // 页面顶部插入醒目提示横幅
+    let banner = document.createElement('div');
+    banner.style.cssText = 'background:#FFEBEE;border-bottom:2px solid #EF5350;padding:16px;text-align:center;';
+    banner.innerHTML =
+        '<div style="font-size:40px;margin-bottom:8px;">🚫</div>' +
+        '<div style="font-size:15px;font-weight:bold;color:#C62828;margin-bottom:6px;">' +
+        browserName + ' 不支持语音朗读</div>' +
+        '<div style="font-size:14px;color:#555;line-height:1.6;">' +
+        '请用 <b style="color:#1A73E8;">Chrome</b> 或 <b style="color:#0078D4;">Edge</b> 浏览器打开即可朗读<br>' +
+        '<span style="font-size:12px;color:#999;">（应用商店搜索"Chrome"或"Edge"下载）</span></div>';
+    let header = document.querySelector('.header');
+    if (header) {
+        header.parentNode.insertBefore(banner, header);
+    }
+    // 禁用所有岗位点击
+    document.querySelectorAll('.job-item').forEach(function(el) {
+        el.style.pointerEvents = 'none';
+        el.style.opacity = '0.5';
+    });
+}
+
+function pickVoice(voices) {
+    // 优先级：zh-CN 中文女声 > zh-CN 任意 > zh-* > 第一个
+    let preferred = ['zh-CN', 'zh-Hans', 'zh-HK', 'zh-TW', 'zh'];
+    for (let lang of preferred) {
+        for (let v of voices) {
+            if (v.lang && v.lang.startsWith(lang)) {
+                // 优先女声
+                if (v.name.toLowerCase().indexOf('female') >= 0 ||
+                    v.name.indexOf('女') >= 0) {
+                    selectedVoice = v;
+                    voicesReady = true;
+                    return;
+                }
+            }
+        }
+    }
+    // 中文任意
+    for (let lang of preferred) {
+        for (let v of voices) {
+            if (v.lang && v.lang.startsWith(lang)) {
+                selectedVoice = v;
+                voicesReady = true;
+                return;
+            }
+        }
+    }
+    // 无中文语音 → 用第一个兜底
+    if (voices.length > 0) {
+        selectedVoice = voices[0];  // 用第一个兜底
+    }
+    voicesReady = true;
+}
+
+// ===== 构建朗读文本 =====
+function buildSpeakText(item) {
+    let raw = speakTemplate
+        .replace('{company}', item.company || '')
+        .replace('{position}', item.position || '')
+        .replace('{salary}', item.salary || '面议')
+        .replace('{location}', item.location || '')
+        .replace('{body}', item.body || '');
+    return _cleanForTTS(raw);
+}
+
+// ===== TTS 文本清洗：去除所有 Markdown 残留符号 =====
+function _cleanForTTS(text) {
+    if (!text) return text;
+    let cleaned = text;
+    // 去除 Markdown 标题标记 (# ## ### #### 等)
+    cleaned = cleaned.replace(/#{1,6}\s*/g, '');
+    // 去除加粗/斜体标记 (** __ * _)
+    cleaned = cleaned.replace(/\*{1,2}|_/g, '');
+    // 去除管道符 (表格)
+    cleaned = cleaned.replace(/\|/g, ' ');
+    // 去除反引号 (代码)
+    cleaned = cleaned.replace(/`+/g, '');
+    // 去除波浪线
+    cleaned = cleaned.replace(/~+/g, '');
+    // 去除分散的 -  :  标记（但不破坏正常连字符和冒号）
+    cleaned = cleaned.replace(/：/g, ':');
+    // 压缩多余空格
+    cleaned = cleaned.replace(/\s+/g, ' ');
+    // 去除连续连字符
+    cleaned = cleaned.replace(/-{2,}/g, '');
+    return cleaned.trim();
+}
+
+// ===== 朗读单条 =====
+function speakItem(index) {
+    if (index < 0 || index >= totalItems) return;
+
+    currentIndex = index;
+
+    synth.cancel();
+    let item = items[index];
+    let text = buildSpeakText(item);
+
+    let utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'zh-CN';
+    utterance.rate = speechRate;
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+    if (selectedVoice) {
+        utterance.voice = selectedVoice;
+    }
+
+    utterance.onstart = function() {
+        updateUI(index);
+        document.getElementById('nowPlaying').classList.add('active');
+        document.getElementById('nowPlayingText').textContent =
+            (item.company || '') + ' ' + (item.position || '');
+    };
+
+    utterance.onend = function() {
+        readDoneSet.add(index);
+        updateReadDone(index);
+        let next = index + 1;
+        if (next < totalItems && isPlaying) {
+            speakItem(next);
+        } else if (next >= totalItems) {
+            stopPlayback();
+            document.getElementById('floatText').textContent = '✅ 全部朗读完成！';
+            document.getElementById('progressText').textContent = '朗读完成';
+            document.getElementById('progressBar').style.width = '100%';
+            document.getElementById('progressLabel').textContent = totalItems + '/' + totalItems;
+        }
+    };
+
+    utterance.onerror = function(e) {
+        if (e.error !== 'canceled' && e.error !== 'interrupted') {
+            let errMsg = '⚠️ 朗读出错: ' + (e.error || 'unknown');
+            document.getElementById('progressText').textContent = errMsg;
+            document.getElementById('floatText').textContent =
+                errMsg + ' — 可尝试用系统自带浏览器打开';
+            let next = index + 1;
+            if (next < totalItems && isPlaying) {
+                setTimeout(function() { speakItem(next); }, 500);
+            }
+        }
+    };
+
+    currentUtterance = utterance;
+    synth.speak(utterance);
+}
+
+// ===== 播放控制 =====
+function togglePlay() {
+    if (isPlaying) {
+        pausePlayback();
+    } else {
+        startPlayback();
+    }
+}
+
+function startPlayback() {
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    document.getElementById('progressText').textContent = '朗读中...';
+    document.getElementById('floatText').textContent =
+        selectedVoice
+            ? '🔊 朗读中 (' + selectedVoice.name + ') ...'
+            : '🔊 朗读中 (系统默认语音)...';
+    speakItem(currentIndex);
+}
+
+function pausePlayback() {
+    isPlaying = false;
+    synth.cancel();
+    document.getElementById('playIcon').textContent = '🎧';
+    document.getElementById('playBtn').classList.remove('playing');
+    document.getElementById('nowPlaying').classList.remove('active');
+    document.getElementById('floatText').textContent = '⏸️ 已暂停，点击继续';
+    document.getElementById('progressText').textContent = '已暂停';
+}
+
+function stopPlayback() {
+    isPlaying = false;
+    synth.cancel();
+    document.getElementById('playIcon').textContent = '🎧';
+    document.getElementById('playBtn').classList.remove('playing');
+    document.getElementById('nowPlaying').classList.remove('active');
+    document.getElementById('floatText').textContent = '✅ 朗读完成';
+}
+
+function skipNext() {
+    synth.cancel();
+    let next = (currentIndex + 1) % totalItems;
+    currentIndex = next;
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function skipPrev() {
+    synth.cancel();
+    let prev = currentIndex - 1;
+    if (prev < 0) prev = totalItems - 1;
+    currentIndex = prev;
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function jumpTo(index) {
+    synth.cancel();
+    currentIndex = index;
+    isPlaying = true;
+    document.getElementById('playIcon').textContent = '⏸️';
+    document.getElementById('playBtn').classList.add('playing');
+    speakItem(currentIndex);
+}
+
+function setSpeed(val) {
+    speechRate = parseFloat(val);
+    document.getElementById('floatText').textContent =
+        '🎵 朗读速度: ' + val + 'x';
+    setTimeout(function() {
+        if (isPlaying) {
+            document.getElementById('floatText').textContent = '🔊 朗读中...';
+        }
+    }, 1500);
+}
+
+// ===== UI更新 =====
+function updateUI(index) {
+    // 进度条
+    let pct = (index / totalItems) * 100;
+    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent = (index + 1) + '/' + totalItems;
+    document.getElementById('progressText').textContent =
+        '正在朗读第 ' + (index + 1) + ' ' + '条新闻'.replace('个岗位','').replace('条新闻','');
+
+    // 高亮当前
+    document.querySelectorAll('.job-item').forEach(function(el) {
+        el.classList.remove('reading');
+    });
+    let currentEl = document.querySelector('.job-item[data-index="' + index + '"]');
+    if (currentEl) {
+        currentEl.classList.add('reading');
+        currentEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+function updateReadDone(index) {
+    let el = document.querySelector('.job-item[data-index="' + index + '"]');
+    if (el) {
+        el.classList.add('read-done');
+    }
+}
+
+// ===== 启动 =====
+init();
+
+// ===== 移动端保持屏幕唤醒（可选） =====
+if (navigator.wakeLock) {
+    try {
+        navigator.wakeLock.request('screen');
+    } catch(e) {}
+}
+</script>
+</body>
+</html>
